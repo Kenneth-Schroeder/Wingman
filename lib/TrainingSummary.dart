@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fluttertraining/ScoreInstance.dart';
 import 'database_service.dart';
 import 'package:fluttertraining/TrainingInstance.dart';
+import 'TargetPage.dart';
 
 class TrainingSummary extends StatefulWidget {
   TrainingSummary(this.training, {Key key}) : super(key: key);
@@ -73,7 +74,10 @@ class _TrainingSummaryState extends State<TrainingSummary> {
   }
 
   void _changeScores() {
-    // TODO
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => TargetPage(widget.training)),
+    );
   }
 
   void _testingEndsInDB() async {
@@ -99,10 +103,6 @@ class _TrainingSummaryState extends State<TrainingSummary> {
     });
   }
 
-  void _createSampleEnds() {
-    print("Creating sample data");
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -111,7 +111,7 @@ class _TrainingSummaryState extends State<TrainingSummary> {
       ),
       body: createSummaryTable(),
       floatingActionButton: FloatingActionButton(
-        onPressed: _testingEndsInDB,
+        onPressed: _changeScores,
         tooltip: 'Change Scores',
         child: Icon(Icons.assignment),
       ),
