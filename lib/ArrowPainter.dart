@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'ScoreInstance.dart';
 
 class ArrowPainter extends CustomPainter {
-  ArrowPainter(this._offset, this._radius, this._spot) {}
+  ArrowPainter(this._offset, this._radius, this._spot); // TODO include default position
+  ArrowPainter.fromInstance(ScoreInstance instance, this._radius, this._spot, Offset targetCenter, double targetRadius)
+      : this._offset = instance.getCartesianCoordinates(targetRadius) + targetCenter;
 
   final Offset _offset;
   final double _radius;
