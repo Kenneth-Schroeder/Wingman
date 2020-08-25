@@ -26,17 +26,18 @@ class _TargetPageState extends State<TargetPage> {
   double arrowRadius = 10;
   int _draggedArrow = -1;
 
+  int _selectedIndex = 0;
+
   @override
   void initState() {
     super.initState();
 
     arrows = [
-      // check if arrows exist in database
-      // if not, create them here
+      // check if which arrows exist in database
       // then arrowpainter can take care of positioning relative to target
-      ScoreInstance(0, 1),
-      ScoreInstance(0, 2),
-      ScoreInstance(0, 3),
+      ScoreInstance(0),
+      ScoreInstance(0),
+      ScoreInstance(0),
     ];
   }
 
@@ -86,7 +87,6 @@ class _TargetPageState extends State<TargetPage> {
     }
 
     return -1;
-    // return sqrt((x - arrowX) * (x - arrowX) + (y - arrowY) * (y - arrowY)) <= arrowRadius;
   }
 
   Widget loadArrows() {
@@ -118,6 +118,25 @@ class _TargetPageState extends State<TargetPage> {
         ));
   }
 
+  // TODO reset button for arrows
+  // TODO remember arrow positions properly through database
+  // TODO enable more pages for additional ends - BottomNavigationBar
+  // TODO recognize scores of arrows
+  // TODO different arrow counts
+
+  void resetArrows() {
+    arrows.forEach((element) {
+      element.reset();
+    });
+    setState(() {});
+  }
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     SizeConfig().init(context);
@@ -125,12 +144,79 @@ class _TargetPageState extends State<TargetPage> {
     targetRadius = SizeConfig().minDim() / 2.2;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text("Score Recording"),
-      ),
+      appBar: AppBar(title: Text("Score Recording"), actions: <Widget>[
+        // action button
+        IconButton(
+          icon: Icon(Icons.undo),
+          onPressed: resetArrows,
+        ),
+      ]),
       body: new Stack(
         children: [createTarget(), loadArrows()],
       ),
+      bottomNavigationBar: BottomAppBar(
+          color: Colors.white,
+          child: new Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              Text("Quickstats"), // TODO add quickstats
+              new Row(
+                mainAxisSize: MainAxisSize.max,
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: <Widget>[
+                  FlatButton(
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(1000.0)),
+                    padding: EdgeInsets.all(4.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        Icon(Icons.navigate_before),
+                        Text("Previous"),
+                      ],
+                    ),
+                    onPressed: () {},
+                  ),
+                  Text(
+                    "Round 1/10",
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  FlatButton(
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(1000.0)),
+                    padding: EdgeInsets.all(4.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        Icon(Icons.navigate_next),
+                        Text("Next"),
+                      ],
+                    ),
+                    onPressed: () {},
+                  ),
+                ],
+              ),
+            ],
+          )),
+
+      /*BottomNavigationBar(
+        items: const <BottomNavigationBarItem>[
+          BottomNavigationBarItem(
+            icon: Icon(Icons.navigate_before),
+            title: Text('Previous'),
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.atm),
+            title: Text('Round 1'),
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.navigate_next),
+            title: Text('Next'),
+          ),
+        ],
+        currentIndex: 1,
+        //selectedItemColor: Colors.amber[800],
+        onTap: _onItemTapped,
+      ),*/
     );
   }
 }

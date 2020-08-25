@@ -2,12 +2,12 @@ import 'package:flutter/cupertino.dart';
 import 'dart:math';
 
 class ScoreInstance {
-  int score;
+  int score = 0;
   int endID;
   double pRadius = 1.3; // polar radius
   double pAngle = 13 / 20 * pi; // polar angle
 
-  ScoreInstance(this.endID, this.score);
+  ScoreInstance(this.endID);
   ScoreInstance.positioned(this.endID, this.score, Offset position, double targetRadius) {
     setWithCartesianCoordinates(position, targetRadius);
   }
@@ -48,6 +48,12 @@ class ScoreInstance {
     Offset cartesian = getCartesianCoordinates(targetRadius);
     cartesian += offset;
     setWithCartesianCoordinates(cartesian, targetRadius);
+  }
+
+  void reset() {
+    score = 0;
+    pRadius = 1.3;
+    pAngle = 13 / 20 * pi;
   }
 
   String toString() {

@@ -33,10 +33,8 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _createNewTraining() async {
-    final training = TrainingInstance.fromMap(
-        {"title": "Training", "creationTime": DateTime.now()});
-    final int id = await dbService.addTraining(training);
-    print(id);
+    final training = TrainingInstance.fromMap({"title": "Training", "creationTime": DateTime.now()});
+    await dbService.addTraining(training);
   }
 
   void _loadTrainings() async {
@@ -69,9 +67,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                        builder: (context) =>
-                            TrainingSummary(_trainings[Index])),
+                    MaterialPageRoute(builder: (context) => TrainingSummary(_trainings[Index])),
                   );
                 },
                 child: new Container(

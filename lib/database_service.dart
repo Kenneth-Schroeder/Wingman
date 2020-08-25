@@ -41,10 +41,11 @@ class DatabaseService {
           ''',
         );
         db.execute(
-          // TODO add coordinates
           '''CREATE TABLE $tableScores(
             shotID INTEGER PRIMARY KEY AUTOINCREMENT,
             score INTEGER,
+            pRadius REAL,
+            pAngle REAL,
             endID INTEGER NOT NULL,
             FOREIGN KEY (endID) REFERENCES $tableEnds (endID) )
           ''',
@@ -68,6 +69,31 @@ class DatabaseService {
     return id;
   }
 
+  void addDefaultScores(int endID, int number) async {
+    Database db = await database;
+    for (var i = 0; i < number; i++) {
+      addScore(ScoreInstance(endID));
+    }
+  }
+
+  Future<Map<int, List<ScoreInstance>>> getFullEndsOfTraining(int trainingID) async {
+    // get all ends first and then get scores for each end
+    Database db = await database;
+    List<Map> endsMap = await db.rawQuery("SELECT * "
+        "FROM $tableEnds "
+        "INNER JOIN $tableTrainings ON $tableEnds.trainingID = $tableTrainings.id "
+        "INNER JOIN $tableScores ON $tableEnds.endID = $tableScores.endID "
+        "WHERE $tableEnds.trainingID == $trainingID");
+
+    Map<int, List<ScoreInstance>> scoresByEnd = Map<int, List<ScoreInstance>>();
+    endsMap.forEach((element) {
+      if (!scoresByEnd.containsKey(element["endID"])) scoresByEnd[element["endID"]] = [];
+      scoresByEnd[element["endID"]].add(ScoreInstance.fromMap(element));
+    });
+
+    return scoresByEnd;
+  }
+
   Future<List<ScoreInstance>> getAllScoresOfEnd(int endID) async {
     Database db = await database;
     List<Map> scoresMap = await db.rawQuery(
@@ -79,10 +105,13 @@ class DatabaseService {
     return scores;
   }
 
-  Future<int> addTraining(TrainingInstance instance) async {
+  void addTraining(TrainingInstance instance) async {
     Database db = await database;
-    int id = await db.insert(tableTrainings, instance.toMap());
-    return id;
+
+    db
+        .insert(tableTrainings, instance.toMap())
+        .then((value) => addEnd(value))
+        .then((value) => addDefaultScores(value, 3));
   }
 
   Future<List<TrainingInstance>> getAllTrainings() async {
