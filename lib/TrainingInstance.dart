@@ -8,7 +8,7 @@
     later:
     distance
     target type
-     */
+*/
 
 class TrainingInstance {
   int id = -1;
@@ -21,8 +21,7 @@ class TrainingInstance {
         assert(map["creationTime"] != null),
         id = map["id"] == null ? -1 : map["id"],
         title = map["title"],
-        creationTime = map["creationTime"]
-                is String // if it is passed as string, we can convert it to DateTime object
+        creationTime = map["creationTime"] is String // if it is passed as string, we can convert it to DateTime object
             ? DateTime.parse(map["creationTime"])
             : map["creationTime"];
 

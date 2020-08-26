@@ -116,29 +116,11 @@ class DatabaseService {
 
   Future<List<TrainingInstance>> getAllTrainings() async {
     Database db = await database;
-    // while (db == null) db = await database;
-    //List<Map> trainingsMap = await db.query(tableTrainings);
 
     return db.query(tableTrainings).then((value) {
       List<TrainingInstance> trainings = [];
       value.forEach((row) => trainings.add(TrainingInstance.fromMap(row)));
       return trainings;
     });
-
-    //trainingsMap.forEach((row) => trainings.add(TrainingInstance.fromMap(row)));
-    //return trainings;
   }
-
-  /*
-  Future<RandomNumber> getNumber(int id) async {
-    Database db = await database;
-    List<Map> datas = await db.query(tableRandomNumber,
-        where: 'id = ?',
-        whereArgs: [id]);
-    if (datas.length > 0) {
-      return RandomNumber.fromMap(datas.first);
-    }
-    return null;
-  }
-*/
 }

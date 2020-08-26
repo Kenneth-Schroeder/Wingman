@@ -109,25 +109,3 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 }
-
-/*
-FutureBuilder(
-        future: dbService.database,
-        builder: (BuildContext context, AsyncSnapshot<Database> dbSnapshot) {
-          Widget widget;
-          if (dbSnapshot.connectionState == ConnectionState.done) {
-            print("OVERVIEW");
-            widget = overviewScreen();
-          } else {
-            print("LOADING");
-            widget = Container(
-              color: Colors.white,
-              child: Center(
-                child: CircularProgressIndicator(),
-              ),
-            );
-          }
-          return widget;
-        },
-      ),
-*/
