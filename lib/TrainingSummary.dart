@@ -14,7 +14,7 @@ class TrainingSummary extends StatefulWidget {
 }
 
 class _TrainingSummaryState extends State<TrainingSummary> {
-  DatabaseService dbService = DatabaseService();
+  DatabaseService dbService; // = DatabaseService.old();
   Map<int, List<ScoreInstance>> scoresByEnd = Map<int, List<ScoreInstance>>();
 
   @override
@@ -24,6 +24,7 @@ class _TrainingSummaryState extends State<TrainingSummary> {
   }
 
   void onStart() async {
+    dbService = await DatabaseService.create();
     scoresByEnd = await dbService.getFullEndsOfTraining(widget.training.id);
     setState(() {});
   }

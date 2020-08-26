@@ -10,15 +10,15 @@ final tableScores = "scores";
 final tableArrows = "arrows"; // specific arrow information
 
 class DatabaseService {
-  static final DatabaseService _instance = DatabaseService._internal();
   Future<Database> database;
 
-  factory DatabaseService() {
-    return _instance;
-  }
+  DatabaseService._() {}
 
-  DatabaseService._internal() {
-    initDatabase();
+  // https://github.com/fluttercommunity/get_it/issues/4
+  static Future<DatabaseService> create() async {
+    var emptyDB = DatabaseService._();
+    await emptyDB.initDatabase();
+    return emptyDB;
   }
 
   initDatabase() async {
@@ -116,11 +116,17 @@ class DatabaseService {
 
   Future<List<TrainingInstance>> getAllTrainings() async {
     Database db = await database;
-    List<Map> trainingsMap = await db.query(tableTrainings);
-    List<TrainingInstance> trainings = [];
-    trainingsMap.forEach((row) => trainings.add(TrainingInstance.fromMap(row)));
+    // while (db == null) db = await database;
+    //List<Map> trainingsMap = await db.query(tableTrainings);
 
-    return trainings;
+    return db.query(tableTrainings).then((value) {
+      List<TrainingInstance> trainings = [];
+      value.forEach((row) => trainings.add(TrainingInstance.fromMap(row)));
+      return trainings;
+    });
+
+    //trainingsMap.forEach((row) => trainings.add(TrainingInstance.fromMap(row)));
+    //return trainings;
   }
 
   /*

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'database_service.dart';
 import 'package:fluttertraining/TrainingInstance.dart';
 import 'TrainingSummary.dart';
+import 'package:sqflite/sqflite.dart';
 
 class MyHomePage extends StatefulWidget {
   MyHomePage({Key key, this.title}) : super(key: key);
@@ -23,11 +24,23 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   List<TrainingInstance> _trainings = [];
-  DatabaseService dbService = DatabaseService();
+  DatabaseService dbService;
 
-  void _addTraining() {
-    _createNewTraining();
-    _loadTrainings();
+  @override
+  void initState() {
+    super.initState();
+    onStart();
+  }
+
+  void onStart() async {
+    dbService = await DatabaseService.create();
+    await _loadTrainings();
+    setState(() {});
+  }
+
+  void _addTraining() async {
+    await _createNewTraining();
+    await _loadTrainings();
 
     setState(() {});
   }
@@ -38,8 +51,38 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _loadTrainings() async {
-    final List<TrainingInstance> trainings = await dbService.getAllTrainings();
+    List<TrainingInstance> trainings = await dbService.getAllTrainings();
     _trainings = trainings.reversed.toList();
+  }
+
+  Widget overviewScreen() {
+    return ListView.separated(
+        padding: EdgeInsets.all(8),
+        itemBuilder: (BuildContext ctxt, int Index) {
+          return GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => TrainingSummary(_trainings[Index])),
+                );
+              },
+              child: new Container(
+                padding: EdgeInsets.all(12.0),
+                height: 40,
+                color: Colors.purple,
+                child: Center(
+                    child: Text(
+                  _trainings[Index].toString(),
+                  style: TextStyle(color: Colors.white),
+                )),
+              ));
+        },
+        separatorBuilder: (BuildContext context, int index) {
+          return SizedBox(
+            height: 10,
+          );
+        },
+        itemCount: _trainings.length);
   }
 
   @override
@@ -51,42 +94,13 @@ class _MyHomePageState extends State<MyHomePage> {
     // fast, so that you can just rebuild anything that needs updating rather
     // than having to individually change instances of widgets.
 
-    // TODO initialize properly
-    // _loadTrainings();
-
     return Scaffold(
       appBar: AppBar(
         // Here we take the value from the MyHomePage object that was created by
         // the App.build method, and use it to set our appbar title.
         title: Text(widget.title),
       ),
-      body: ListView.separated(
-          padding: EdgeInsets.all(8),
-          itemBuilder: (BuildContext ctxt, int Index) {
-            return GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => TrainingSummary(_trainings[Index])),
-                  );
-                },
-                child: new Container(
-                  padding: EdgeInsets.all(12.0),
-                  height: 40,
-                  color: Colors.purple,
-                  child: Center(
-                      child: Text(
-                    _trainings[Index].toString(),
-                    style: TextStyle(color: Colors.white),
-                  )),
-                ));
-          },
-          separatorBuilder: (BuildContext context, int index) {
-            return SizedBox(
-              height: 10,
-            );
-          },
-          itemCount: _trainings.length),
+      body: overviewScreen(),
       floatingActionButton: FloatingActionButton(
         onPressed: _addTraining,
         tooltip: 'New Training',
@@ -95,3 +109,25 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 }
+
+/*
+FutureBuilder(
+        future: dbService.database,
+        builder: (BuildContext context, AsyncSnapshot<Database> dbSnapshot) {
+          Widget widget;
+          if (dbSnapshot.connectionState == ConnectionState.done) {
+            print("OVERVIEW");
+            widget = overviewScreen();
+          } else {
+            print("LOADING");
+            widget = Container(
+              color: Colors.white,
+              child: Center(
+                child: CircularProgressIndicator(),
+              ),
+            );
+          }
+          return widget;
+        },
+      ),
+*/

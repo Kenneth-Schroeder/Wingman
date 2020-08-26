@@ -18,8 +18,7 @@ class TargetPage extends StatefulWidget {
 }
 
 class _TargetPageState extends State<TargetPage> {
-  DatabaseService dbService = DatabaseService();
-  List<ScoreInstance> arrows;
+  List<ScoreInstance> arrows = [];
 
   Offset targetCenter;
   double targetRadius;
@@ -28,10 +27,16 @@ class _TargetPageState extends State<TargetPage> {
 
   int _selectedIndex = 0;
 
+  DatabaseService dbService;
+
   @override
   void initState() {
     super.initState();
+    onStart();
+  }
 
+  void onStart() async {
+    dbService = await DatabaseService.create();
     arrows = [
       // check if which arrows exist in database
       // then arrowpainter can take care of positioning relative to target
@@ -39,6 +44,8 @@ class _TargetPageState extends State<TargetPage> {
       ScoreInstance(0),
       ScoreInstance(0),
     ];
+
+    setState(() {});
   }
 
   Widget createTarget() {
@@ -118,11 +125,10 @@ class _TargetPageState extends State<TargetPage> {
         ));
   }
 
-  // TODO reset button for arrows
   // TODO remember arrow positions properly through database
   // TODO enable more pages for additional ends - BottomNavigationBar
   // TODO recognize scores of arrows
-  // TODO different arrow counts
+  // TODO different arrow numbers 3/6 ...
 
   void resetArrows() {
     arrows.forEach((element) {
@@ -197,26 +203,6 @@ class _TargetPageState extends State<TargetPage> {
               ),
             ],
           )),
-
-      /*BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.navigate_before),
-            title: Text('Previous'),
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.atm),
-            title: Text('Round 1'),
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.navigate_next),
-            title: Text('Next'),
-          ),
-        ],
-        currentIndex: 1,
-        //selectedItemColor: Colors.amber[800],
-        onTap: _onItemTapped,
-      ),*/
     );
   }
 }
