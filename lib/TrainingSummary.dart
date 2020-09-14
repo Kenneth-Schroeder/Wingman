@@ -5,7 +5,7 @@ import 'package:fluttertraining/TrainingInstance.dart';
 import 'TargetPage.dart';
 
 class TrainingSummary extends StatefulWidget {
-  TrainingSummary(this.training, {Key key}) : super(key: key) {}
+  TrainingSummary(this.training, {Key key}) : super(key: key);
 
   final TrainingInstance training;
 

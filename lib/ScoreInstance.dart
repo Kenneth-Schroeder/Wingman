@@ -3,7 +3,7 @@ import 'dart:math';
 
 class ScoreInstance {
   int shotID = -1;
-  double arrowRadius = 0.05; // percentage of target radius, which is normalized to 1
+  double arrowRadius = 0.03; // percentage of target radius, which is normalized to 1
   int score = 0;
   int endID;
   double pRadius = 1.3; // polar radius

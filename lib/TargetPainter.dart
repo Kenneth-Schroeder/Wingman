@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class TargetPainter extends CustomPainter {
-  TargetPainter(this._offset, this._radius, this._spot) {}
+  TargetPainter(this._offset, this._radius, this._spot);
 
   final Offset _offset;
   final double _radius;
@@ -44,6 +44,17 @@ class TargetPainter extends CustomPainter {
     drawCircle(canvas, Colors.black, 1.0, PaintingStyle.stroke, _offset, radius * 3 / 10);
     drawCircle(canvas, Colors.black, 1.0, PaintingStyle.stroke, _offset, radius * 2 / 10);
     drawCircle(canvas, Colors.black, 1.0, PaintingStyle.stroke, _offset, radius * 1 / 10);
+    drawCircle(canvas, Colors.black, 1.0, PaintingStyle.stroke, _offset, radius * 0.5 / 10);
+
+    Paint paint = Paint()
+      ..color = Colors.black
+      ..strokeWidth = 1.0
+      ..style = PaintingStyle.stroke;
+
+    double crossSize = radius * 0.1 / 10;
+
+    canvas.drawLine(_offset - Offset(crossSize, 0), _offset + Offset(crossSize, 0), paint);
+    canvas.drawLine(_offset - Offset(0, crossSize), _offset + Offset(0, crossSize), paint);
   }
 
   @override

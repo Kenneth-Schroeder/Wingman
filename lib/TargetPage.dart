@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertraining/ScoreInstance.dart';
+import 'package:gesture_x_detector/gesture_x_detector.dart';
 import 'database_service.dart';
 import 'package:fluttertraining/TrainingInstance.dart';
 import 'TargetPainter.dart';
@@ -9,7 +10,7 @@ import 'dart:math';
 import 'ScoreInstance.dart';
 
 class TargetPage extends StatefulWidget {
-  TargetPage(this.training, this.scoresByEndMap, {Key key}) : super(key: key) {}
+  TargetPage(this.training, this.scoresByEndMap, {Key key}) : super(key: key);
 
   final TrainingInstance training;
   Map<int, List<ScoreInstance>> scoresByEndMap;
@@ -26,6 +27,13 @@ class _TargetPageState extends State<TargetPage> {
   int _draggedArrow = -1;
 
   int endIndex = 0;
+
+  double _scaleFactor = 1.0;
+  double _initialScaleFactor = 1.0;
+  Offset _initialScaleCenter = Offset(0, 0);
+  Offset _scaleCenterOffset = Offset(0, 0);
+  Offset _scaleCenterDelta = Offset(0, 0);
+  Offset _targetCenterOffset = Offset(0, 0);
 
   DatabaseService dbService;
 
@@ -49,8 +57,16 @@ class _TargetPageState extends State<TargetPage> {
     setState(() {});
   }
 
+  Offset draggedTargetCenter() {
+    return targetCenter + _targetCenterOffset;
+  }
+
+  double scaledTargetRadius() {
+    return targetRadius * _scaleFactor;
+  }
+
   Widget createTarget() {
-    return CustomPaint(painter: TargetPainter(targetCenter, targetRadius, false));
+    return CustomPaint(painter: TargetPainter(draggedTargetCenter(), scaledTargetRadius(), false));
   }
 
   double polarDistance(double r1, double a1, double r2, double a2) {
@@ -72,8 +88,8 @@ class _TargetPageState extends State<TargetPage> {
   }
 
   List localCartesianToRelativePolar(double x, double y) {
-    double rX = x - targetCenter.dx; // x coordinate relative to target center
-    double rY = y - targetCenter.dy; // y coordinate relative to target center
+    double rX = x - draggedTargetCenter().dx; // x coordinate relative to target center
+    double rY = y - draggedTargetCenter().dy; // y coordinate relative to target center
 
     double pRadius = sqrt(rX * rX + rY * rY);
     double pAngle = atan2(rY, rX);
@@ -88,10 +104,11 @@ class _TargetPageState extends State<TargetPage> {
 
     List<double> distances = [];
 
-    arrows[endIndex]
-        .forEach((arrow) => distances.add(polarDistance(touchPRadius, touchPAngle, arrow.pRadius * targetRadius, arrow.pAngle)));
+    arrows[endIndex].forEach(
+        (arrow) => distances.add(polarDistance(touchPRadius, touchPAngle, arrow.pRadius * targetRadius * _scaleFactor, arrow.pAngle)));
 
-    if (argMin(distances)[0] <= arrows[endIndex][argMin(distances)[1]].arrowRadius * targetRadius) {
+    // TODO *3 is hardcoded here
+    if (argMin(distances)[0] <= arrows[endIndex][argMin(distances)[1]].arrowRadius * targetRadius * _scaleFactor * 3) {
       return argMin(distances)[1];
     }
 
@@ -100,32 +117,62 @@ class _TargetPageState extends State<TargetPage> {
 
   Widget loadArrows() {
     List<CustomPaint> arrowPainters = [];
+    int counter = 0;
     arrows[endIndex].forEach((element) {
       arrowPainters.add(
         CustomPaint(
-          painter: ArrowPainter.fromInstance(element, false, targetCenter, targetRadius),
+          painter: ArrowPainter.fromInstance(
+              element, false, draggedTargetCenter(), scaledTargetRadius(), counter == _draggedArrow, _scaleFactor),
           child: Container(),
         ),
       );
+      counter++;
     });
 
-    return GestureDetector(
-        onPanStart: (details) {
-          _draggedArrow = _touchedArrowIndex(details.localPosition.dx, details.localPosition.dy);
-        },
-        onPanEnd: (details) {
-          // TODO save to DB!?
-          _draggedArrow = -1;
-        },
-        onPanUpdate: (details) {
-          if (_draggedArrow != -1) {
-            arrows[endIndex][_draggedArrow].moveByOffset(details.delta, targetRadius);
-            setState(() {});
-          }
-        },
-        child: new Stack(
-          children: arrowPainters,
-        ));
+    return XGestureDetector(
+      doubleTapTimeConsider: 300,
+      longPressTimeConsider: 350,
+      //onTap: onTap,
+      //onDoubleTap: onDoubleTap,
+      //onLongPress: onLongPress,
+      onMoveStart: (pointer, localPos, position) {
+        _draggedArrow = _touchedArrowIndex(localPos.dx, localPos.dy);
+      },
+      onMoveEnd: (pointer, localPos, position) {
+        if (_draggedArrow != -1) {
+          arrows[endIndex][_draggedArrow]
+              .moveByOffset(Offset(0, -arrows[endIndex][_draggedArrow].arrowRadius * targetRadius * 6), targetRadius);
+        }
+        _draggedArrow = -1;
+        setState(() {});
+      },
+      onMoveUpdate: (localPos, position, localDelta, delta) {
+        if (_draggedArrow != -1) {
+          arrows[endIndex][_draggedArrow].moveByOffset(delta, targetRadius * _scaleFactor);
+          setState(() {});
+        }
+      },
+      onScaleStart: (initialFocusPoint) {
+        _initialScaleCenter = initialFocusPoint;
+        _initialScaleFactor = _scaleFactor;
+      },
+      onScaleUpdate: (changedFocusPoint, scale, rotation) {
+        _scaleFactor = scale * _initialScaleFactor;
+        Offset newScaleCenterOffset = _initialScaleCenter - changedFocusPoint;
+        _scaleCenterDelta = _scaleCenterOffset - newScaleCenterOffset;
+        _scaleCenterOffset = newScaleCenterOffset;
+        _targetCenterOffset += _scaleCenterDelta;
+        setState(() {});
+        //print('onScaleUpdate - changedFocusPoint: $changedFocusPoint'); // ; scale: $scale ;Rotation: $rotation');
+      },
+      onScaleEnd: () {
+        _scaleCenterOffset = Offset(0, 0);
+      },
+      bypassTapEventOnDoubleTap: false,
+      child: new Stack(
+        children: arrowPainters,
+      ),
+    );
   }
 
   // TODO recognize scores of arrows
@@ -199,7 +246,7 @@ class _TargetPageState extends State<TargetPage> {
               onPressed: resetArrows,
             ),
           ]),
-          body: new Stack(
+          body: Stack(
             children: [createTarget(), loadArrows()],
           ),
           bottomNavigationBar: BottomAppBar(

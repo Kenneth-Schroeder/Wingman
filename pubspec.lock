@@ -62,11 +62,25 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  flutter_slidable:
+    dependency: "direct main"
+    description:
+      name: flutter_slidable
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.5.7"
   flutter_test:
     dependency: "direct dev"
     description: flutter
     source: sdk
     version: "0.0.0"
+  gesture_x_detector:
+    dependency: "direct main"
+    description:
+      name: gesture_x_detector
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.0.4"
   matcher:
     dependency: transitive
     description:
@@ -172,4 +186,4 @@ packages:
     version: "2.0.8"
 sdks:
   dart: ">=2.9.0-14.0.dev <3.0.0"
-  flutter: ">=1.10.1 <2.0.0"
+  flutter: ">=1.17.0 <2.0.0"

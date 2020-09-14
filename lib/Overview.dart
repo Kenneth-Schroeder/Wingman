@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'database_service.dart';
 import 'package:fluttertraining/TrainingInstance.dart';
 import 'TrainingSummary.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:gesture_x_detector/gesture_x_detector.dart';
 
 class MyHomePage extends StatefulWidget {
   MyHomePage({Key key, this.title}) : super(key: key);
@@ -54,34 +56,63 @@ class _MyHomePageState extends State<MyHomePage> {
     _trainings = trainings.reversed.toList();
   }
 
+  void editTraining(TrainingInstance training) {
+    // TODO implement
+  }
+
+  void deleteTraining(int trainingID) {
+    // TODO implement
+  }
+
   Widget overviewScreen() {
     return ListView.separated(
         padding: EdgeInsets.all(8),
-        itemBuilder: (BuildContext ctxt, int Index) {
+        itemBuilder: (BuildContext ctxt, int index) {
           return GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => TrainingSummary(_trainings[Index])),
-                );
-              },
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => TrainingSummary(_trainings[index])),
+              );
+            },
+            child: new Slidable(
+              actionPane: SlidableDrawerActionPane(),
+              actionExtentRatio: 0.25,
+              secondaryActions: <Widget>[
+                new IconSlideAction(
+                  caption: 'Edit',
+                  color: Colors.black45,
+                  icon: Icons.more_horiz,
+                  onTap: () => editTraining(_trainings[index]),
+                ),
+                new IconSlideAction(
+                  caption: 'Delete',
+                  color: Colors.red,
+                  icon: Icons.delete,
+                  onTap: () => deleteTraining(_trainings[index].id),
+                ),
+              ],
               child: new Container(
                 padding: EdgeInsets.all(5.0),
                 height: 50,
                 decoration: BoxDecoration(
-                  color: Colors.grey[200],
+                  color: Colors.yellow[100],
+                  boxShadow: [new BoxShadow(color: Colors.grey, offset: new Offset(3.0, 2.0), blurRadius: 3.0, spreadRadius: 0.1)],
                   border: Border.all(
                     width: 3.0,
                     color: Colors.blue[400],
                   ),
-                  borderRadius: BorderRadius.all(Radius.circular(15)),
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(15),
+                    bottomLeft: Radius.circular(15),
+                  ),
                 ),
                 child: Row(
                   children: [
                     Expanded(
                       child: Center(
                         child: Text(
-                          _trainings[Index].title,
+                          _trainings[index].title,
                           style: TextStyle(
                             color: Colors.blue[800],
                             fontSize: 20,
@@ -96,21 +127,27 @@ class _MyHomePageState extends State<MyHomePage> {
                           Expanded(
                               child: Center(
                                   child: Text(
-                            "Date: " + _trainings[Index].date(),
+                            "Date: " + _trainings[index].date(),
                             style: TextStyle(color: Colors.blue[800]),
                           ))),
                           Expanded(
                               child: Center(
                                   child: Text(
-                            "Time: " + _trainings[Index].time(),
+                            "Time: " + _trainings[index].time(),
                             style: TextStyle(color: Colors.blue[800]),
                           ))),
                         ],
                       ),
                     ),
+                    Icon(
+                      Icons.navigate_before,
+                      color: Colors.blue[800],
+                    ),
                   ],
                 ),
-              ));
+              ),
+            ),
+          );
         },
         separatorBuilder: (BuildContext context, int index) {
           return SizedBox(

@@ -12,7 +12,7 @@ final tableArrows = "arrows"; // specific arrow information
 class DatabaseService {
   Future<Database> database;
 
-  DatabaseService._() {}
+  DatabaseService._();
 
   // https://github.com/fluttercommunity/get_it/issues/4
   static Future<DatabaseService> create() async {
