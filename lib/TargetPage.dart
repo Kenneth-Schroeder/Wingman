@@ -9,42 +9,43 @@ import 'dart:math';
 import 'ScoreInstance.dart';
 
 class TargetPage extends StatefulWidget {
-  TargetPage(this.training, {Key key}) : super(key: key);
+  TargetPage(this.training, this.scoresByEndMap, {Key key}) : super(key: key) {}
 
   final TrainingInstance training;
+  Map<int, List<ScoreInstance>> scoresByEndMap;
 
   @override
   _TargetPageState createState() => _TargetPageState();
 }
 
 class _TargetPageState extends State<TargetPage> {
-  List<ScoreInstance> arrows = [];
+  List<List<ScoreInstance>> arrows;
 
   Offset targetCenter;
   double targetRadius;
-  double arrowRadius = 10;
   int _draggedArrow = -1;
 
-  int _selectedIndex = 0;
+  int endIndex = 0;
 
   DatabaseService dbService;
 
   @override
   void initState() {
     super.initState();
+    arrows = new List.generate(widget.scoresByEndMap.length, (i) => []);
+    int counter = 0;
+    widget.scoresByEndMap.forEach((key, value) {
+      value.forEach((element) {
+        arrows[counter].add(element);
+      });
+      counter++;
+    });
+
     onStart();
   }
 
   void onStart() async {
     dbService = await DatabaseService.create();
-    arrows = [
-      // check if which arrows exist in database
-      // then arrowpainter can take care of positioning relative to target
-      ScoreInstance(0),
-      ScoreInstance(0),
-      ScoreInstance(0),
-    ];
-
     setState(() {});
   }
 
@@ -86,10 +87,11 @@ class _TargetPageState extends State<TargetPage> {
     double touchPAngle = localCartesianToRelativePolar(x, y)[1];
 
     List<double> distances = [];
-    arrows.forEach(
-        (arrow) => distances.add(polarDistance(touchPRadius, touchPAngle, arrow.pRadius * targetRadius, arrow.pAngle)));
 
-    if (argMin(distances)[0] <= arrowRadius) {
+    arrows[endIndex]
+        .forEach((arrow) => distances.add(polarDistance(touchPRadius, touchPAngle, arrow.pRadius * targetRadius, arrow.pAngle)));
+
+    if (argMin(distances)[0] <= arrows[endIndex][argMin(distances)[1]].arrowRadius * targetRadius) {
       return argMin(distances)[1];
     }
 
@@ -98,10 +100,10 @@ class _TargetPageState extends State<TargetPage> {
 
   Widget loadArrows() {
     List<CustomPaint> arrowPainters = [];
-    arrows.forEach((element) {
+    arrows[endIndex].forEach((element) {
       arrowPainters.add(
         CustomPaint(
-          painter: ArrowPainter.fromInstance(element, arrowRadius, false, targetCenter, targetRadius),
+          painter: ArrowPainter.fromInstance(element, false, targetCenter, targetRadius),
           child: Container(),
         ),
       );
@@ -112,11 +114,12 @@ class _TargetPageState extends State<TargetPage> {
           _draggedArrow = _touchedArrowIndex(details.localPosition.dx, details.localPosition.dy);
         },
         onPanEnd: (details) {
+          // TODO save to DB!?
           _draggedArrow = -1;
         },
         onPanUpdate: (details) {
           if (_draggedArrow != -1) {
-            arrows[_draggedArrow].moveByOffset(details.delta, targetRadius);
+            arrows[endIndex][_draggedArrow].moveByOffset(details.delta, targetRadius);
             setState(() {});
           }
         },
@@ -125,22 +128,60 @@ class _TargetPageState extends State<TargetPage> {
         ));
   }
 
-  // TODO remember arrow positions properly through database
-  // TODO enable more pages for additional ends - BottomNavigationBar
   // TODO recognize scores of arrows
   // TODO different arrow numbers 3/6 ...
 
   void resetArrows() {
-    arrows.forEach((element) {
+    arrows[endIndex].forEach((element) {
       element.reset();
     });
     setState(() {});
   }
 
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
+  void nextRound() async {
+    // TODO SAVE ARROW POSITIONS
+    await dbService.updateAllEndsOfTraining(widget.training.id, arrows);
+
+    // go forward and if we hit the end, create more ends...
+    endIndex++;
+
+    if (endIndex < arrows.length) {
+      // all good
+      setState(() {});
+      return;
+    }
+
+    // create new end
+    int endID = await dbService.addEnd(widget.training.id);
+    await dbService.addDefaultScores(endID, widget.training.arrowsPerEnd);
+
+    // just load all again and we are good
+    Map<int, List<ScoreInstance>> SBEM = await dbService.getFullEndsOfTraining(widget.training.id);
+
+    arrows = new List.generate(SBEM.length, (i) => []);
+    int counter = 0;
+    SBEM.forEach((key, value) {
+      value.forEach((element) {
+        arrows[counter].add(element);
+      });
+      counter++;
     });
+
+    setState(() {});
+  }
+
+  void prevRound() async {
+    // go back if possible
+    if (endIndex == 0) return;
+
+    await dbService.updateAllEndsOfTraining(widget.training.id, arrows);
+
+    endIndex--;
+    setState(() {});
+  }
+
+  Future<bool> onLeave() async {
+    return await dbService.updateAllEndsOfTraining(widget.training.id, arrows);
   }
 
   @override
@@ -149,60 +190,62 @@ class _TargetPageState extends State<TargetPage> {
     targetCenter = SizeConfig().threeSideCenter();
     targetRadius = SizeConfig().minDim() / 2.2;
 
-    return Scaffold(
-      appBar: AppBar(title: Text("Score Recording"), actions: <Widget>[
-        // action button
-        IconButton(
-          icon: Icon(Icons.undo),
-          onPressed: resetArrows,
-        ),
-      ]),
-      body: new Stack(
-        children: [createTarget(), loadArrows()],
-      ),
-      bottomNavigationBar: BottomAppBar(
-          color: Colors.white,
-          child: new Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              Text("Quickstats"), // TODO add quickstats
-              new Row(
-                mainAxisSize: MainAxisSize.max,
+    return WillPopScope(
+        child: Scaffold(
+          appBar: AppBar(title: Text("Score Recording"), actions: <Widget>[
+            // action button
+            IconButton(
+              icon: Icon(Icons.undo),
+              onPressed: resetArrows,
+            ),
+          ]),
+          body: new Stack(
+            children: [createTarget(), loadArrows()],
+          ),
+          bottomNavigationBar: BottomAppBar(
+              color: Colors.white,
+              child: new Column(
+                mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: <Widget>[
-                  FlatButton(
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(1000.0)),
-                    padding: EdgeInsets.all(4.0),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                        Icon(Icons.navigate_before),
-                        Text("Previous"),
-                      ],
-                    ),
-                    onPressed: () {},
-                  ),
-                  Text(
-                    "Round 1/10",
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                  FlatButton(
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(1000.0)),
-                    padding: EdgeInsets.all(4.0),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                        Icon(Icons.navigate_next),
-                        Text("Next"),
-                      ],
-                    ),
-                    onPressed: () {},
+                children: [
+                  Text("Quickstats"), // TODO add quickstats
+                  new Row(
+                    mainAxisSize: MainAxisSize.max,
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: <Widget>[
+                      FlatButton(
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(1000.0)),
+                        padding: EdgeInsets.all(4.0),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: <Widget>[
+                            Icon(Icons.navigate_before),
+                            Text("Previous"),
+                          ],
+                        ),
+                        onPressed: prevRound,
+                      ),
+                      Text(
+                        "End " + (endIndex + 1).toString() + "/" + arrows.length.toString(),
+                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                      ),
+                      FlatButton(
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(1000.0)),
+                        padding: EdgeInsets.all(4.0),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: <Widget>[
+                            Icon(Icons.navigate_next),
+                            Text("Next"),
+                          ],
+                        ),
+                        onPressed: nextRound,
+                      ),
+                    ],
                   ),
                 ],
-              ),
-            ],
-          )),
-    );
+              )),
+        ),
+        onWillPop: onLeave);
   }
 }

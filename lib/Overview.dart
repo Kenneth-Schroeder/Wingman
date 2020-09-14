@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'database_service.dart';
 import 'package:fluttertraining/TrainingInstance.dart';
 import 'TrainingSummary.dart';
-import 'package:sqflite/sqflite.dart';
 
 class MyHomePage extends StatefulWidget {
   MyHomePage({Key key, this.title}) : super(key: key);
@@ -46,7 +45,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _createNewTraining() async {
-    final training = TrainingInstance.fromMap({"title": "Training", "creationTime": DateTime.now()});
+    final training = TrainingInstance.fromMap({"title": "Training", "creationTime": DateTime.now(), "arrowsPerEnd": 6});
     await dbService.addTraining(training);
   }
 
@@ -67,19 +66,55 @@ class _MyHomePageState extends State<MyHomePage> {
                 );
               },
               child: new Container(
-                padding: EdgeInsets.all(12.0),
-                height: 40,
-                color: Colors.purple,
-                child: Center(
-                    child: Text(
-                  _trainings[Index].toString(),
-                  style: TextStyle(color: Colors.white),
-                )),
+                padding: EdgeInsets.all(5.0),
+                height: 50,
+                decoration: BoxDecoration(
+                  color: Colors.grey[200],
+                  border: Border.all(
+                    width: 3.0,
+                    color: Colors.blue[400],
+                  ),
+                  borderRadius: BorderRadius.all(Radius.circular(15)),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Center(
+                        child: Text(
+                          _trainings[Index].title,
+                          style: TextStyle(
+                            color: Colors.blue[800],
+                            fontSize: 20,
+                            //fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Column(
+                        children: [
+                          Expanded(
+                              child: Center(
+                                  child: Text(
+                            "Date: " + _trainings[Index].date(),
+                            style: TextStyle(color: Colors.blue[800]),
+                          ))),
+                          Expanded(
+                              child: Center(
+                                  child: Text(
+                            "Time: " + _trainings[Index].time(),
+                            style: TextStyle(color: Colors.blue[800]),
+                          ))),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ));
         },
         separatorBuilder: (BuildContext context, int index) {
           return SizedBox(
-            height: 10,
+            height: 8,
           );
         },
         itemCount: _trainings.length);

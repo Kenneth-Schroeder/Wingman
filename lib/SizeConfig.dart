@@ -9,6 +9,7 @@ class SizeConfig {
   static double blockSizeVertical;
 
   void init(BuildContext context) {
+    // todo also get orientation of screen etc
     _mediaQueryData = MediaQuery.of(context);
     screenWidth = _mediaQueryData.size.width;
     screenHeight = _mediaQueryData.size.height;

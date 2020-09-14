@@ -30,6 +30,7 @@ class DatabaseService {
           '''CREATE TABLE $tableTrainings(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             title TEXT,
+            arrowsPerEnd INTEGER,
             creationTime DATETIME)
           ''',
         );
@@ -43,6 +44,7 @@ class DatabaseService {
         db.execute(
           '''CREATE TABLE $tableScores(
             shotID INTEGER PRIMARY KEY AUTOINCREMENT,
+            arrowRadius REAL,
             score INTEGER,
             pRadius REAL,
             pAngle REAL,
@@ -69,8 +71,15 @@ class DatabaseService {
     return id;
   }
 
-  void addDefaultScores(int endID, int number) async {
+  Future<int> updateScore(ScoreInstance instance) async {
     Database db = await database;
+
+    int updateCount = await db.update(tableScores, instance.toMap(), where: 'shotID = ?', whereArgs: [instance.shotID]);
+
+    return updateCount;
+  }
+
+  void addDefaultScores(int endID, int number) async {
     for (var i = 0; i < number; i++) {
       addScore(ScoreInstance(endID));
     }
@@ -94,6 +103,25 @@ class DatabaseService {
     return scoresByEnd;
   }
 
+  Future<bool> updateAllEndsOfTraining(int trainingID, List<List<ScoreInstance>> arrows) async {
+    // iterate over all ends and as long as arrows have an id, update them individually
+    arrows.forEach((end) {
+      // update arrows that are in DB already and insert new ones for those that have no ID
+      if (end.first.shotID != -1) {
+        end.forEach((arrow) {
+          updateScore(arrow); // todo check if its alright not to use await here
+        });
+      } else {
+        addEnd(trainingID).then((endID) => end.forEach((arrow) {
+              arrow.endID = endID;
+              addScore(arrow);
+            }));
+      }
+    });
+
+    return true;
+  }
+
   Future<List<ScoreInstance>> getAllScoresOfEnd(int endID) async {
     Database db = await database;
     List<Map> scoresMap = await db.rawQuery(
@@ -111,7 +139,7 @@ class DatabaseService {
     db
         .insert(tableTrainings, instance.toMap())
         .then((value) => addEnd(value))
-        .then((value) => addDefaultScores(value, 3));
+        .then((value) => addDefaultScores(value, instance.arrowsPerEnd));
   }
 
   Future<List<TrainingInstance>> getAllTrainings() async {

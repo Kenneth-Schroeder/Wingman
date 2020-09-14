@@ -34,43 +34,137 @@ class _TrainingSummaryState extends State<TrainingSummary> {
     List<DataRow> rows = [];
 
     if (scoresByEnd == null || scoresByEnd.isEmpty) {
-      return Text("NOTHING");
+      return Text("Can't find results for this training.");
     }
 
+    int totalSum = 0;
+    int endCounter = 0;
+
     scoresByEnd.forEach((key, value) {
+      // for each end
+      int endSum = 0;
+      endCounter++;
+
       List<DataCell> cells = [];
-      cells.add(DataCell(Text(
-        key.toString(),
-        style: TextStyle(color: Colors.grey, fontSize: 14),
-      )));
 
+      value.sort((b, a) => a.score.compareTo(b.score));
+
+      int rowScoreCounter = 0;
+      int rowOfEndCounter = 0;
+      int rowSum = 0;
       value.forEach((scoreInstance) {
-        cells.add(DataCell(Text(
-          scoreInstance.score.toString(),
-          style: TextStyle(fontSize: 16),
-        )));
+        // for each scoreInstance in end
+        rowSum += scoreInstance.score;
+        endSum += scoreInstance.score;
+        totalSum += scoreInstance.score;
+
+        if (rowScoreCounter == 0) {
+          // begin of new row
+          String content = "";
+          if (rowOfEndCounter == 0) {
+            content = endCounter.toString();
+          }
+
+          cells.add(
+            DataCell(
+              Text(
+                content,
+                style: TextStyle(color: Colors.grey, fontSize: 16),
+              ),
+            ),
+          );
+
+          rowOfEndCounter++;
+        }
+
+        cells.add(
+          DataCell(
+            Text(
+              scoreInstance.score.toString(),
+              style: TextStyle(fontSize: 16),
+            ),
+          ),
+        );
+        // TODO add more of these cells if there aren't enough to fill the row
+
+        rowScoreCounter++;
+
+        if (rowScoreCounter == 3) {
+          // finish row
+          cells.add(
+            DataCell(
+              Text(
+                rowSum.toString(),
+                style: TextStyle(fontSize: 16),
+              ),
+            ),
+          );
+
+          String endSumText = "";
+          String totalSumText = "";
+
+          // this is the last row of an end
+          if ((value.length / 3.0).ceil() - rowOfEndCounter <= 0) {
+            endSumText = endSum.toString();
+            totalSumText = totalSum.toString();
+          }
+
+          cells.add(
+            DataCell(
+              Text(
+                endSumText,
+                style: TextStyle(fontSize: 16),
+              ),
+            ),
+          );
+
+          cells.add(
+            DataCell(
+              Text(
+                totalSumText,
+                style: TextStyle(fontSize: 16),
+              ),
+            ),
+          );
+
+          rows.add(DataRow(cells: cells));
+
+          cells = [];
+          rowScoreCounter = 0;
+          rowSum = 0;
+        }
       });
-
-      cells.add(DataCell(Text(
-        "SUM",
-        style: TextStyle(fontSize: 16),
-      )));
-
-      cells.add(DataCell(Text(
-        "TOTAL",
-        style: TextStyle(fontSize: 16),
-      )));
-
-      rows.add(DataRow(cells: cells));
     });
 
     List<DataColumn> columns = [
-      DataColumn(label: Text('Nr.')),
-      DataColumn(label: Text('1')),
-      DataColumn(label: Text('2')),
-      DataColumn(label: Text('3')),
-      DataColumn(label: Text('Row Sum')),
-      DataColumn(label: Text('Total'))
+      DataColumn(
+        label: Text('End'),
+        numeric: true,
+      ),
+      DataColumn(
+        label: Text('1'),
+        numeric: true,
+      ),
+      DataColumn(
+        label: Text('2'),
+        numeric: true,
+      ),
+      DataColumn(
+        label: Text('3'),
+        numeric: true,
+      ),
+      DataColumn(
+        label: Text('Row Sum'),
+        numeric: true,
+      ),
+      DataColumn(
+        label: Text('End Sum'),
+        numeric: true,
+      ),
+      DataColumn(
+        label: Text('Total'),
+        numeric: true,
+      )
     ];
 
     MediaQueryData _mediaQueryData = MediaQuery.of(context);
@@ -92,31 +186,8 @@ class _TrainingSummaryState extends State<TrainingSummary> {
   void _changeScores() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => TargetPage(widget.training)),
-    );
-  }
-
-  void _testingEndsInDB() async {
-    final int id1 = await dbService.addEnd(widget.training.id);
-    await dbService.addScore(ScoreInstance(id1));
-    await dbService.addScore(ScoreInstance(id1));
-    await dbService.addScore(ScoreInstance(id1));
-    final int id2 = await dbService.addEnd(widget.training.id);
-    await dbService.addScore(ScoreInstance(id2));
-    await dbService.addScore(ScoreInstance(id2));
-    await dbService.addScore(ScoreInstance(id2));
-    final int id3 = await dbService.addEnd(widget.training.id);
-    await dbService.addScore(ScoreInstance(id3));
-    await dbService.addScore(ScoreInstance(id3));
-    await dbService.addScore(ScoreInstance(id3));
-    print("created 3 ends ...");
-    print(id2.toString() + " is the id of the second end");
-    print("querying all scores of the second end...");
-
-    List<ScoreInstance> scores = await dbService.getAllScoresOfEnd(id1);
-    scores.forEach((element) {
-      print(element.toString());
-    });
+      MaterialPageRoute(builder: (context) => TargetPage(widget.training, scoresByEnd)),
+    ).then((value) => onStart());
   }
 
   @override
