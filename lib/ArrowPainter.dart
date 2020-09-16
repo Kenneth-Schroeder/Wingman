@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'ScoreInstance.dart';
 
@@ -36,13 +38,50 @@ class ArrowPainter extends CustomPainter {
     double wingRadius = _radius * 2.5;
 
     if (_isDragged) {
-      canvas.drawLine(_offset, _offset + Offset(0, -_radius * 6), paint3);
-      canvas.drawCircle(_offset + Offset(0, -_radius * 6), _radius, innerPaint);
+      canvas.drawLine(_offset, _offset + Offset(0, -_radius * 6 * (1 / _scaleFactor + 1)), paint3);
+      canvas.drawCircle(_offset + Offset(0, -_radius * 6 * (1 / _scaleFactor + 1)), _radius, innerPaint);
     }
 
     canvas.drawCircle(_offset, _radius, innerPaint);
 
     //canvas.drawLine(_offset, _offset + Offset(_radius, 0), paint3);
+
+    /*
+    canvas.drawLine(_offset, _offset + Offset(-1, 0) * wingRadius, paint3);
+    canvas.drawLine(_offset, _offset + Offset(0.5, 0.866) * wingRadius, paint3);
+    canvas.drawLine(_offset, _offset + Offset(0.5, -0.866) * wingRadius, paint3);
+
+    canvas.drawArc(
+        _offset - Offset(wingRadius, wingRadius) & Size(wingRadius * 2, wingRadius * 2),
+        pi, //radians
+        1.8, //radians
+        false,
+        paint3);
+    canvas.drawArc(
+        _offset - Offset(wingRadius, wingRadius) & Size(wingRadius * 2, wingRadius * 2),
+        5 / 3 * pi, //radians
+        1.8, //radians
+        false,
+        paint3);
+    canvas.drawArc(
+        _offset - Offset(wingRadius, wingRadius) & Size(wingRadius * 2, wingRadius * 2),
+        7 / 3 * pi, //radians
+        1.8, //radians
+        false,
+        paint3);
+        */
+    //canvas.drawArc(rect, startAngle, sweepAngle, useCenter, paint)
+
+    //canvas.drawOval(
+    //    Rect.fromPoints(_offset + Offset(-1, 0) * wingRadius + Offset(0, _radius / 5), _offset - Offset(0, _radius / 5)), innerPaint);
+
+    //canvas.drawOval(
+    //    Rect.fromLTWH(_offset.dx - wingRadius / (factor * 2), _offset.dy - wingRadius, wingRadius / factor, wingRadius), innerPaint);
+
+    //canvas.drawOval(Rect.fromLTWH(_offset.dx, _offset.dy - wingRadius / (factor * 2), wingRadius, wingRadius / factor), innerPaint);
+    //canvas.drawOval(
+    //    Rect.fromLTWH(_offset.dx - wingRadius, _offset.dy - wingRadius / (factor * 2), wingRadius, wingRadius / factor), innerPaint);
+
     canvas.drawOval(Rect.fromLTWH(_offset.dx - wingRadius / (factor * 2), _offset.dy, wingRadius / factor, wingRadius), innerPaint);
     canvas.drawOval(
         Rect.fromLTWH(_offset.dx - wingRadius / (factor * 2), _offset.dy - wingRadius, wingRadius / factor, wingRadius), innerPaint);

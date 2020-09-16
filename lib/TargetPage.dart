@@ -140,8 +140,9 @@ class _TargetPageState extends State<TargetPage> {
       },
       onMoveEnd: (pointer, localPos, position) {
         if (_draggedArrow != -1) {
-          arrows[endIndex][_draggedArrow]
-              .moveByOffset(Offset(0, -arrows[endIndex][_draggedArrow].arrowRadius * targetRadius * 6), targetRadius);
+          arrows[endIndex][_draggedArrow].moveByOffset(
+              Offset(0, -arrows[endIndex][_draggedArrow].arrowRadius * targetRadius * 6 * (1 / _scaleFactor + 1)),
+              targetRadius); // todo remove hardcoding
         }
         _draggedArrow = -1;
         setState(() {});

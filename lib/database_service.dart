@@ -38,7 +38,7 @@ class DatabaseService {
           '''CREATE TABLE $tableEnds(
             endID INTEGER PRIMARY KEY AUTOINCREMENT,
             trainingID INTEGER NOT NULL,
-            FOREIGN KEY (trainingID) REFERENCES $tableTrainings (id) )
+            FOREIGN KEY (trainingID) REFERENCES $tableTrainings (id) ON DELETE CASCADE ) 
           ''',
         );
         db.execute(
@@ -49,7 +49,7 @@ class DatabaseService {
             pRadius REAL,
             pAngle REAL,
             endID INTEGER NOT NULL,
-            FOREIGN KEY (endID) REFERENCES $tableEnds (endID) )
+            FOREIGN KEY (endID) REFERENCES $tableEnds (endID) ON DELETE CASCADE ) 
           ''',
         );
       },
@@ -140,6 +140,11 @@ class DatabaseService {
         .insert(tableTrainings, instance.toMap())
         .then((value) => addEnd(value))
         .then((value) => addDefaultScores(value, instance.arrowsPerEnd));
+  }
+
+  void deleteTraining(int trainingID) async {
+    Database db = await database;
+    await db.delete(tableTrainings, where: 'id = ?', whereArgs: [trainingID]);
   }
 
   Future<List<TrainingInstance>> getAllTrainings() async {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'database_service.dart';
 import 'package:fluttertraining/TrainingInstance.dart';
 import 'TrainingSummary.dart';
+import 'TrainingCreation.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:gesture_x_detector/gesture_x_detector.dart';
 
@@ -40,10 +41,14 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _addTraining() async {
-    await _createNewTraining();
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => TrainingCreation()),
+    ).then((value) => onStart());
+    /*await _createNewTraining();
     await _loadTrainings();
 
-    setState(() {});
+    setState(() {});*/
   }
 
   void _createNewTraining() async {
@@ -60,8 +65,10 @@ class _MyHomePageState extends State<MyHomePage> {
     // TODO implement
   }
 
-  void deleteTraining(int trainingID) {
-    // TODO implement
+  void deleteTraining(int trainingID) async {
+    await dbService.deleteTraining(trainingID);
+    await _loadTrainings();
+    setState(() {});
   }
 
   Widget overviewScreen() {
