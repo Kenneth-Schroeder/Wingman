@@ -176,9 +176,6 @@ class _TargetPageState extends State<TargetPage> {
     );
   }
 
-  // TODO recognize scores of arrows
-  // TODO different arrow numbers 3/6 ...
-
   void resetArrows() {
     arrows[endIndex].forEach((element) {
       element.reset();
@@ -187,7 +184,6 @@ class _TargetPageState extends State<TargetPage> {
   }
 
   void nextRound() async {
-    // TODO SAVE ARROW POSITIONS
     await dbService.updateAllEndsOfTraining(widget.training.id, arrows);
 
     // go forward and if we hit the end, create more ends...

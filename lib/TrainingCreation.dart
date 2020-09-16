@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'database_service.dart';
+import 'package:flutter/services.dart';
 import 'package:fluttertraining/TrainingInstance.dart';
 
 class TrainingCreation extends StatefulWidget {
@@ -38,7 +39,7 @@ class _TrainingCreationState extends State<TrainingCreation> {
         children: <Widget>[
           TextFormField(
             decoration: const InputDecoration(
-              hintText: 'Training title',
+              hintText: 'Training Title',
             ),
             validator: (value) {
               if (value.isEmpty) {
@@ -49,6 +50,24 @@ class _TrainingCreationState extends State<TrainingCreation> {
             onSaved: (String value) {
               newTraining.title = value;
             },
+          ),
+          TextFormField(
+            decoration: const InputDecoration(
+              hintText: 'Arrows per End',
+            ),
+            validator: (value) {
+              if (value.isEmpty) {
+                return 'Please enter the number of arrows to shoot per end.';
+              }
+              if (int.parse(value) <= 0) {
+                return 'Please enter a value greater than 0.';
+              }
+              return null;
+            },
+            onSaved: (String value) {
+              newTraining.arrowsPerEnd = int.parse(value);
+            },
+            inputFormatters: [WhitelistingTextInputFormatter.digitsOnly],
           ),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 16.0),

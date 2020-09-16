@@ -56,7 +56,6 @@ class ScoreInstance {
     score = distance.floor();
 
     return score;
-    // todo make sure it works with 10s
     // TODO different calculation for different target type
   }
 

@@ -49,6 +49,7 @@ class _TrainingSummaryState extends State<TrainingSummary> {
 
       value.sort((b, a) => a.score.compareTo(b.score));
 
+      int endScoreCounter = 0;
       int rowScoreCounter = 0;
       int rowOfEndCounter = 0;
       int rowSum = 0;
@@ -85,9 +86,17 @@ class _TrainingSummaryState extends State<TrainingSummary> {
             ),
           ),
         );
-        // TODO add more of these cells if there aren't enough to fill the row
 
+        endScoreCounter++;
         rowScoreCounter++;
+
+        if (endScoreCounter == value.length && value.length % 3 != 0) {
+          // TODO add more of these cells if there aren't enough to fill the row
+          for (int i = 0; i < 3 - (value.length % 3); i++) {
+            cells.add(DataCell(Text("", style: TextStyle(fontSize: 16))));
+            rowScoreCounter++;
+          }
+        }
 
         if (rowScoreCounter == 3) {
           // finish row
@@ -167,7 +176,7 @@ class _TrainingSummaryState extends State<TrainingSummary> {
       )
     ];
 
-    MediaQueryData _mediaQueryData = MediaQuery.of(context);
+    //MediaQueryData _mediaQueryData = MediaQuery.of(context);
 
     return ListView(
       children: <Widget>[
@@ -175,8 +184,8 @@ class _TrainingSummaryState extends State<TrainingSummary> {
           child: DataTable(
             columns: columns,
             rows: rows,
-            columnSpacing: 1,
-            dataRowHeight: _mediaQueryData.size.height / 25,
+            columnSpacing: 20,
+            dataRowHeight: 25, //_mediaQueryData.size.height / 25,
           ),
         )
       ],
