@@ -1,5 +1,7 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'dart:math';
+import 'package:fluttertraining/TrainingInstance.dart';
 
 class ScoreInstance {
   int shotID = -1;
@@ -34,7 +36,7 @@ class ScoreInstance {
     };
   }
 
-  int updateScore() {
+  int fullTargetScore() {
     // range (0, 1] soll gequetscht werden in (11, 1] und dann in [10,0]
     double distance = pRadius - arrowRadius;
 
@@ -56,7 +58,66 @@ class ScoreInstance {
     score = distance.floor();
 
     return score;
-    // TODO different calculation for different target type
+  }
+
+  int singleSpotScore() {
+    int score = fullTargetScore();
+    if (score <= 5) score = 0;
+    return score;
+  }
+
+  int tripleSpotScore(double targetRadius) {
+    score = 0;
+
+    score = max(score, singleSpotScore());
+    _moveForTriSpot(targetRadius, 1);
+    score = max(score, singleSpotScore());
+    _moveForTriSpot(targetRadius, -2);
+    score = max(score, singleSpotScore());
+    _moveForTriSpot(targetRadius, 1);
+
+    return score;
+  }
+
+  int updateScore(TargetType targetType, double targetRadius) {
+    switch (targetType) {
+      case TargetType.Full:
+        score = fullTargetScore();
+        break;
+      case TargetType.SingleSpot:
+        score = singleSpotScore();
+        break;
+      case TargetType.TripleSpot:
+        score = tripleSpotScore(targetRadius);
+        break;
+    }
+
+    return score;
+  }
+
+  Offset getRelativeCartesianCoordinates(double targetRadius, TargetType targetType) {
+    double radius = pRadius * targetRadius;
+    double angle = pAngle;
+
+    switch (targetType) {
+      case TargetType.Full:
+      case TargetType.SingleSpot:
+        return Offset(radius * cos(angle), radius * sin(angle));
+      case TargetType.TripleSpot:
+        List<Offset> spotOffsets = [];
+        spotOffsets.add(Offset(radius * cos(angle), radius * sin(angle)));
+        spotOffsets.add(spotOffsets.first + Offset(0, targetRadius * 1.1)); // todo hardcoded cross files
+        spotOffsets.add(spotOffsets.first - Offset(0, targetRadius * 1.1));
+
+        Offset minOffset = spotOffsets.first;
+        spotOffsets.forEach((offset) {
+          if (offset.distance < minOffset.distance) {
+            minOffset = offset;
+          }
+        });
+
+        return minOffset;
+    }
   }
 
   // TODO maybe move coordinates into separate class
@@ -73,12 +134,18 @@ class ScoreInstance {
     pRadius = radius / targetRadius;
   }
 
-  void moveByOffset(Offset offset, double targetRadius) {
+  void _moveForTriSpot(double targetRadius, int direction) {
+    Offset cartesian = getCartesianCoordinates(targetRadius);
+    cartesian += Offset(0, targetRadius * 1.1 * direction);
+    setWithCartesianCoordinates(cartesian, targetRadius);
+  }
+
+  void moveByOffset(Offset offset, double targetRadius, TargetType targetType) {
     // convert own coordinates to cartesian, add offset, convert back
     Offset cartesian = getCartesianCoordinates(targetRadius);
     cartesian += offset;
     setWithCartesianCoordinates(cartesian, targetRadius);
-    updateScore();
+    // updateScore(targetType, targetRadius);
   }
 
   void reset() {

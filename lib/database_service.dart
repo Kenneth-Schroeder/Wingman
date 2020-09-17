@@ -31,6 +31,8 @@ class DatabaseService {
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             title TEXT,
             arrowsPerEnd INTEGER,
+            targetType INTEGER,
+            targetDiameterCM REAL,
             creationTime DATETIME)
           ''',
         );

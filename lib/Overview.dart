@@ -45,10 +45,6 @@ class _MyHomePageState extends State<MyHomePage> {
       context,
       MaterialPageRoute(builder: (context) => TrainingCreation()),
     ).then((value) => onStart());
-    /*await _createNewTraining();
-    await _loadTrainings();
-
-    setState(() {});*/
   }
 
   void _createNewTraining() async {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertraining/ScoreInstance.dart';
+import 'package:fluttertraining/SizeConfig.dart';
 import 'database_service.dart';
 import 'package:fluttertraining/TrainingInstance.dart';
 import 'TargetPage.dart';
@@ -187,7 +188,10 @@ class _TrainingSummaryState extends State<TrainingSummary> {
             columnSpacing: 20,
             dataRowHeight: 25, //_mediaQueryData.size.height / 25,
           ),
-        )
+        ),
+        Container(
+          height: SizeConfig.screenHeight == null ? 100 : SizeConfig.screenHeight / 5,
+        ),
       ],
     );
   }

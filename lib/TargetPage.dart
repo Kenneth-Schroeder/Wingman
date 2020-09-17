@@ -35,6 +35,8 @@ class _TargetPageState extends State<TargetPage> {
   Offset _scaleCenterDelta = Offset(0, 0);
   Offset _targetCenterOffset = Offset(0, 0);
 
+  double _groupPerimeter = 0;
+
   DatabaseService dbService;
 
   @override
@@ -54,19 +56,44 @@ class _TargetPageState extends State<TargetPage> {
 
   void onStart() async {
     dbService = await DatabaseService.create();
+    SizeConfig().init(context);
+
+    switch (widget.training.targetType) {
+      case TargetType.Full:
+        targetCenter = SizeConfig().threeSideCenter();
+        _scaleFactor = 1.0;
+        break;
+      case TargetType.SingleSpot:
+        targetCenter = SizeConfig().threeSideCenter();
+        _scaleFactor = 1.3;
+        break;
+      case TargetType.TripleSpot:
+        targetCenter = SizeConfig().center();
+        _scaleFactor = 0.8;
+        break;
+    }
+
+    targetRadius = SizeConfig().minDim() / 2.2;
+
     setState(() {});
   }
 
   Offset draggedTargetCenter() {
+    if (targetCenter == null) {
+      return Offset(0, 0);
+    }
     return targetCenter + _targetCenterOffset;
   }
 
   double scaledTargetRadius() {
+    if (targetRadius == null) {
+      return 0;
+    }
     return targetRadius * _scaleFactor;
   }
 
   Widget createTarget() {
-    return CustomPaint(painter: TargetPainter(draggedTargetCenter(), scaledTargetRadius(), false));
+    return CustomPaint(painter: TargetPainter(draggedTargetCenter(), scaledTargetRadius(), widget.training.targetType));
   }
 
   double polarDistance(double r1, double a1, double r2, double a2) {
@@ -142,14 +169,16 @@ class _TargetPageState extends State<TargetPage> {
         if (_draggedArrow != -1) {
           arrows[endIndex][_draggedArrow].moveByOffset(
               Offset(0, -arrows[endIndex][_draggedArrow].arrowRadius * targetRadius * 6 * (1 / _scaleFactor + 1)),
-              targetRadius); // todo remove hardcoding
+              targetRadius,
+              widget.training.targetType); // todo remove hardcoding
+          arrows[endIndex][_draggedArrow].updateScore(widget.training.targetType, targetRadius);
         }
         _draggedArrow = -1;
         setState(() {});
       },
       onMoveUpdate: (localPos, position, localDelta, delta) {
         if (_draggedArrow != -1) {
-          arrows[endIndex][_draggedArrow].moveByOffset(delta, targetRadius * _scaleFactor);
+          arrows[endIndex][_draggedArrow].moveByOffset(delta, targetRadius * _scaleFactor, widget.training.targetType);
           setState(() {});
         }
       },
@@ -228,11 +257,112 @@ class _TargetPageState extends State<TargetPage> {
     return await dbService.updateAllEndsOfTraining(widget.training.id, arrows);
   }
 
+  int getEndScore() {
+    int score = 0;
+    arrows[endIndex].forEach((arrow) {
+      score += arrow.score;
+    });
+    return score;
+  }
+
+  int getTotalScore() {
+    int totalScore = 0;
+
+    arrows.forEach((end) {
+      end.forEach((arrow) {
+        totalScore += arrow.score;
+      });
+    });
+
+    return totalScore;
+  }
+
+  double getEndAverage() {
+    int totalScore = 0;
+    int numEnds = 0;
+
+    arrows.forEach((end) {
+      end.forEach((arrow) {
+        totalScore += arrow.score;
+      });
+      numEnds += 1;
+    });
+
+    return totalScore / numEnds;
+  }
+
+  double dist(Offset pointA, Offset pointB) {
+    return (pointA - pointB).distance;
+  }
+
+  double chPerimeter(List<Offset> points) {
+    double p = 0;
+    for (int i = 1; i < points.length; i++) {
+      p += dist(points[i - 1], points[i]);
+    }
+    p += dist(points.first, points.last);
+
+    return p;
+  }
+
+  double crossProduct(Offset O, Offset A, Offset B) {
+    return (A.dx - O.dx) * (B.dy - O.dy) - (A.dy - O.dy) * (B.dx - O.dx);
+  }
+
+  List<Offset> convexHull(List<Offset> points) {
+    int n = points.length;
+    int k = 0;
+
+    if (n <= 3) return points;
+
+    List<Offset> ans = new List(n * 2);
+
+    // Sort points lexicographically
+    points.sort((a, b) {
+      if (a == b) return 0;
+      if (a.dx < b.dx || (a.dx == b.dx && a.dy < b.dy)) {
+        return 1;
+      }
+      return -1;
+    });
+
+    // Build lower hull
+    for (int i = 0; i < n; ++i) {
+      // If the point at K-1 position is not a part
+      // of hull as vector from ans[k-2] to ans[k-1]
+      // and ans[k-2] to A[i] has a clockwise turn
+      while (k >= 2 && crossProduct(ans[k - 2], ans[k - 1], points[i]) <= 0) k--;
+      ans[k++] = points[i];
+    }
+
+    // Build upper hull
+    for (int i = n - 1, t = k + 1; i > 0; --i) {
+      // If the point at K-1 position is not a part
+      // of hull as vector from ans[k-2] to ans[k-1]
+      // and ans[k-2] to A[i] has a clockwise turn
+      while (k >= t && crossProduct(ans[k - 2], ans[k - 1], points[i - 1]) <= 0) k--;
+      ans[k++] = points[i - 1];
+    }
+
+    // Resize the array to desired size
+    return ans.getRange(0, k - 1).toList();
+  }
+
+  double getGroupPerimeter(double physicalTargetRadius) {
+    // all arrows to Offsets
+    List<Offset> arrowOffsets = [];
+
+    arrows[endIndex].forEach((arrow) {
+      arrowOffsets.add(arrow.getRelativeCartesianCoordinates(physicalTargetRadius, widget.training.targetType));
+    });
+
+    return chPerimeter(convexHull(arrowOffsets));
+  }
+
   @override
   Widget build(BuildContext context) {
-    SizeConfig().init(context);
-    targetCenter = SizeConfig().threeSideCenter();
-    targetRadius = SizeConfig().minDim() / 2.2;
+    if (_draggedArrow == -1)
+      _groupPerimeter = getGroupPerimeter(widget.training.targetDiameterCM); // todo remove hardcoding here and further down
 
     return WillPopScope(
         child: Scaffold(
@@ -253,6 +383,39 @@ class _TargetPageState extends State<TargetPage> {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   Text("Quickstats"), // TODO add quickstats
+                  Padding(
+                    padding: EdgeInsets.all(2.0),
+                    child: Container(
+                      height: 1.0,
+                      width: SizeConfig.screenWidth,
+                      //color: Colors.black,
+                    ),
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      Column(
+                        children: [
+                          Text("End Score: " + getEndScore().toString()),
+                          Text("Total: " + getTotalScore().toString()),
+                        ],
+                      ),
+                      Column(
+                        children: [
+                          Text("End Average: " + getEndAverage().toStringAsFixed(2)),
+                          Text("Perimeter: " + this._groupPerimeter.toStringAsFixed(2) + " cm"),
+                        ],
+                      ),
+                    ],
+                  ),
+                  Padding(
+                    padding: EdgeInsets.all(5.0),
+                    child: Container(
+                      height: 1.0,
+                      width: SizeConfig.screenWidth,
+                      color: Colors.black,
+                    ),
+                  ),
                   new Row(
                     mainAxisSize: MainAxisSize.max,
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,

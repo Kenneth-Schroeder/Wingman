@@ -59,8 +59,8 @@ class _TrainingCreationState extends State<TrainingCreation> {
               if (value.isEmpty) {
                 return 'Please enter the number of arrows to shoot per end.';
               }
-              if (int.parse(value) <= 0) {
-                return 'Please enter a value greater than 0.';
+              if (int.parse(value) <= 0 || int.parse(value) > 24) {
+                return 'Please enter a value greater than 0 and smaller than 25';
               }
               return null;
             },
@@ -68,6 +68,67 @@ class _TrainingCreationState extends State<TrainingCreation> {
               newTraining.arrowsPerEnd = int.parse(value);
             },
             inputFormatters: [WhitelistingTextInputFormatter.digitsOnly],
+          ),
+          DropdownButtonFormField(
+            //value: _ratingController,
+            items: ["Full Target", "Single Spot", "Triple Spot"]
+                .map((label) => DropdownMenuItem(
+                      child: Text(label),
+                      value: label,
+                    ))
+                .toList(),
+            hint: Text('Target Type'),
+            validator: (value) {
+              if (value == null) {
+                return 'Please select a target type.';
+              }
+              return null;
+            },
+            onChanged: (String item) {
+              switch (item) {
+                case "Full Target":
+                  newTraining.targetType = TargetType.Full;
+                  break;
+                case "Single Spot":
+                  newTraining.targetType = TargetType.SingleSpot;
+                  break;
+                case "Triple Spot":
+                  newTraining.targetType = TargetType.TripleSpot;
+                  break;
+              }
+            },
+          ),
+          DropdownButtonFormField(
+            value: "122cm",
+            items: ["40cm", "60cm", "80cm", "122cm"]
+                .map((label) => DropdownMenuItem(
+                      child: Text(label.toString()),
+                      value: label,
+                    ))
+                .toList(),
+            hint: Text('Target Diameter'),
+            validator: (value) {
+              if (value == null) {
+                return 'Please select a target diameter.';
+              }
+              return null;
+            },
+            onChanged: (String item) {
+              switch (item) {
+                case "40cm":
+                  newTraining.targetDiameterCM = 40;
+                  break;
+                case "60cm":
+                  newTraining.targetDiameterCM = 60;
+                  break;
+                case "80cm":
+                  newTraining.targetDiameterCM = 80;
+                  break;
+                case "122cm":
+                  newTraining.targetDiameterCM = 122;
+                  break;
+              }
+            },
           ),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 16.0),
