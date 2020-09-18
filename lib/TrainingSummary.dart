@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:fluttertraining/ScoreInstance.dart';
-import 'package:fluttertraining/SizeConfig.dart';
+import 'ScoreInstance.dart';
+import 'SizeConfig.dart';
 import 'database_service.dart';
-import 'package:fluttertraining/TrainingInstance.dart';
+import 'TrainingInstance.dart';
 import 'TargetPage.dart';
 
 class TrainingSummary extends StatefulWidget {
@@ -92,7 +92,6 @@ class _TrainingSummaryState extends State<TrainingSummary> {
         rowScoreCounter++;
 
         if (endScoreCounter == value.length && value.length % 3 != 0) {
-          // TODO add more of these cells if there aren't enough to fill the row
           for (int i = 0; i < 3 - (value.length % 3); i++) {
             cells.add(DataCell(Text("", style: TextStyle(fontSize: 16))));
             rowScoreCounter++;
@@ -164,11 +163,11 @@ class _TrainingSummaryState extends State<TrainingSummary> {
         numeric: true,
       ),
       DataColumn(
-        label: Text('Row Sum'),
+        label: Text('Row\nSum'),
         numeric: true,
       ),
       DataColumn(
-        label: Text('End Sum'),
+        label: Text('End\nSum'),
         numeric: true,
       ),
       DataColumn(
@@ -181,12 +180,15 @@ class _TrainingSummaryState extends State<TrainingSummary> {
 
     return ListView(
       children: <Widget>[
-        SingleChildScrollView(
-          child: DataTable(
-            columns: columns,
-            rows: rows,
-            columnSpacing: 20,
-            dataRowHeight: 25, //_mediaQueryData.size.height / 25,
+        Center(
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: DataTable(
+              columns: columns,
+              rows: rows,
+              columnSpacing: 25,
+              dataRowHeight: 25,
+            ),
           ),
         ),
         Container(

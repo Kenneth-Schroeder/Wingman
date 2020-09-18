@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:fluttertraining/ScoreInstance.dart';
+import 'ScoreInstance.dart';
 import 'package:gesture_x_detector/gesture_x_detector.dart';
 import 'database_service.dart';
-import 'package:fluttertraining/TrainingInstance.dart';
+import 'TrainingInstance.dart';
 import 'TargetPainter.dart';
 import 'ArrowPainter.dart';
 import 'SizeConfig.dart';
 import 'dart:math';
-import 'ScoreInstance.dart';
 
 class TargetPage extends StatefulWidget {
   TargetPage(this.training, this.scoresByEndMap, {Key key}) : super(key: key);
@@ -148,8 +147,7 @@ class _TargetPageState extends State<TargetPage> {
     arrows[endIndex].forEach((element) {
       arrowPainters.add(
         CustomPaint(
-          painter: ArrowPainter.fromInstance(
-              element, false, draggedTargetCenter(), scaledTargetRadius(), counter == _draggedArrow, _scaleFactor),
+          painter: ArrowPainter.fromInstance(element, draggedTargetCenter(), scaledTargetRadius(), counter == _draggedArrow, _scaleFactor),
           child: Container(),
         ),
       );
@@ -229,11 +227,11 @@ class _TargetPageState extends State<TargetPage> {
     await dbService.addDefaultScores(endID, widget.training.arrowsPerEnd);
 
     // just load all again and we are good
-    Map<int, List<ScoreInstance>> SBEM = await dbService.getFullEndsOfTraining(widget.training.id);
+    Map<int, List<ScoreInstance>> allScoresMap = await dbService.getFullEndsOfTraining(widget.training.id);
 
-    arrows = new List.generate(SBEM.length, (i) => []);
+    arrows = new List.generate(allScoresMap.length, (i) => []);
     int counter = 0;
-    SBEM.forEach((key, value) {
+    allScoresMap.forEach((key, value) {
       value.forEach((element) {
         arrows[counter].add(element);
       });

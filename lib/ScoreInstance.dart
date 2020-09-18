@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'dart:math';
-import 'package:fluttertraining/TrainingInstance.dart';
+import 'TrainingInstance.dart';
 
 class ScoreInstance {
   int shotID = -1;
@@ -100,9 +100,6 @@ class ScoreInstance {
     double angle = pAngle;
 
     switch (targetType) {
-      case TargetType.Full:
-      case TargetType.SingleSpot:
-        return Offset(radius * cos(angle), radius * sin(angle));
       case TargetType.TripleSpot:
         List<Offset> spotOffsets = [];
         spotOffsets.add(Offset(radius * cos(angle), radius * sin(angle)));
@@ -115,8 +112,10 @@ class ScoreInstance {
             minOffset = offset;
           }
         });
-
         return minOffset;
+
+      default:
+        return Offset(radius * cos(angle), radius * sin(angle));
     }
   }
 

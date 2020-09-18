@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'database_service.dart';
-import 'package:fluttertraining/TrainingInstance.dart';
+import 'TrainingInstance.dart';
 import 'TrainingSummary.dart';
 import 'TrainingCreation.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
-import 'package:gesture_x_detector/gesture_x_detector.dart';
 
 class MyHomePage extends StatefulWidget {
   MyHomePage({Key key, this.title}) : super(key: key);
@@ -45,11 +44,6 @@ class _MyHomePageState extends State<MyHomePage> {
       context,
       MaterialPageRoute(builder: (context) => TrainingCreation()),
     ).then((value) => onStart());
-  }
-
-  void _createNewTraining() async {
-    final training = TrainingInstance.fromMap({"title": "Training", "creationTime": DateTime.now(), "arrowsPerEnd": 6});
-    await dbService.addTraining(training);
   }
 
   void _loadTrainings() async {

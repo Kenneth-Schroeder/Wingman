@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'database_service.dart';
 import 'package:flutter/services.dart';
-import 'package:fluttertraining/TrainingInstance.dart';
+import 'TrainingInstance.dart';
 
 class TrainingCreation extends StatefulWidget {
   TrainingCreation({Key key}) : super(key: key);
@@ -30,7 +30,6 @@ class _TrainingCreationState extends State<TrainingCreation> {
 
   Widget newTrainingForm() {
     final _formKey = GlobalKey<FormState>();
-    int _value = 1;
 
     return Form(
       key: _formKey,

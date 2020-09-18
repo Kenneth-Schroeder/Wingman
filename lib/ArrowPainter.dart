@@ -1,17 +1,13 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'ScoreInstance.dart';
 
 class ArrowPainter extends CustomPainter {
-  ArrowPainter.fromInstance(
-      ScoreInstance instance, this._spot, Offset targetCenter, double targetRadius, this._isDragged, this._scaleFactor)
+  ArrowPainter.fromInstance(ScoreInstance instance, Offset targetCenter, double targetRadius, this._isDragged, this._scaleFactor)
       : this._offset = instance.getCartesianCoordinates(targetRadius) + targetCenter,
         this._radius = instance.arrowRadius * targetRadius;
 
   final Offset _offset;
   final double _radius;
-  final bool _spot;
   bool _isDragged = true;
   double _scaleFactor;
 

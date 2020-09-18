@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:fluttertraining/TrainingInstance.dart';
+import 'TrainingInstance.dart';
 
 class TargetPainter extends CustomPainter {
   TargetPainter(this._offset, this._radius, this._targetType);
