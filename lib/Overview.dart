@@ -4,6 +4,8 @@ import 'TrainingInstance.dart';
 import 'TrainingSummary.dart';
 import 'TrainingCreation.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'CompetitionMenu.dart';
+import 'package:Wingman/icons/my_flutter_app_icons.dart';
 
 class MyHomePage extends StatefulWidget {
   MyHomePage({Key key, this.title}) : super(key: key);
@@ -62,96 +64,98 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget overviewScreen() {
-    return ListView.separated(
-        padding: EdgeInsets.all(8),
-        itemBuilder: (BuildContext ctxt, int index) {
-          return GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => TrainingSummary(_trainings[index])),
-              );
-            },
-            child: new Slidable(
-              actionPane: SlidableDrawerActionPane(),
-              actionExtentRatio: 0.25,
-              secondaryActions: <Widget>[
-                new IconSlideAction(
-                  caption: 'Edit',
-                  color: Colors.black45,
-                  icon: Icons.more_horiz,
-                  onTap: () => editTraining(_trainings[index]),
-                ),
-                new IconSlideAction(
-                  caption: 'Delete',
-                  color: Colors.red,
-                  icon: Icons.delete,
-                  onTap: () => deleteTraining(_trainings[index].id),
-                ),
-              ],
-              child: new Container(
-                padding: EdgeInsets.all(5.0),
-                height: 50,
-                decoration: BoxDecoration(
-                  color: Colors.yellow[100],
-                  boxShadow: [new BoxShadow(color: Colors.grey, offset: new Offset(3.0, 2.0), blurRadius: 3.0, spreadRadius: 0.1)],
-                  border: Border.all(
-                    width: 3.0,
-                    color: Colors.blue[400],
+    return Scrollbar(
+      child: ListView.separated(
+          padding: EdgeInsets.all(8),
+          itemBuilder: (BuildContext ctxt, int index) {
+            return GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => TrainingSummary(_trainings[index])),
+                );
+              },
+              child: new Slidable(
+                actionPane: SlidableDrawerActionPane(),
+                actionExtentRatio: 0.25,
+                secondaryActions: <Widget>[
+                  new IconSlideAction(
+                    caption: 'Edit',
+                    color: Colors.black45,
+                    icon: Icons.more_horiz,
+                    onTap: () => editTraining(_trainings[index]),
                   ),
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(15),
-                    bottomLeft: Radius.circular(15),
+                  new IconSlideAction(
+                    caption: 'Delete',
+                    color: Colors.red,
+                    icon: Icons.delete,
+                    onTap: () => deleteTraining(_trainings[index].id),
                   ),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Center(
-                        child: Text(
-                          _trainings[index].title,
-                          style: TextStyle(
-                            color: Colors.blue[800],
-                            fontSize: 20,
-                            //fontWeight: FontWeight.bold,
+                ],
+                child: new Container(
+                  padding: EdgeInsets.all(5.0),
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: Colors.yellow[100],
+                    boxShadow: [new BoxShadow(color: Colors.grey, offset: new Offset(3.0, 2.0), blurRadius: 3.0, spreadRadius: 0.1)],
+                    border: Border.all(
+                      width: 3.0,
+                      color: Colors.blue[400],
+                    ),
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(15),
+                      bottomLeft: Radius.circular(15),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Center(
+                          child: Text(
+                            _trainings[index].title,
+                            style: TextStyle(
+                              color: Colors.blue[800],
+                              fontSize: 20,
+                              //fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    Expanded(
-                      child: Column(
-                        children: [
-                          Expanded(
-                              child: Center(
-                                  child: Text(
-                            "Date: " + _trainings[index].date(),
-                            style: TextStyle(color: Colors.blue[800]),
-                          ))),
-                          Expanded(
-                              child: Center(
-                                  child: Text(
-                            "Time: " + _trainings[index].time(),
-                            style: TextStyle(color: Colors.blue[800]),
-                          ))),
-                        ],
+                      Expanded(
+                        child: Column(
+                          children: [
+                            Expanded(
+                                child: Center(
+                                    child: Text(
+                              "Date: " + _trainings[index].date(),
+                              style: TextStyle(color: Colors.blue[800]),
+                            ))),
+                            Expanded(
+                                child: Center(
+                                    child: Text(
+                              "Time: " + _trainings[index].time(),
+                              style: TextStyle(color: Colors.blue[800]),
+                            ))),
+                          ],
+                        ),
                       ),
-                    ),
-                    Icon(
-                      Icons.navigate_before,
-                      color: Colors.blue[800],
-                    ),
-                  ],
+                      Icon(
+                        Icons.navigate_before,
+                        color: Colors.blue[800],
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          );
-        },
-        separatorBuilder: (BuildContext context, int index) {
-          return SizedBox(
-            height: 8,
-          );
-        },
-        itemCount: _trainings.length);
+            );
+          },
+          separatorBuilder: (BuildContext context, int index) {
+            return SizedBox(
+              height: 8,
+            );
+          },
+          itemCount: _trainings.length),
+    );
   }
 
   @override
@@ -168,6 +172,20 @@ class _MyHomePageState extends State<MyHomePage> {
         // Here we take the value from the MyHomePage object that was created by
         // the App.build method, and use it to set our appbar title.
         title: Text(widget.title),
+        actions: <Widget>[
+          IconButton(
+            icon: Icon(
+              MyFlutterApp.trophy,
+              color: Colors.white,
+            ),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => CompetitionMenu()),
+              );
+            },
+          ),
+        ],
       ),
       body: overviewScreen(),
       floatingActionButton: FloatingActionButton(

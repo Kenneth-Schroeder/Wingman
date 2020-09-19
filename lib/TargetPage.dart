@@ -191,7 +191,6 @@ class _TargetPageState extends State<TargetPage> {
         _scaleCenterOffset = newScaleCenterOffset;
         _targetCenterOffset += _scaleCenterDelta;
         setState(() {});
-        //print('onScaleUpdate - changedFocusPoint: $changedFocusPoint'); // ; scale: $scale ;Rotation: $rotation');
       },
       onScaleEnd: () {
         _scaleCenterOffset = Offset(0, 0);
