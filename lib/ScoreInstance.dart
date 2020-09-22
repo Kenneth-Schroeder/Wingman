@@ -11,6 +11,7 @@ class ScoreInstance {
   double pRadius = 1.3; // polar radius
   double pAngle = 13 / 20 * pi; // polar angle
 
+  ScoreInstance.scoreOnly(this.endID, this.score);
   ScoreInstance(this.endID);
   ScoreInstance.positioned(this.endID, this.score, Offset position, double targetRadius) {
     setWithCartesianCoordinates(position, targetRadius);

@@ -3,8 +3,10 @@ import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'TrainingInstance.dart';
 import 'ScoreInstance.dart';
+import 'TargetPage.dart'; // todo move Archer definition
 
 final tableTrainings = "trainings";
+final tableOpponents = "opponents";
 final tableEnds = "ends";
 final tableScores = "scores";
 final tableArrows = "arrows"; // specific arrow information
@@ -41,10 +43,21 @@ class DatabaseService {
           ''',
         );
         db.execute(
+          '''CREATE TABLE $tableOpponents(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            trainingID INTEGER NOT NULL,
+            FOREIGN KEY (trainingID) REFERENCES $tableTrainings (id) ON DELETE CASCADE )
+          ''',
+        );
+        db.execute(
           '''CREATE TABLE $tableEnds(
             endID INTEGER PRIMARY KEY AUTOINCREMENT,
-            trainingID INTEGER NOT NULL,
-            FOREIGN KEY (trainingID) REFERENCES $tableTrainings (id) ON DELETE CASCADE ) 
+            arrowCount INTEGER,
+            trainingID INTEGER,
+            opponentID INTEGER,
+            FOREIGN KEY (trainingID) REFERENCES $tableTrainings (id) ON DELETE CASCADE,
+            FOREIGN KEY (opponentID) REFERENCES $tableOpponents (id) ON DELETE CASCADE )
           ''',
         );
         db.execute(
@@ -63,6 +76,112 @@ class DatabaseService {
       // path to perform database upgrades and downgrades.
       version: 1,
     );
+  }
+
+  Future<int> addOpponent(int trainingID, String name) async {
+    Database db = await database;
+    int id = await db.insert(tableOpponents, {"trainingID": trainingID, "name": name});
+    return id;
+  }
+
+  Future<bool> addOpponents(int trainingID, int number) async {
+    // todo it this even used?
+    for (int i = 0; i < number; i++) {
+      await addOpponent(trainingID, i.toString());
+    }
+    return true;
+  }
+
+  Future<int> addOpponentsEnd(int opponentID, int arrowCount) async {
+    Database db = await database;
+    int id = await db.insert(tableEnds, {"opponentID": opponentID, "arrowCount": arrowCount});
+    return id;
+  }
+
+  void deleteAllEndsOfOpponent(int opponentID) async {
+    Database db = await database;
+    await db.delete(tableEnds, where: 'opponentID = ?', whereArgs: [opponentID]);
+  }
+
+  Future<bool> updateAllEndsOfOpponent(int opponentID, Archer archer) async {
+    // just delete all and create new entries?
+    deleteAllEndsOfOpponent(opponentID);
+
+    archer.arrowScores.forEach((end) {
+      // update arrows that are in DB already and insert new ones for those that have no ID
+      addOpponentsEnd(opponentID, end.length).then((endID) => end.forEach((score) {
+            addScore(ScoreInstance.scoreOnly(endID, score)); // TODO this uses unnecessarily much storage
+          }));
+    });
+
+    return true;
+  }
+
+  Future<bool> updateAllOpponents(int trainingID, List<Archer> opponents) async {
+    List<int> opponentIDs = await getAllOpponentIDs(trainingID);
+
+    for (int i = 0; i < opponentIDs.length; i++) {
+      await updateAllEndsOfOpponent(opponentIDs[i], opponents[i]);
+    }
+
+    return true;
+  }
+
+  Future<Archer> getOpponent(int opponentID) async {
+    // get all ends first and then get scores for each end
+    Database db = await database;
+    List<Map> endsMap = await db.rawQuery("SELECT * "
+        "FROM $tableEnds "
+        "INNER JOIN $tableScores ON $tableEnds.endID = $tableScores.endID "
+        "INNER JOIN $tableOpponents ON $tableOpponents.id = $tableEnds.opponentID "
+        "WHERE $tableEnds.opponentID == $opponentID");
+
+    Archer opponent = Archer(endsMap.first['name'].toString());
+
+    Map<int, List<int>> scoresByEnd = Map<int, List<int>>(); // maps from endID to the scores
+    endsMap.forEach((element) {
+      if (!scoresByEnd.containsKey(element["endID"])) {
+        scoresByEnd[element["endID"]] = [];
+      }
+      scoresByEnd[element["endID"]].add(element["score"]);
+    });
+
+    opponent.arrowScores = new List.generate(scoresByEnd.length, (i) => []);
+    int counter = 0;
+    scoresByEnd.forEach((key, value) {
+      value.forEach((element) {
+        opponent.arrowScores[counter].add(element);
+      });
+      counter++;
+    });
+
+    opponent.endScores = [];
+    opponent.arrowScores.forEach((end) {
+      opponent.endScores.add(end.reduce((a, b) => a + b));
+    });
+
+    return opponent;
+  }
+
+  Future<List<int>> getAllOpponentIDs(int trainingID) async {
+    Database db = await database;
+
+    return await db.query(tableOpponents, where: 'trainingID = ?', whereArgs: [trainingID]).then((value) {
+      List<int> opponentIDs = [];
+      value.forEach((row) => opponentIDs.add(row['id']));
+      return opponentIDs;
+    });
+  }
+
+  Future<List<Archer>> getAllOpponents(int trainingID) async {
+    List<int> opponentIDs = await getAllOpponentIDs(trainingID);
+    List<Archer> opponents = [];
+
+    for (int id in opponentIDs) {
+      await getOpponent(id).then((archer) => opponents.add(archer));
+    }
+
+    return opponents;
   }
 
   Future<int> addEnd(int trainingID) async {
@@ -102,7 +221,9 @@ class DatabaseService {
 
     Map<int, List<ScoreInstance>> scoresByEnd = Map<int, List<ScoreInstance>>();
     endsMap.forEach((element) {
-      if (!scoresByEnd.containsKey(element["endID"])) scoresByEnd[element["endID"]] = [];
+      if (!scoresByEnd.containsKey(element["endID"])) {
+        scoresByEnd[element["endID"]] = [];
+      }
       scoresByEnd[element["endID"]].add(ScoreInstance.fromMap(element));
     });
 
@@ -115,7 +236,7 @@ class DatabaseService {
       // update arrows that are in DB already and insert new ones for those that have no ID
       if (end.first.shotID != -1) {
         end.forEach((arrow) {
-          updateScore(arrow); // todo check if its alright not to use await here
+          updateScore(arrow); // todo check if its alright not to use await here NO NOT GOOD check getAllOpponents() for better solution
         });
       } else {
         addEnd(trainingID).then((endID) => end.forEach((arrow) {

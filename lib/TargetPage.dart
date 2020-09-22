@@ -98,9 +98,22 @@ class _TargetPageState extends State<TargetPage> {
       );
     }
 
-    opponents = [];
-    for (int i = 0; i < numOpponents; i++) {
-      opponents.add(Archer(i.toString()));
+    if (await dbService.getAllOpponentIDs(widget.training.id).then((value) => value.length == 0)) {
+      opponents = [];
+      for (int i = 0; i < numOpponents; i++) {
+        opponents.add(Archer(i.toString()));
+        dbService.addOpponent(widget.training.id, i.toString());
+      }
+    } else {
+      opponents = await dbService.getAllOpponents(widget.training.id);
+
+      int len = opponents[0].arrowScores.length;
+      for (int j = 0; j < arrows.length - len; j++) {
+        for (int i = 0; i < numOpponents; i++) {
+          opponents[i].arrowScores.add([]);
+          opponents[i].endScores.add(0);
+        }
+      }
     }
 
     previouslyUntouchedArrows = widget.training.arrowsPerEnd;
@@ -242,6 +255,7 @@ class _TargetPageState extends State<TargetPage> {
   Widget _opponentStats() {
     // todo improve this
     if (opponents == null ||
+        opponents.length == 0 ||
         widget.training.competitionType == CompetitionType.training ||
         opponents[0].endScores.length <= endIndex ||
         opponents[0].arrowScores[endIndex].length == 0) {
@@ -442,6 +456,7 @@ class _TargetPageState extends State<TargetPage> {
   }
 
   Future<bool> onLeave() async {
+    await dbService.updateAllOpponents(widget.training.id, opponents);
     return await dbService.updateAllEndsOfTraining(widget.training.id, arrows);
   }
 
@@ -677,12 +692,6 @@ class _TargetPageState extends State<TargetPage> {
       },
     );
   }
-
-  /*
-  SingleChildScrollView(
-          controller: scrollController,
-          child:
-   */
 
   @override
   Widget build(BuildContext context) {
