@@ -10,6 +10,13 @@ import 'SizeConfig.dart';
 import 'dart:math';
 import 'CompetitionSimulator.dart';
 
+class Archer {
+  List<int> endScores = [0];
+  List<List<int>> arrowScores = [[]];
+  String name;
+  Archer(this.name);
+}
+
 class TargetPage extends StatefulWidget {
   TargetPage(this.training, this.scoresByEndMap, {Key key}) : super(key: key);
 
@@ -40,9 +47,10 @@ class _TargetPageState extends State<TargetPage> {
 
   DatabaseService dbService;
   CompetitionSimulator simulator;
-  List<List<List<int>>> opponentsScores;
-  List<List<int>> opponentsEndScores;
-  int previouslyUntouchedArrows = 6;
+  List<Archer> opponents;
+  bool sortAscending = false;
+  int sortColumnIndex = 2;
+  int previouslyUntouchedArrows = 6; // todo dont hardcode here but count number of pRadius = 1.3
   int numOpponents = 10;
 
   @override
@@ -90,11 +98,9 @@ class _TargetPageState extends State<TargetPage> {
       );
     }
 
-    opponentsScores = [];
-    opponentsEndScores = [];
+    opponents = [];
     for (int i = 0; i < numOpponents; i++) {
-      opponentsScores.add([[]]);
-      opponentsEndScores.add([0]);
+      opponents.add(Archer(i.toString()));
     }
 
     previouslyUntouchedArrows = widget.training.arrowsPerEnd;
@@ -167,162 +173,159 @@ class _TargetPageState extends State<TargetPage> {
   }
 
   void arrowReleasedAction() {
+    if (widget.training.competitionType == CompetitionType.training) return;
+
     int newUntouchedArrows = arrows[endIndex].where((element) => element.pRadius == 1.3).length;
-    if (newUntouchedArrows != previouslyUntouchedArrows && opponentsScores[0][endIndex].length < widget.training.arrowsPerEnd) {
+    if (newUntouchedArrows != previouslyUntouchedArrows && opponents[0].arrowScores[endIndex].length < widget.training.arrowsPerEnd) {
       // add new arrow to opponents scores
       for (int i = 0; i < numOpponents; i++) {
         int score = simulator.getScore();
-        opponentsScores[i][endIndex].add(score);
-        opponentsEndScores[i][endIndex] += score;
+        opponents[i].arrowScores[endIndex].add(score);
+        opponents[i].endScores[endIndex] += score;
       }
     }
     previouslyUntouchedArrows = newUntouchedArrows;
-
-    switch (widget.training.competitionType) {
-      case CompetitionType.training:
-      case CompetitionType.qualifying:
-        break;
-      case CompetitionType.finals:
-        break;
-    }
   }
 
   void endFinishedAction() {
+    if (widget.training.competitionType == CompetitionType.training) return;
+
     // todo what if this is called by going back and fourth ??? cant happen i think
     for (int i = 0; i < numOpponents; i++) {
-      opponentsScores[i].add([]);
-      opponentsEndScores[i].add(0);
+      opponents[i].arrowScores.add([]);
+      opponents[i].endScores.add(0);
+    }
+  }
+
+  List<Archer> getArchers() {
+    List<Archer> archers = List<Archer>.from(opponents);
+    archers.add(Archer("YOU"));
+
+    archers.last.endScores[0] = getEndScore(0);
+    for (int i = 1; i < arrows.length; i++) {
+      archers.last.endScores.add(getEndScore(i));
     }
 
-    switch (widget.training.competitionType) {
-      case CompetitionType.training:
+    switch (sortColumnIndex) {
+      case 0:
+        if (sortAscending) {
+          archers.sort((a, b) => a.name.compareTo(b.name));
+        } else {
+          archers.sort((b, a) => a.name.compareTo(b.name));
+        }
         break;
-      case CompetitionType.qualifying:
-        //opponentScores.add(simulator.getScores(widget.training.arrowsPerEnd));
+      case 1:
+        if (sortAscending) {
+          archers.sort((a, b) => a.endScores[endIndex].compareTo(b.endScores[endIndex]));
+        } else {
+          archers.sort((b, a) => a.endScores[endIndex].compareTo(b.endScores[endIndex]));
+        }
         break;
-      case CompetitionType.finals:
+      default:
+        if (sortAscending) {
+          archers.sort((a, b) => a.endScores
+              .sublist(0, endIndex + 1)
+              .reduce((a, b) => a + b)
+              .compareTo(b.endScores.sublist(0, endIndex + 1).reduce((a, b) => a + b)));
+        } else {
+          archers.sort((b, a) => a.endScores
+              .sublist(0, endIndex + 1)
+              .reduce((a, b) => a + b)
+              .compareTo(b.endScores.sublist(0, endIndex + 1).reduce((a, b) => a + b)));
+        }
         break;
     }
+
+    return archers;
   }
 
   Widget _opponentStats() {
     // todo improve this
-    if (opponentsScores == null ||
+    if (opponents == null ||
         widget.training.competitionType == CompetitionType.training ||
-        opponentsScores[0].length <= endIndex ||
-        opponentsScores[0][endIndex].length == 0) {
+        opponents[0].endScores.length <= endIndex ||
+        opponents[0].arrowScores[endIndex].length == 0) {
       return Container();
     }
 
-    return ListView.separated(
-        shrinkWrap: true,
-        physics: NeverScrollableScrollPhysics(),
-        padding: EdgeInsets.all(8),
-        itemBuilder: (BuildContext ctxt, int index) {
-          return Container(
-            padding: EdgeInsets.all(5.0),
-            height: 50,
-            decoration: BoxDecoration(
-              color: Colors.red[200],
-              boxShadow: [new BoxShadow(color: Colors.grey, offset: new Offset(3.0, 2.0), blurRadius: 3.0, spreadRadius: 0.1)],
-              borderRadius: BorderRadius.all(
-                Radius.circular(15),
-              ),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(
-                  child: Center(
-                    child: Text(
-                      index.toString(),
-                      style: TextStyle(
-                        color: Colors.blue[800],
-                        fontSize: 15,
-                        //fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: Column(
-                    //crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Expanded(
-                        child: Center(
-                            child: Text(
-                          "End: " + opponentsEndScores[index][endIndex].toString(),
-                          style: TextStyle(color: Colors.blue[800]),
-                        )),
-                      ),
-                      Expanded(
-                        child: Center(
-                            child: Text(
-                          "Total: " + opponentsEndScores[index].sublist(0, endIndex + 1).reduce((a, b) => a + b).toString(),
-                          style: TextStyle(color: Colors.blue[800]),
-                        )),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
-        separatorBuilder: (BuildContext context, int index) {
-          return SizedBox(
-            height: 8,
-          );
-        },
-        itemCount: opponentsEndScores.length);
+    List<Archer> archers = getArchers();
 
-    /*new Column(
-      mainAxisSize: MainAxisSize.min,
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        Container(
-          color: Colors.white,
-          child: Column(
-            children: [
-              Text("Opponent Quickstats"), // TODO add quickstats
-              Padding(
-                padding: EdgeInsets.all(2.0),
-                child: Container(
-                  height: 1.0,
-                  width: _screenWidth(),
-                  //color: Colors.black,
-                ),
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  Column(
-                    children: [
-                      Text("Opponent End Score: " + opponentScores[endIndex].reduce((a, b) => a + b).toString()),
-                      Text("Opponent Total: " + opponentScores.expand((element) => element).toList().reduce((a, b) => a + b).toString()),
-                    ],
-                  ),
-                  Column(
-                    children: [
-                      Text("Opponent End Average: -"),
-                      Text("Opponent Perimeter: - cm"),
-                    ],
-                  ),
-                ],
-              ),
-              Padding(
-                padding: EdgeInsets.all(5.0),
-                child: Container(
-                  height: 1.0,
-                  width: _screenWidth(),
-                  color: Colors.black,
-                ),
-              ),
-            ],
+    List<DataRow> rows = [];
+
+    for (int i = 0; i < archers.length; i++) {
+      List<DataCell> cells = [];
+
+      cells.add(
+        DataCell(
+          Text(
+            archers[i].name,
+            style: TextStyle(fontSize: 16),
           ),
         ),
-      ],
-    );*/
+      );
+
+      cells.add(
+        DataCell(
+          Text(
+            archers[i].endScores[endIndex].toString(),
+            style: TextStyle(fontSize: 16),
+          ),
+        ),
+      );
+
+      cells.add(
+        DataCell(
+          Text(
+            archers[i].endScores.sublist(0, endIndex + 1).reduce((a, b) => a + b).toString(),
+            style: TextStyle(fontSize: 16),
+          ),
+        ),
+      );
+
+      rows.add(DataRow(cells: cells));
+      cells = [];
+    }
+
+    List<DataColumn> columns = [
+      DataColumn(
+        label: Text('Archer'),
+        onSort: (columnIndex, ascending) {
+          sortAscending = ascending;
+          sortColumnIndex = columnIndex;
+          setState(() {});
+        },
+      ),
+      DataColumn(
+        label: Text('End Score'),
+        numeric: true,
+        onSort: (columnIndex, ascending) {
+          sortAscending = ascending;
+          sortColumnIndex = columnIndex;
+          setState(() {});
+        },
+      ),
+      DataColumn(
+        label: Text('Total Score'),
+        numeric: true,
+        onSort: (columnIndex, ascending) {
+          sortAscending = ascending;
+          sortColumnIndex = columnIndex;
+          setState(() {});
+        },
+      ),
+    ];
+
+    return Container(
+      color: Colors.white,
+      child: DataTable(
+        columns: columns,
+        rows: rows,
+        sortAscending: sortAscending,
+        sortColumnIndex: sortColumnIndex,
+        columnSpacing: 25,
+        dataRowHeight: 25,
+      ),
+    );
   }
 
   Widget loadArrows() {
@@ -442,9 +445,9 @@ class _TargetPageState extends State<TargetPage> {
     return await dbService.updateAllEndsOfTraining(widget.training.id, arrows);
   }
 
-  int getEndScore() {
+  int getEndScore(int endIdx) {
     int score = 0;
-    arrows[endIndex].forEach((arrow) {
+    arrows[endIdx].forEach((arrow) {
       score += arrow.score;
     });
     return score;
@@ -589,7 +592,7 @@ class _TargetPageState extends State<TargetPage> {
                 children: [
                   Column(
                     children: [
-                      Text("End Score: " + getEndScore().toString()),
+                      Text("End Score: " + getEndScore(endIndex).toString()),
                       Text("Total: " + getTotalScore().toString()),
                     ],
                   ),
