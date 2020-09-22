@@ -32,6 +32,10 @@ class DatabaseService {
             title TEXT,
             arrowsPerEnd INTEGER,
             targetType INTEGER,
+            competitionType INTEGER,
+            competitionLevel INTEGER,
+            referencedGender INTEGER,
+            numberOfEnds INTEGER,
             targetDiameterCM REAL,
             creationTime DATETIME)
           ''',

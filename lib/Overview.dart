@@ -96,7 +96,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   padding: EdgeInsets.all(5.0),
                   height: 50,
                   decoration: BoxDecoration(
-                    color: Colors.yellow[100],
+                    color: _trainings[index].competitionType == CompetitionType.training ? Colors.yellow[200] : Colors.red[200],
                     boxShadow: [new BoxShadow(color: Colors.grey, offset: new Offset(3.0, 2.0), blurRadius: 3.0, spreadRadius: 0.1)],
                     border: Border.all(
                       width: 3.0,
@@ -182,7 +182,7 @@ class _MyHomePageState extends State<MyHomePage> {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => CompetitionMenu()),
-              );
+              ).then((value) => onStart());
             },
           ),
         ],

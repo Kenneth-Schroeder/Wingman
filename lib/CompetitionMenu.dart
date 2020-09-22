@@ -1,4 +1,6 @@
+import 'package:Wingman/TrainingInstance.dart';
 import 'package:flutter/material.dart';
+import 'database_service.dart';
 
 class CompetitionMenu extends StatefulWidget {
   CompetitionMenu({Key key}) : super(key: key);
@@ -8,8 +10,10 @@ class CompetitionMenu extends StatefulWidget {
 }
 
 class _CompetitionMenuState extends State<CompetitionMenu> {
-  double sliderValue = 5;
-  List<int> selected = [-1, -1, -1];
+  DatabaseService dbService;
+  double sliderValue = 10;
+  List<int> selected = [-1, -1, -1]; // outdoor, indoor / female, male / qualifying, finals
+  bool showError = false;
 
   @override
   void initState() {
@@ -17,7 +21,13 @@ class _CompetitionMenuState extends State<CompetitionMenu> {
     onStart();
   }
 
-  void onStart() async {}
+  void onStart() async {
+    dbService = await DatabaseService.create();
+  }
+
+  void _saveNewTraining(TrainingInstance training) async {
+    await dbService.addTraining(training);
+  }
 
   Widget floatingBoxWrapper(String image, String title, Color textColor, Alignment titleAlign, int category, int option) {
     BorderRadius radius = BorderRadius.only(bottomLeft: Radius.circular(10), topRight: Radius.circular(10));
@@ -25,7 +35,7 @@ class _CompetitionMenuState extends State<CompetitionMenu> {
 
     Widget imageWidget = ColorFiltered(
       colorFilter: ColorFilter.mode(
-        Colors.grey[900],
+        Colors.grey[800],
         BlendMode.multiply,
       ),
       child: Image.asset(
@@ -58,14 +68,7 @@ class _CompetitionMenuState extends State<CompetitionMenu> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(10.0),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.8),
-                  spreadRadius: 3,
-                  blurRadius: 6,
-                  offset: Offset(0, 3), // changes position of shadow
-                ),
-              ],
+              boxShadow: customBoxShadow(),
             ),
           ),
           Positioned.fill(
@@ -92,6 +95,72 @@ class _CompetitionMenuState extends State<CompetitionMenu> {
         ],
       ),
     );
+  }
+
+  List<BoxShadow> customBoxShadow() {
+    return [
+      BoxShadow(
+        color: Colors.grey.withOpacity(0.8),
+        spreadRadius: 3,
+        blurRadius: 6,
+        offset: Offset(0, 3), // changes position of shadow
+      ),
+    ];
+  }
+
+  void submitSelection() {
+    if (!selected.contains(-1)) {
+      TrainingInstance training = TrainingInstance("Competition", DateTime.now());
+
+      training.competitionLevel = sliderValue.toInt();
+
+      if (selected[0] == 0) {
+        // outdoor
+        training.targetDiameterCM = 122;
+        training.targetType = TargetType.Full;
+
+        if (selected[2] == 0) {
+          // qualifying
+          training.arrowsPerEnd = 6;
+          training.numberOfEnds = 12;
+        } else {
+          // finals
+          training.arrowsPerEnd = 3;
+        }
+      } else {
+        // indoor
+        training.targetDiameterCM = 40;
+        training.targetType = TargetType.TripleSpot;
+        training.arrowsPerEnd = 3;
+
+        if (selected[2] == 0) {
+          // qualifying
+          training.numberOfEnds = 20;
+        } else {
+          // finals
+          training.numberOfEnds = 6;
+        }
+      }
+
+      if (selected[1] == 0) {
+        // female
+        training.referencedGender = Gender.female;
+      } else {
+        // male
+        training.referencedGender = Gender.male;
+      }
+
+      if (selected[2] == 0) {
+        // qualifying
+        training.competitionType = CompetitionType.qualifying;
+      } else {
+        // finals
+        training.competitionType = CompetitionType.finals;
+      }
+
+      _saveNewTraining(training);
+      Navigator.pop(context);
+    }
   }
 
   // images from https://svgsilh.com/image/2025609.html and https://svgsilh.com/image/156849.html
@@ -133,7 +202,7 @@ class _CompetitionMenuState extends State<CompetitionMenu> {
             child: Column(
               children: [
                 Text(
-                  "DIFFICULTY",
+                  "Difficulty",
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -147,8 +216,8 @@ class _CompetitionMenuState extends State<CompetitionMenu> {
                     setState(() {});
                   },
                   min: 1,
-                  max: 10,
-                  divisions: 9,
+                  max: 20,
+                  divisions: 19,
                   label: sliderValue.toInt().toString(),
                 ),
                 Row(
@@ -156,11 +225,11 @@ class _CompetitionMenuState extends State<CompetitionMenu> {
                   children: [
                     Padding(
                       padding: EdgeInsets.only(left: 22),
-                      child: Text("BEGINNER", style: TextStyle(fontSize: 16)),
+                      child: Text("Beginner", style: TextStyle(fontSize: 16)),
                     ),
                     Padding(
                       padding: EdgeInsets.only(right: 22),
-                      child: Text("INHUMAN", style: TextStyle(fontSize: 16)),
+                      child: Text("Inhuman", style: TextStyle(fontSize: 16)),
                     ),
                   ],
                 ),
@@ -169,15 +238,23 @@ class _CompetitionMenuState extends State<CompetitionMenu> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(10.0),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.8),
-                  spreadRadius: 5,
-                  blurRadius: 7,
-                  offset: Offset(0, 3), // changes position of shadow
-                ),
-              ],
+              boxShadow: customBoxShadow(),
             ),
+          ),
+          SizedBox(height: 20),
+          InkWell(
+            child: Container(
+              padding: EdgeInsets.all(8),
+              child: Center(
+                child: Text("Let's go", style: TextStyle(fontSize: 20, color: Colors.white, fontWeight: FontWeight.bold)),
+              ),
+              decoration: BoxDecoration(
+                color: selected.contains(-1) ? Colors.grey : Colors.greenAccent,
+                borderRadius: BorderRadius.circular(10.0),
+                boxShadow: customBoxShadow(),
+              ),
+            ),
+            onTap: submitSelection,
           ),
         ],
       ),

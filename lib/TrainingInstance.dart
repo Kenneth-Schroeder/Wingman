@@ -11,14 +11,20 @@
 */
 
 enum TargetType { Full, SingleSpot, TripleSpot }
+enum CompetitionType { training, qualifying, finals }
+enum Gender { none, female, male }
 
 class TrainingInstance {
   int id = -1;
   String title;
   DateTime creationTime;
   int arrowsPerEnd = 6;
+  int numberOfEnds = 0; // 0 means open
   TargetType targetType = TargetType.Full;
   double targetDiameterCM = 122; // 40, 60, 80 oder 122
+  CompetitionType competitionType = CompetitionType.training;
+  Gender referencedGender = Gender.none;
+  int competitionLevel = 1;
 
   TrainingInstance(this.title, this.creationTime);
 
@@ -27,9 +33,13 @@ class TrainingInstance {
         assert(map["creationTime"] != null),
         id = map["id"] == null ? -1 : map["id"],
         targetType = map["targetType"] == null ? TargetType.Full : TargetType.values[map["targetType"]],
+        competitionType = map["competitionType"] == null ? CompetitionType.training : CompetitionType.values[map["competitionType"]],
+        referencedGender = map["referencedGender"] == null ? Gender.none : Gender.values[map["referencedGender"]],
         targetDiameterCM = map["targetDiameterCM"] == null ? 122 : map["targetDiameterCM"],
+        numberOfEnds = map["numberOfEnds"] == null ? 0 : map["numberOfEnds"],
         title = map["title"],
         arrowsPerEnd = map["arrowsPerEnd"],
+        competitionLevel = map["competitionLevel"],
         creationTime = map["creationTime"] is String // if it is passed as string, we can convert it to DateTime object
             ? DateTime.parse(map["creationTime"])
             : map["creationTime"];
@@ -41,6 +51,10 @@ class TrainingInstance {
       "arrowsPerEnd": this.arrowsPerEnd,
       "targetType": this.targetType.index,
       "targetDiameterCM": this.targetDiameterCM,
+      "competitionType": this.competitionType.index,
+      "referencedGender": this.referencedGender.index,
+      "numberOfEnds": this.numberOfEnds,
+      "competitionLevel": this.competitionLevel,
     };
   }
 

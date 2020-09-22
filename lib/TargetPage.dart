@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'ScoreInstance.dart';
 import 'package:gesture_x_detector/gesture_x_detector.dart';
@@ -7,6 +8,7 @@ import 'TargetPainter.dart';
 import 'ArrowPainter.dart';
 import 'SizeConfig.dart';
 import 'dart:math';
+import 'CompetitionSimulator.dart';
 
 class TargetPage extends StatefulWidget {
   TargetPage(this.training, this.scoresByEndMap, {Key key}) : super(key: key);
@@ -37,6 +39,11 @@ class _TargetPageState extends State<TargetPage> {
   double _groupPerimeter = 0;
 
   DatabaseService dbService;
+  CompetitionSimulator simulator;
+  List<List<List<int>>> opponentsScores;
+  List<List<int>> opponentsEndScores;
+  int previouslyUntouchedArrows = 6;
+  int numOpponents = 10;
 
   @override
   void initState() {
@@ -73,6 +80,24 @@ class _TargetPageState extends State<TargetPage> {
     }
 
     targetRadius = SizeConfig().minDim() / 2.2;
+
+    if (widget.training.competitionType != CompetitionType.training) {
+      simulator = CompetitionSimulator(
+        widget.training.competitionType,
+        widget.training.referencedGender,
+        widget.training.targetType == TargetType.Full,
+        widget.training.competitionLevel,
+      );
+    }
+
+    opponentsScores = [];
+    opponentsEndScores = [];
+    for (int i = 0; i < numOpponents; i++) {
+      opponentsScores.add([[]]);
+      opponentsEndScores.add([0]);
+    }
+
+    previouslyUntouchedArrows = widget.training.arrowsPerEnd;
 
     setState(() {});
   }
@@ -141,6 +166,165 @@ class _TargetPageState extends State<TargetPage> {
     return -1;
   }
 
+  void arrowReleasedAction() {
+    int newUntouchedArrows = arrows[endIndex].where((element) => element.pRadius == 1.3).length;
+    if (newUntouchedArrows != previouslyUntouchedArrows && opponentsScores[0][endIndex].length < widget.training.arrowsPerEnd) {
+      // add new arrow to opponents scores
+      for (int i = 0; i < numOpponents; i++) {
+        int score = simulator.getScore();
+        opponentsScores[i][endIndex].add(score);
+        opponentsEndScores[i][endIndex] += score;
+      }
+    }
+    previouslyUntouchedArrows = newUntouchedArrows;
+
+    switch (widget.training.competitionType) {
+      case CompetitionType.training:
+      case CompetitionType.qualifying:
+        break;
+      case CompetitionType.finals:
+        break;
+    }
+  }
+
+  void endFinishedAction() {
+    // todo what if this is called by going back and fourth ??? cant happen i think
+    for (int i = 0; i < numOpponents; i++) {
+      opponentsScores[i].add([]);
+      opponentsEndScores[i].add(0);
+    }
+
+    switch (widget.training.competitionType) {
+      case CompetitionType.training:
+        break;
+      case CompetitionType.qualifying:
+        //opponentScores.add(simulator.getScores(widget.training.arrowsPerEnd));
+        break;
+      case CompetitionType.finals:
+        break;
+    }
+  }
+
+  Widget _opponentStats() {
+    // todo improve this
+    if (opponentsScores == null ||
+        widget.training.competitionType == CompetitionType.training ||
+        opponentsScores[0].length <= endIndex ||
+        opponentsScores[0][endIndex].length == 0) {
+      return Container();
+    }
+
+    return ListView.separated(
+        shrinkWrap: true,
+        physics: NeverScrollableScrollPhysics(),
+        padding: EdgeInsets.all(8),
+        itemBuilder: (BuildContext ctxt, int index) {
+          return Container(
+            padding: EdgeInsets.all(5.0),
+            height: 50,
+            decoration: BoxDecoration(
+              color: Colors.red[200],
+              boxShadow: [new BoxShadow(color: Colors.grey, offset: new Offset(3.0, 2.0), blurRadius: 3.0, spreadRadius: 0.1)],
+              borderRadius: BorderRadius.all(
+                Radius.circular(15),
+              ),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: Center(
+                    child: Text(
+                      index.toString(),
+                      style: TextStyle(
+                        color: Colors.blue[800],
+                        fontSize: 15,
+                        //fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Column(
+                    //crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(
+                        child: Center(
+                            child: Text(
+                          "End: " + opponentsEndScores[index][endIndex].toString(),
+                          style: TextStyle(color: Colors.blue[800]),
+                        )),
+                      ),
+                      Expanded(
+                        child: Center(
+                            child: Text(
+                          "Total: " + opponentsEndScores[index].sublist(0, endIndex + 1).reduce((a, b) => a + b).toString(),
+                          style: TextStyle(color: Colors.blue[800]),
+                        )),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+        separatorBuilder: (BuildContext context, int index) {
+          return SizedBox(
+            height: 8,
+          );
+        },
+        itemCount: opponentsEndScores.length);
+
+    /*new Column(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        Container(
+          color: Colors.white,
+          child: Column(
+            children: [
+              Text("Opponent Quickstats"), // TODO add quickstats
+              Padding(
+                padding: EdgeInsets.all(2.0),
+                child: Container(
+                  height: 1.0,
+                  width: _screenWidth(),
+                  //color: Colors.black,
+                ),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  Column(
+                    children: [
+                      Text("Opponent End Score: " + opponentScores[endIndex].reduce((a, b) => a + b).toString()),
+                      Text("Opponent Total: " + opponentScores.expand((element) => element).toList().reduce((a, b) => a + b).toString()),
+                    ],
+                  ),
+                  Column(
+                    children: [
+                      Text("Opponent End Average: -"),
+                      Text("Opponent Perimeter: - cm"),
+                    ],
+                  ),
+                ],
+              ),
+              Padding(
+                padding: EdgeInsets.all(5.0),
+                child: Container(
+                  height: 1.0,
+                  width: _screenWidth(),
+                  color: Colors.black,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );*/
+  }
+
   Widget loadArrows() {
     List<CustomPaint> arrowPainters = [];
     int counter = 0;
@@ -172,6 +356,7 @@ class _TargetPageState extends State<TargetPage> {
           arrows[endIndex][_draggedArrow].updateScore(widget.training.targetType, targetRadius);
         }
         _draggedArrow = -1;
+        arrowReleasedAction();
         setState(() {});
       },
       onMoveUpdate: (localPos, position, localDelta, delta) {
@@ -210,41 +395,44 @@ class _TargetPageState extends State<TargetPage> {
   }
 
   void nextRound() async {
-    await dbService.updateAllEndsOfTraining(widget.training.id, arrows);
-
-    // go forward and if we hit the end, create more ends...
-    endIndex++;
-
-    if (endIndex < arrows.length) {
+    if (endIndex + 1 < arrows.length) {
       // all good
+      endIndex++;
       setState(() {});
       return;
     }
 
-    // create new end
-    int endID = await dbService.addEnd(widget.training.id);
-    await dbService.addDefaultScores(endID, widget.training.arrowsPerEnd);
+    if (arrows.length < widget.training.numberOfEnds || widget.training.numberOfEnds == 0) {
+      // create new
+      await dbService.updateAllEndsOfTraining(widget.training.id, arrows);
+      endIndex++;
 
-    // just load all again and we are good
-    Map<int, List<ScoreInstance>> allScoresMap = await dbService.getFullEndsOfTraining(widget.training.id);
+      int endID = await dbService.addEnd(widget.training.id);
+      await dbService.addDefaultScores(endID, widget.training.arrowsPerEnd);
 
-    arrows = new List.generate(allScoresMap.length, (i) => []);
-    int counter = 0;
-    allScoresMap.forEach((key, value) {
-      value.forEach((element) {
-        arrows[counter].add(element);
+      // just load all again and we are good
+      Map<int, List<ScoreInstance>> allScoresMap = await dbService.getFullEndsOfTraining(widget.training.id);
+
+      arrows = new List.generate(allScoresMap.length, (i) => []);
+      int counter = 0;
+      allScoresMap.forEach((key, value) {
+        value.forEach((element) {
+          arrows[counter].add(element);
+        });
+        counter++;
       });
-      counter++;
-    });
 
-    setState(() {});
+      endFinishedAction();
+
+      setState(() {});
+    }
   }
 
   void prevRound() async {
     // go back if possible
     if (endIndex == 0) return;
 
-    await dbService.updateAllEndsOfTraining(widget.training.id, arrows);
+    // await dbService.updateAllEndsOfTraining(widget.training.id, arrows);
 
     endIndex--;
     setState(() {});
@@ -335,7 +523,7 @@ class _TargetPageState extends State<TargetPage> {
     // Build upper hull
     for (int i = n - 1, t = k + 1; i > 0; --i) {
       // If the point at K-1 position is not a part
-      // of hull as vector from ans[k-2] to ans[k-1]
+      // of hull as vector from ans[k-2] to ans[k-1]e
       // and ans[k-2] to A[i] has a clockwise turn
       while (k >= t && crossProduct(ans[k - 2], ans[k - 1], points[i - 1]) <= 0) k--;
       ans[k++] = points[i - 1];
@@ -345,6 +533,7 @@ class _TargetPageState extends State<TargetPage> {
     return ans.getRange(0, k - 1).toList();
   }
 
+  // todo fix error when clicking next round too fast
   double getGroupPerimeter(double physicalTargetRadius) {
     // all arrows to Offsets
     List<Offset> arrowOffsets = [];
@@ -356,11 +545,144 @@ class _TargetPageState extends State<TargetPage> {
     return chPerimeter(convexHull(arrowOffsets));
   }
 
-  @override
-  Widget build(BuildContext context) {
+  int _numberOfEnds() {
+    if (widget.training.numberOfEnds == 0) return arrows.length;
+
+    return widget.training.numberOfEnds;
+  }
+
+  double _screenWidth() {
+    return SizeConfig.screenWidth == null ? 1 : SizeConfig.screenWidth;
+  }
+
+  double _screenHeight() {
+    return SizeConfig.screenHeight == null ? 1 : SizeConfig.screenHeight;
+  }
+
+  Widget _quickStats() {
+    return new Column(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        Container(
+          height: _screenHeight() * 0.04,
+          color: Colors.blue[300],
+          child: Center(
+            child: Icon(Icons.arrow_drop_up),
+          ),
+        ),
+        Container(
+          color: Colors.white,
+          child: Column(
+            children: [
+              Text("Quickstats"), // TODO add quickstats
+              Padding(
+                padding: EdgeInsets.all(2.0),
+                child: Container(
+                  height: 1.0,
+                  width: _screenWidth(),
+                  //color: Colors.black,
+                ),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  Column(
+                    children: [
+                      Text("End Score: " + getEndScore().toString()),
+                      Text("Total: " + getTotalScore().toString()),
+                    ],
+                  ),
+                  Column(
+                    children: [
+                      Text("End Average: " + getEndAverage().toStringAsFixed(2)),
+                      Text("Perimeter: " + this._groupPerimeter.toStringAsFixed(2) + " cm"),
+                    ],
+                  ),
+                ],
+              ),
+              Padding(
+                padding: EdgeInsets.all(5.0),
+                child: Container(
+                  height: 1.0,
+                  width: _screenWidth(),
+                  color: Colors.black,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _bottomBar() {
     if (_draggedArrow == -1)
       _groupPerimeter = getGroupPerimeter(widget.training.targetDiameterCM); // todo remove hardcoding here and further down
 
+    return BottomAppBar(
+      color: Colors.white,
+      child: Row(
+        mainAxisSize: MainAxisSize.max,
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: <Widget>[
+          FlatButton(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(1000.0)),
+            padding: EdgeInsets.all(4.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Icon(Icons.navigate_before),
+                Text("Previous"),
+              ],
+            ),
+            onPressed: prevRound,
+          ),
+          Text(
+            "End " + (endIndex + 1).toString() + "/" + _numberOfEnds().toString(),
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          FlatButton(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(1000.0)),
+            padding: EdgeInsets.all(4.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Icon(Icons.navigate_next),
+                Text("Next"),
+              ],
+            ),
+            onPressed: nextRound,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _dragScrollSheet() {
+    return DraggableScrollableSheet(
+      initialChildSize: 0.04,
+      maxChildSize: 0.8,
+      minChildSize: 0.04,
+      builder: (context, scrollController) {
+        return SingleChildScrollView(
+          controller: scrollController,
+          child: Column(
+            children: [_quickStats(), _opponentStats()],
+          ),
+        );
+      },
+    );
+  }
+
+  /*
+  SingleChildScrollView(
+          controller: scrollController,
+          child:
+   */
+
+  @override
+  Widget build(BuildContext context) {
     return WillPopScope(
         child: Scaffold(
           appBar: AppBar(title: Text("Score Recording"), actions: <Widget>[
@@ -371,84 +693,9 @@ class _TargetPageState extends State<TargetPage> {
             ),
           ]),
           body: Stack(
-            children: [createTarget(), loadArrows()],
+            children: [createTarget(), loadArrows(), _dragScrollSheet()],
           ),
-          bottomNavigationBar: BottomAppBar(
-              color: Colors.white,
-              child: new Column(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  Text("Quickstats"), // TODO add quickstats
-                  Padding(
-                    padding: EdgeInsets.all(2.0),
-                    child: Container(
-                      height: 1.0,
-                      width: SizeConfig.screenWidth,
-                      //color: Colors.black,
-                    ),
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      Column(
-                        children: [
-                          Text("End Score: " + getEndScore().toString()),
-                          Text("Total: " + getTotalScore().toString()),
-                        ],
-                      ),
-                      Column(
-                        children: [
-                          Text("End Average: " + getEndAverage().toStringAsFixed(2)),
-                          Text("Perimeter: " + this._groupPerimeter.toStringAsFixed(2) + " cm"),
-                        ],
-                      ),
-                    ],
-                  ),
-                  Padding(
-                    padding: EdgeInsets.all(5.0),
-                    child: Container(
-                      height: 1.0,
-                      width: SizeConfig.screenWidth,
-                      color: Colors.black,
-                    ),
-                  ),
-                  new Row(
-                    mainAxisSize: MainAxisSize.max,
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: <Widget>[
-                      FlatButton(
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(1000.0)),
-                        padding: EdgeInsets.all(4.0),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: <Widget>[
-                            Icon(Icons.navigate_before),
-                            Text("Previous"),
-                          ],
-                        ),
-                        onPressed: prevRound,
-                      ),
-                      Text(
-                        "End " + (endIndex + 1).toString() + "/" + arrows.length.toString(),
-                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                      ),
-                      FlatButton(
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(1000.0)),
-                        padding: EdgeInsets.all(4.0),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: <Widget>[
-                            Icon(Icons.navigate_next),
-                            Text("Next"),
-                          ],
-                        ),
-                        onPressed: nextRound,
-                      ),
-                    ],
-                  ),
-                ],
-              )),
+          bottomNavigationBar: _bottomBar(),
         ),
         onWillPop: onLeave);
   }
