@@ -125,7 +125,8 @@ class _CompetitionMenuState extends State<CompetitionMenu> {
           training.numberOfEnds = 12;
         } else {
           // finals
-          training.arrowsPerEnd = 0;
+          training.arrowsPerEnd = 3;
+          training.numberOfEnds = 0;
         }
       } else {
         // indoor

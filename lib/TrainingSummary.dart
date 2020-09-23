@@ -17,6 +17,7 @@ class TrainingSummary extends StatefulWidget {
 class _TrainingSummaryState extends State<TrainingSummary> {
   DatabaseService dbService; // = DatabaseService.old();
   Map<int, List<ScoreInstance>> scoresByEnd = Map<int, List<ScoreInstance>>();
+  bool startRoutineFinished = false;
 
   @override
   void initState() {
@@ -27,6 +28,7 @@ class _TrainingSummaryState extends State<TrainingSummary> {
   void onStart() async {
     dbService = await DatabaseService.create();
     scoresByEnd = await dbService.getFullEndsOfTraining(widget.training.id);
+    startRoutineFinished = true;
     setState(() {});
   }
 
@@ -205,8 +207,16 @@ class _TrainingSummaryState extends State<TrainingSummary> {
     ).then((value) => onStart());
   }
 
-  @override
-  Widget build(BuildContext context) {
+  Widget emptyScreen() {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(widget.training.title),
+      ),
+      body: Text("loading..."),
+    );
+  }
+
+  Widget showContent() {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.training.title),
@@ -218,5 +228,14 @@ class _TrainingSummaryState extends State<TrainingSummary> {
         child: Icon(Icons.assignment),
       ),
     );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (startRoutineFinished) {
+      return showContent();
+    }
+
+    return emptyScreen();
   }
 }

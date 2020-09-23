@@ -50,10 +50,10 @@ class _TargetPageState extends State<TargetPage> {
   List<Archer> opponents;
   bool sortAscending = false;
   int sortColumnIndex = 2;
-  int previouslyUntouchedArrows = 6; // todo dont hardcode here but count number of pRadius = 1.3
+  int numberOfUntouchedArrows;
   int numOpponents = 10;
   List<int> currentMatchPoints = [0, 0];
-  bool onStartFinished = false;
+  bool startRoutineFinished = false;
 
   @override
   void initState() {
@@ -91,6 +91,8 @@ class _TargetPageState extends State<TargetPage> {
 
     targetRadius = SizeConfig().minDim() / 2.2;
 
+    numberOfUntouchedArrows = countNumberOfUntouchedArrows(); // has to be called before first getMatchPoints()
+
     if (widget.training.competitionType != CompetitionType.training) {
       simulator = CompetitionSimulator(
         widget.training.competitionType,
@@ -99,12 +101,12 @@ class _TargetPageState extends State<TargetPage> {
         widget.training.competitionLevel,
       );
 
+      if (widget.training.competitionType == CompetitionType.finals) {
+        numOpponents = 1;
+      }
+
       if (await dbService.getAllOpponentIDs(widget.training.id).then((value) => value.length == 0)) {
         opponents = [];
-
-        if (widget.training.competitionType == CompetitionType.finals) {
-          numOpponents = 1;
-        }
 
         for (int i = 0; i < numOpponents; i++) {
           opponents.add(Archer(i.toString()));
@@ -125,10 +127,13 @@ class _TargetPageState extends State<TargetPage> {
       currentMatchPoints = getMatchPoints();
     }
 
-    previouslyUntouchedArrows = arrows[endIndex].where((element) => element.pRadius == 1.3).length;
-    onStartFinished = true;
+    startRoutineFinished = true;
 
     setState(() {});
+  }
+
+  int countNumberOfUntouchedArrows() {
+    return arrows[endIndex].where((element) => element.isUntouched == 1).length;
   }
 
   Offset draggedTargetCenter() {
@@ -206,7 +211,7 @@ class _TargetPageState extends State<TargetPage> {
   List<int> getMatchPoints() {
     List<int> points = [0, 0];
 
-    if (opponents == null) {
+    if (opponents == null || numberOfUntouchedArrows == arrows[endIndex].length) {
       return points;
     }
 
@@ -271,8 +276,8 @@ class _TargetPageState extends State<TargetPage> {
   void arrowReleasedAction() {
     if (widget.training.competitionType == CompetitionType.training) return;
 
-    int newUntouchedArrows = arrows[endIndex].where((element) => element.pRadius == 1.3).length;
-    if (newUntouchedArrows != previouslyUntouchedArrows && opponents[0].arrowScores[endIndex].length < numArrowsForEnd(endIndex)) {
+    int newUntouchedArrows = countNumberOfUntouchedArrows();
+    if (newUntouchedArrows != numberOfUntouchedArrows && opponents[0].arrowScores[endIndex].length < numArrowsForEnd(endIndex)) {
       // add new arrow to opponents scores
       for (int i = 0; i < numOpponents; i++) {
         int score = simulator.getScore();
@@ -286,13 +291,13 @@ class _TargetPageState extends State<TargetPage> {
       }
     }
 
-    previouslyUntouchedArrows = newUntouchedArrows;
+    numberOfUntouchedArrows = newUntouchedArrows;
   }
 
   void endFinishedAction() {
+    // only executed when clicking next for the first time for each end
     if (widget.training.competitionType == CompetitionType.training) return;
 
-    // todo what if this is called by going back and fourth ??? cant happen i think
     for (int i = 0; i < numOpponents; i++) {
       opponents[i].arrowScores.add([]);
       opponents[i].endScores.add(0);
@@ -342,17 +347,13 @@ class _TargetPageState extends State<TargetPage> {
   }
 
   Widget _opponentStats() {
-    // todo improve this
-    if (opponents == null ||
-        opponents.length == 0 ||
-        widget.training.competitionType == CompetitionType.training ||
+    if (widget.training.competitionType == CompetitionType.training ||
         opponents[0].endScores.length <= endIndex ||
         opponents[0].arrowScores[endIndex].length == 0) {
       return Container();
     }
 
     List<Archer> archers = getArchers();
-
     List<DataRow> rows = [];
 
     for (int i = 0; i < archers.length; i++) {
@@ -505,7 +506,7 @@ class _TargetPageState extends State<TargetPage> {
 
     if (endIndex < arrows.length) {
       // all good
-      previouslyUntouchedArrows = arrows[endIndex].where((element) => element.pRadius == 1.3).length; // todo wrap in nice function
+      numberOfUntouchedArrows = countNumberOfUntouchedArrows();
       setState(() {});
       return;
     }
@@ -534,7 +535,7 @@ class _TargetPageState extends State<TargetPage> {
         counter++;
       });
 
-      previouslyUntouchedArrows = arrows[endIndex].where((element) => element.pRadius == 1.3).length;
+      numberOfUntouchedArrows = countNumberOfUntouchedArrows();
 
       endFinishedAction(); // todo getting error here when reentering saved match and clicking forward over the end?? this is because gameOver is not working properly
 
@@ -814,7 +815,9 @@ class _TargetPageState extends State<TargetPage> {
 
   @override
   Widget build(BuildContext context) {
-    if (onStartFinished) return showContent();
+    if (startRoutineFinished) {
+      return showContent();
+    }
 
     return emptyScreen();
   }

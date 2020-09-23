@@ -28,6 +28,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   List<TrainingInstance> _trainings = [];
   DatabaseService dbService;
+  bool startRoutineFinished = false;
 
   @override
   void initState() {
@@ -38,6 +39,7 @@ class _MyHomePageState extends State<MyHomePage> {
   void onStart() async {
     dbService = await DatabaseService.create();
     await _loadTrainings();
+    startRoutineFinished = true;
     setState(() {});
   }
 
@@ -158,15 +160,16 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
+  Widget emptyScreen() {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(widget.title),
+      ),
+      body: Text("loading..."),
+    );
+  }
 
+  Widget showContent() {
     return Scaffold(
       appBar: AppBar(
         // Here we take the value from the MyHomePage object that was created by
@@ -194,5 +197,14 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Icon(Icons.add),
       ), // This trailing comma makes auto-formatting nicer for build methods.
     );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (startRoutineFinished) {
+      return showContent();
+    }
+
+    return emptyScreen();
   }
 }

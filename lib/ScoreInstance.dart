@@ -10,6 +10,7 @@ class ScoreInstance {
   int endID;
   double pRadius = 1.3; // polar radius
   double pAngle = 13 / 20 * pi; // polar angle
+  int isUntouched = 1; // 1 == true
 
   ScoreInstance.scoreOnly(this.endID, this.score);
   ScoreInstance(this.endID);
@@ -25,7 +26,8 @@ class ScoreInstance {
         score = map["score"],
         endID = map["endID"],
         pRadius = map["pRadius"] == null ? -1 : map["pRadius"],
-        pAngle = map["pAngle"] == null ? -1 : map["pAngle"];
+        pAngle = map["pAngle"] == null ? -1 : map["pAngle"],
+        isUntouched = map["isUntouched"] == null ? 1 : map["isUntouched"];
 
   Map<String, dynamic> toMap() {
     return {
@@ -34,6 +36,7 @@ class ScoreInstance {
       "endID": this.endID,
       "pRadius": this.pRadius,
       "pAngle": this.pAngle,
+      "isUntouched": this.isUntouched,
     };
   }
 
@@ -142,6 +145,7 @@ class ScoreInstance {
 
   void moveByOffset(Offset offset, double targetRadius, TargetType targetType) {
     // convert own coordinates to cartesian, add offset, convert back
+    isUntouched = 0;
     Offset cartesian = getCartesianCoordinates(targetRadius);
     cartesian += offset;
     setWithCartesianCoordinates(cartesian, targetRadius);

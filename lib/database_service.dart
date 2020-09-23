@@ -67,6 +67,7 @@ class DatabaseService {
             score INTEGER,
             pRadius REAL,
             pAngle REAL,
+            isUntouched INTEGER,
             endID INTEGER NOT NULL,
             FOREIGN KEY (endID) REFERENCES $tableEnds (endID) ON DELETE CASCADE ) 
           ''',
@@ -107,12 +108,14 @@ class DatabaseService {
     // just delete all and create new entries?
     deleteAllEndsOfOpponent(opponentID);
 
-    archer.arrowScores.forEach((end) {
+    for (var end in archer.arrowScores) {
       // update arrows that are in DB already and insert new ones for those that have no ID
-      addOpponentsEnd(opponentID, end.length).then((endID) => end.forEach((score) {
-            addScore(ScoreInstance.scoreOnly(endID, score)); // TODO this uses unnecessarily much storage
-          }));
-    });
+      addOpponentsEnd(opponentID, end.length).then((endID) {
+        for (var score in end) {
+          addScore(ScoreInstance.scoreOnly(endID, score)); // TODO this uses unnecessarily much storage
+        }
+      });
+    }
 
     return true;
   }
@@ -139,26 +142,26 @@ class DatabaseService {
     Archer opponent = Archer(endsMap.first['name'].toString());
 
     Map<int, List<int>> scoresByEnd = Map<int, List<int>>(); // maps from endID to the scores
-    endsMap.forEach((element) {
+    for (var element in endsMap) {
       if (!scoresByEnd.containsKey(element["endID"])) {
         scoresByEnd[element["endID"]] = [];
       }
       scoresByEnd[element["endID"]].add(element["score"]);
-    });
+    }
 
     opponent.arrowScores = new List.generate(scoresByEnd.length, (i) => []);
     int counter = 0;
-    scoresByEnd.forEach((key, value) {
-      value.forEach((element) {
-        opponent.arrowScores[counter].add(element);
-      });
+    for (var end in scoresByEnd.values) {
+      for (var arrow in end) {
+        opponent.arrowScores[counter].add(arrow);
+      }
       counter++;
-    });
+    }
 
     opponent.endScores = [];
-    opponent.arrowScores.forEach((end) {
+    for (var end in opponent.arrowScores) {
       opponent.endScores.add(end.reduce((a, b) => a + b));
-    });
+    }
 
     return opponent;
   }
@@ -166,9 +169,11 @@ class DatabaseService {
   Future<List<int>> getAllOpponentIDs(int trainingID) async {
     Database db = await database;
 
-    return await db.query(tableOpponents, where: 'trainingID = ?', whereArgs: [trainingID]).then((value) {
+    return await db.query(tableOpponents, where: 'trainingID = ?', whereArgs: [trainingID]).then((table) {
       List<int> opponentIDs = [];
-      value.forEach((row) => opponentIDs.add(row['id']));
+      for (var row in table) {
+        opponentIDs.add(row['id']);
+      }
       return opponentIDs;
     });
   }
@@ -178,7 +183,6 @@ class DatabaseService {
     List<Archer> opponents = [];
 
     for (int id in opponentIDs) {
-      print(id);
       await getOpponent(id).then((archer) => opponents.add(archer));
     }
 
@@ -221,31 +225,34 @@ class DatabaseService {
         "WHERE $tableEnds.trainingID == $trainingID");
 
     Map<int, List<ScoreInstance>> scoresByEnd = Map<int, List<ScoreInstance>>();
-    endsMap.forEach((element) {
-      if (!scoresByEnd.containsKey(element["endID"])) {
-        scoresByEnd[element["endID"]] = [];
+
+    for (var item in endsMap) {
+      if (!scoresByEnd.containsKey(item["endID"])) {
+        scoresByEnd[item["endID"]] = [];
       }
-      scoresByEnd[element["endID"]].add(ScoreInstance.fromMap(element));
-    });
+      scoresByEnd[item["endID"]].add(ScoreInstance.fromMap(item));
+    }
 
     return scoresByEnd;
   }
 
   Future<bool> updateAllEndsOfTraining(int trainingID, List<List<ScoreInstance>> arrows) async {
     // iterate over all ends and as long as arrows have an id, update them individually
-    arrows.forEach((end) {
+    for (var end in arrows) {
       // update arrows that are in DB already and insert new ones for those that have no ID
       if (end.first.shotID != -1) {
-        end.forEach((arrow) {
-          updateScore(arrow); // todo check if its alright not to use await here NO NOT GOOD check getAllOpponents() for better solution
-        });
+        for (var arrow in end) {
+          await updateScore(arrow);
+        }
       } else {
-        addEnd(trainingID).then((endID) => end.forEach((arrow) {
-              arrow.endID = endID;
-              addScore(arrow);
-            }));
+        await addEnd(trainingID).then((endID) {
+          for (var arrow in end) {
+            arrow.endID = endID;
+            addScore(arrow);
+          }
+        });
       }
-    });
+    }
 
     return true;
   }
@@ -256,7 +263,9 @@ class DatabaseService {
         "SELECT * FROM $tableScores INNER JOIN $tableEnds ON $tableScores.endID = $tableEnds.endID WHERE $tableScores.endID == $endID");
 
     List<ScoreInstance> scores = [];
-    scoresMap.forEach((row) => scores.add(ScoreInstance.fromMap(row)));
+    for (var row in scoresMap) {
+      scores.add(ScoreInstance.fromMap(row));
+    }
 
     return scores;
   }
@@ -280,7 +289,9 @@ class DatabaseService {
 
     return db.query(tableTrainings).then((value) {
       List<TrainingInstance> trainings = [];
-      value.forEach((row) => trainings.add(TrainingInstance.fromMap(row)));
+      for (var row in value) {
+        trainings.add(TrainingInstance.fromMap(row));
+      }
       return trainings;
     });
   }
