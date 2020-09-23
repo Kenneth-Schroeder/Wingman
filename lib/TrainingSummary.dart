@@ -41,20 +41,20 @@ class _TrainingSummaryState extends State<TrainingSummary> {
     int totalSum = 0;
     int endCounter = 0;
 
-    scoresByEnd.forEach((key, value) {
+    scoresByEnd.forEach((endID, scores) {
       // for each end
       int endSum = 0;
       endCounter++;
 
       List<DataCell> cells = [];
 
-      value.sort((b, a) => a.score.compareTo(b.score));
+      scores.sort((b, a) => a.score.compareTo(b.score));
 
       int endScoreCounter = 0;
       int rowScoreCounter = 0;
       int rowOfEndCounter = 0;
       int rowSum = 0;
-      value.forEach((scoreInstance) {
+      scores.forEach((scoreInstance) {
         // for each scoreInstance in end
         rowSum += scoreInstance.score;
         endSum += scoreInstance.score;
@@ -91,8 +91,8 @@ class _TrainingSummaryState extends State<TrainingSummary> {
         endScoreCounter++;
         rowScoreCounter++;
 
-        if (endScoreCounter == value.length && value.length % 3 != 0) {
-          for (int i = 0; i < 3 - (value.length % 3); i++) {
+        if (endScoreCounter == scores.length && scores.length % 3 != 0) {
+          for (int i = 0; i < 3 - (scores.length % 3); i++) {
             cells.add(DataCell(Text("", style: TextStyle(fontSize: 16))));
             rowScoreCounter++;
           }
@@ -113,7 +113,7 @@ class _TrainingSummaryState extends State<TrainingSummary> {
           String totalSumText = "";
 
           // this is the last row of an end
-          if ((value.length / 3.0).ceil() - rowOfEndCounter <= 0) {
+          if ((scores.length / 3.0).ceil() - rowOfEndCounter <= 0) {
             endSumText = endSum.toString();
             totalSumText = totalSum.toString();
           }

@@ -52,6 +52,8 @@ class _TargetPageState extends State<TargetPage> {
   int sortColumnIndex = 2;
   int previouslyUntouchedArrows = 6; // todo dont hardcode here but count number of pRadius = 1.3
   int numOpponents = 10;
+  List<int> currentMatchPoints = [0, 0];
+  bool onStartFinished = false;
 
   @override
   void initState() {
@@ -96,27 +98,35 @@ class _TargetPageState extends State<TargetPage> {
         widget.training.targetType == TargetType.Full,
         widget.training.competitionLevel,
       );
-    }
 
-    if (await dbService.getAllOpponentIDs(widget.training.id).then((value) => value.length == 0)) {
-      opponents = [];
-      for (int i = 0; i < numOpponents; i++) {
-        opponents.add(Archer(i.toString()));
-        dbService.addOpponent(widget.training.id, i.toString());
-      }
-    } else {
-      opponents = await dbService.getAllOpponents(widget.training.id);
+      if (await dbService.getAllOpponentIDs(widget.training.id).then((value) => value.length == 0)) {
+        opponents = [];
 
-      int len = opponents[0].arrowScores.length;
-      for (int j = 0; j < arrows.length - len; j++) {
+        if (widget.training.competitionType == CompetitionType.finals) {
+          numOpponents = 1;
+        }
+
         for (int i = 0; i < numOpponents; i++) {
-          opponents[i].arrowScores.add([]);
-          opponents[i].endScores.add(0);
+          opponents.add(Archer(i.toString()));
+          dbService.addOpponent(widget.training.id, i.toString());
+        }
+      } else {
+        opponents = await dbService.getAllOpponents(widget.training.id);
+
+        int len = opponents[0].arrowScores.length;
+        for (int j = 0; j < arrows.length - len; j++) {
+          for (int i = 0; i < numOpponents; i++) {
+            opponents[i].arrowScores.add([]);
+            opponents[i].endScores.add(0);
+          }
         }
       }
+
+      currentMatchPoints = getMatchPoints();
     }
 
-    previouslyUntouchedArrows = widget.training.arrowsPerEnd;
+    previouslyUntouchedArrows = arrows[endIndex].where((element) => element.pRadius == 1.3).length;
+    onStartFinished = true;
 
     setState(() {});
   }
@@ -185,18 +195,97 @@ class _TargetPageState extends State<TargetPage> {
     return -1;
   }
 
+  int numArrowsForEnd(int endIndex) {
+    if (widget.training.competitionType == CompetitionType.finals && endIndex == 5) {
+      return 1;
+    }
+
+    return widget.training.arrowsPerEnd;
+  }
+
+  List<int> getMatchPoints() {
+    List<int> points = [0, 0];
+
+    if (opponents == null) {
+      return points;
+    }
+
+    for (int i = 0; i < opponents[0].endScores.length; i++) {
+      if (opponents[0].endScores[i] < getEndScore(i)) {
+        points[0] += 2;
+      } else if (opponents[0].endScores[i] > getEndScore(i)) {
+        points[1] += 2;
+      } else {
+        points[0] += 1;
+        points[1] += 1;
+      }
+    }
+
+    return points;
+  }
+
+  bool gameOver() {
+    if (widget.training.competitionType == CompetitionType.finals && currentMatchPoints[0] >= 6 || currentMatchPoints[1] >= 6) {
+      return true;
+    }
+    return false;
+  }
+
+  Widget matchPointsDisplay() {
+    Widget w = Container();
+
+    Widget winDisplay = Container();
+    if (gameOver()) {
+      String text = "DEFEAT";
+      if (currentMatchPoints[0] > currentMatchPoints[1]) {
+        text = "VICTORY";
+      }
+
+      winDisplay = Text(
+        text,
+        style: TextStyle(fontSize: 20, color: Colors.white, fontWeight: FontWeight.bold),
+      );
+    }
+
+    if (widget.training.competitionType == CompetitionType.finals) {
+      w = Container(
+        height: _screenHeight() * 0.12,
+        color: Colors.red[300],
+        child: Center(
+          child: Column(
+            children: [
+              Text(
+                currentMatchPoints[0].toString() + " VS " + currentMatchPoints[1].toString(),
+                style: TextStyle(fontSize: 20, color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+              winDisplay,
+            ],
+          ),
+        ),
+      );
+    }
+
+    return w;
+  }
+
   void arrowReleasedAction() {
     if (widget.training.competitionType == CompetitionType.training) return;
 
     int newUntouchedArrows = arrows[endIndex].where((element) => element.pRadius == 1.3).length;
-    if (newUntouchedArrows != previouslyUntouchedArrows && opponents[0].arrowScores[endIndex].length < widget.training.arrowsPerEnd) {
+    if (newUntouchedArrows != previouslyUntouchedArrows && opponents[0].arrowScores[endIndex].length < numArrowsForEnd(endIndex)) {
       // add new arrow to opponents scores
       for (int i = 0; i < numOpponents; i++) {
         int score = simulator.getScore();
         opponents[i].arrowScores[endIndex].add(score);
         opponents[i].endScores[endIndex] += score;
       }
+
+      if (newUntouchedArrows == 0) {
+        // all arrows placed
+        currentMatchPoints = getMatchPoints();
+      }
     }
+
     previouslyUntouchedArrows = newUntouchedArrows;
   }
 
@@ -412,20 +501,26 @@ class _TargetPageState extends State<TargetPage> {
   }
 
   void nextRound() async {
-    if (endIndex + 1 < arrows.length) {
+    endIndex++;
+
+    if (endIndex < arrows.length) {
       // all good
-      endIndex++;
+      previouslyUntouchedArrows = arrows[endIndex].where((element) => element.pRadius == 1.3).length; // todo wrap in nice function
       setState(() {});
+      return;
+    }
+
+    if (gameOver()) {
+      endIndex--; // do nothing (+-1)
       return;
     }
 
     if (arrows.length < widget.training.numberOfEnds || widget.training.numberOfEnds == 0) {
       // create new
       await dbService.updateAllEndsOfTraining(widget.training.id, arrows);
-      endIndex++;
 
       int endID = await dbService.addEnd(widget.training.id);
-      await dbService.addDefaultScores(endID, widget.training.arrowsPerEnd);
+      await dbService.addDefaultScores(endID, numArrowsForEnd(endIndex));
 
       // just load all again and we are good
       Map<int, List<ScoreInstance>> allScoresMap = await dbService.getFullEndsOfTraining(widget.training.id);
@@ -439,7 +534,9 @@ class _TargetPageState extends State<TargetPage> {
         counter++;
       });
 
-      endFinishedAction();
+      previouslyUntouchedArrows = arrows[endIndex].where((element) => element.pRadius == 1.3).length;
+
+      endFinishedAction(); // todo getting error here when reentering saved match and clicking forward over the end?? this is because gameOver is not working properly
 
       setState(() {});
     }
@@ -456,7 +553,9 @@ class _TargetPageState extends State<TargetPage> {
   }
 
   Future<bool> onLeave() async {
-    await dbService.updateAllOpponents(widget.training.id, opponents);
+    if (opponents != null) {
+      await dbService.updateAllOpponents(widget.training.id, opponents);
+    }
     return await dbService.updateAllEndsOfTraining(widget.training.id, arrows);
   }
 
@@ -531,18 +630,12 @@ class _TargetPageState extends State<TargetPage> {
 
     // Build lower hull
     for (int i = 0; i < n; ++i) {
-      // If the point at K-1 position is not a part
-      // of hull as vector from ans[k-2] to ans[k-1]
-      // and ans[k-2] to A[i] has a clockwise turn
       while (k >= 2 && crossProduct(ans[k - 2], ans[k - 1], points[i]) <= 0) k--;
       ans[k++] = points[i];
     }
 
     // Build upper hull
     for (int i = n - 1, t = k + 1; i > 0; --i) {
-      // If the point at K-1 position is not a part
-      // of hull as vector from ans[k-2] to ans[k-1]e
-      // and ans[k-2] to A[i] has a clockwise turn
       while (k >= t && crossProduct(ans[k - 2], ans[k - 1], points[i - 1]) <= 0) k--;
       ans[k++] = points[i - 1];
     }
@@ -570,6 +663,7 @@ class _TargetPageState extends State<TargetPage> {
   }
 
   double _screenWidth() {
+    // todo make sure to use these
     return SizeConfig.screenWidth == null ? 1 : SizeConfig.screenWidth;
   }
 
@@ -686,15 +780,21 @@ class _TargetPageState extends State<TargetPage> {
         return SingleChildScrollView(
           controller: scrollController,
           child: Column(
-            children: [_quickStats(), _opponentStats()],
+            children: [_quickStats(), matchPointsDisplay(), _opponentStats()],
           ),
         );
       },
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
+  Widget emptyScreen() {
+    return Scaffold(
+      appBar: AppBar(title: Text("Score Recording")),
+      body: Text("loading..."),
+    );
+  }
+
+  Widget showContent() {
     return WillPopScope(
         child: Scaffold(
           appBar: AppBar(title: Text("Score Recording"), actions: <Widget>[
@@ -710,5 +810,12 @@ class _TargetPageState extends State<TargetPage> {
           bottomNavigationBar: _bottomBar(),
         ),
         onWillPop: onLeave);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (onStartFinished) return showContent();
+
+    return emptyScreen();
   }
 }

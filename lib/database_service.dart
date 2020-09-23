@@ -178,6 +178,7 @@ class DatabaseService {
     List<Archer> opponents = [];
 
     for (int id in opponentIDs) {
+      print(id);
       await getOpponent(id).then((archer) => opponents.add(archer));
     }
 
