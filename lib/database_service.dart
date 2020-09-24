@@ -39,6 +39,7 @@ class DatabaseService {
             referencedGender INTEGER,
             numberOfEnds INTEGER,
             targetDiameterCM REAL,
+            arrowDiameterMM REAL,
             creationTime DATETIME)
           ''',
         );
@@ -63,7 +64,7 @@ class DatabaseService {
         db.execute(
           '''CREATE TABLE $tableScores(
             shotID INTEGER PRIMARY KEY AUTOINCREMENT,
-            arrowRadius REAL,
+            relativeArrowRadius REAL,
             score INTEGER,
             pRadius REAL,
             pAngle REAL,
@@ -209,9 +210,9 @@ class DatabaseService {
     return updateCount;
   }
 
-  void addDefaultScores(int endID, int number) async {
+  void addDefaultScores(int endID, int number, double relativeArrowRadius) async {
     for (var i = 0; i < number; i++) {
-      addScore(ScoreInstance(endID));
+      addScore(ScoreInstance(endID, relativeArrowRadius));
     }
   }
 
@@ -276,7 +277,7 @@ class DatabaseService {
     db
         .insert(tableTrainings, instance.toMap())
         .then((value) => addEnd(value))
-        .then((value) => addDefaultScores(value, instance.arrowsPerEnd));
+        .then((value) => addDefaultScores(value, instance.arrowsPerEnd, instance.relativeArrowWidth()));
   }
 
   void deleteTraining(int trainingID) async {

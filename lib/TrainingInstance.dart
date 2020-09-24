@@ -22,6 +22,7 @@ class TrainingInstance {
   int numberOfEnds = 0; // 0 means open
   TargetType targetType = TargetType.Full;
   double targetDiameterCM = 122; // 40, 60, 80 oder 122
+  double arrowDiameterMM = 5;
   CompetitionType competitionType = CompetitionType.training;
   Gender referencedGender = Gender.none;
   int competitionLevel = 1;
@@ -36,6 +37,7 @@ class TrainingInstance {
         competitionType = map["competitionType"] == null ? CompetitionType.training : CompetitionType.values[map["competitionType"]],
         referencedGender = map["referencedGender"] == null ? Gender.none : Gender.values[map["referencedGender"]],
         targetDiameterCM = map["targetDiameterCM"] == null ? 122 : map["targetDiameterCM"],
+        arrowDiameterMM = map["arrowDiameterMM"] == null ? 5 : map["arrowDiameterMM"],
         numberOfEnds = map["numberOfEnds"] == null ? 0 : map["numberOfEnds"],
         title = map["title"],
         arrowsPerEnd = map["arrowsPerEnd"],
@@ -51,11 +53,16 @@ class TrainingInstance {
       "arrowsPerEnd": this.arrowsPerEnd,
       "targetType": this.targetType.index,
       "targetDiameterCM": this.targetDiameterCM,
+      "arrowDiameterMM": this.arrowDiameterMM,
       "competitionType": this.competitionType.index,
       "referencedGender": this.referencedGender.index,
       "numberOfEnds": this.numberOfEnds,
       "competitionLevel": this.competitionLevel,
     };
+  }
+
+  double relativeArrowWidth() {
+    return arrowDiameterMM / targetDiameterCM / 10;
   }
 
   String date() {

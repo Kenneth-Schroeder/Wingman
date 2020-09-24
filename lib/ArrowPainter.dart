@@ -2,15 +2,13 @@ import 'package:flutter/material.dart';
 import 'ScoreInstance.dart';
 
 class ArrowPainter extends CustomPainter {
-  ArrowPainter.fromInstance(
-      ScoreInstance instance, Offset targetCenter, double targetRadius, this._dropOffset, this._isDragged, this._scaleFactor)
+  ArrowPainter.fromInstance(ScoreInstance instance, Offset targetCenter, double targetRadius, this._dropOffset, this._isDragged)
       : this._offset = instance.getCartesianCoordinates(targetRadius) + targetCenter,
-        this._radius = instance.arrowRadius * targetRadius;
+        this._radius = instance.relativeArrowRadius * targetRadius;
 
   final Offset _offset;
   final double _radius;
   bool _isDragged = true;
-  double _scaleFactor;
   Offset _dropOffset;
 
   @override
@@ -28,11 +26,11 @@ class ArrowPainter extends CustomPainter {
 
     Paint paint3 = Paint()
       ..color = Colors.purple
-      ..strokeWidth = 3.0
+      ..strokeWidth = _radius / 2
       ..style = PaintingStyle.stroke;
 
     double factor = 3.3;
-    double wingRadius = _radius * 2.5;
+    double wingRadius = -_dropOffset.dy / 7; //_radius * 10;
 
     if (_isDragged) {
       canvas.drawLine(_offset, _offset + _dropOffset, paint3);

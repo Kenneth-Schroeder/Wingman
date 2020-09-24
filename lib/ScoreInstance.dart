@@ -5,16 +5,17 @@ import 'TrainingInstance.dart';
 
 class ScoreInstance {
   int shotID = -1;
-  double arrowRadius = 0.03; // percentage of target radius, which is normalized to 1
+  double relativeArrowRadius = 0.03; // percentage of target radius, which is normalized to 1
   int score = 0;
   int endID;
   double pRadius = 1.3; // polar radius
   double pAngle = 13 / 20 * pi; // polar angle
   int isUntouched = 1; // 1 == true
 
-  ScoreInstance.scoreOnly(this.endID, this.score);
-  ScoreInstance(this.endID);
+  ScoreInstance.scoreOnly(this.endID, this.score); // for opponent scores
+  ScoreInstance(this.endID, this.relativeArrowRadius);
   ScoreInstance.positioned(this.endID, this.score, Offset position, double targetRadius) {
+    // todo - is this used anymore?
     setWithCartesianCoordinates(position, targetRadius);
   }
 
@@ -22,7 +23,7 @@ class ScoreInstance {
       : assert(map["score"] != null),
         assert(map["endID"] != null),
         shotID = map["shotID"],
-        arrowRadius = map["arrowRadius"],
+        relativeArrowRadius = map["relativeArrowRadius"],
         score = map["score"],
         endID = map["endID"],
         pRadius = map["pRadius"] == null ? -1 : map["pRadius"],
@@ -31,7 +32,7 @@ class ScoreInstance {
 
   Map<String, dynamic> toMap() {
     return {
-      "arrowRadius": this.arrowRadius,
+      "relativeArrowRadius": this.relativeArrowRadius,
       "score": this.score,
       "endID": this.endID,
       "pRadius": this.pRadius,
@@ -42,7 +43,7 @@ class ScoreInstance {
 
   int fullTargetScore() {
     // range (0, 1] soll gequetscht werden in (11, 1] und dann in [10,0]
-    double distance = pRadius - arrowRadius;
+    double distance = pRadius - relativeArrowRadius;
 
     if (distance <= 0) {
       score = 10;

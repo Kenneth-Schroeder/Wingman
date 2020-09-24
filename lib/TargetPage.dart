@@ -209,7 +209,7 @@ class _TargetPageState extends State<TargetPage> {
         (arrow) => distances.add(polarDistance(touchPRadius, touchPAngle, arrow.pRadius * targetRadius * _scaleFactor, arrow.pAngle)));
 
     // TODO *3 is hardcoded here
-    if (argMin(distances)[0] <= arrows[endIndex][argMin(distances)[1]].arrowRadius * targetRadius * _scaleFactor * 3) {
+    if (argMin(distances)[0] <= arrows[endIndex][argMin(distances)[1]].relativeArrowRadius * targetRadius * _scaleFactor * 10) {
       return argMin(distances)[1];
     }
 
@@ -425,8 +425,8 @@ class _TargetPageState extends State<TargetPage> {
     arrows[endIndex].forEach((element) {
       arrowPainters.add(
         CustomPaint(
-          painter: ArrowPainter.fromInstance(
-              element, draggedTargetCenter(), scaledTargetRadius(), arrowDropOffset(), counter == _draggedArrow, _scaleFactor),
+          painter:
+              ArrowPainter.fromInstance(element, draggedTargetCenter(), scaledTargetRadius(), arrowDropOffset(), counter == _draggedArrow),
           child: Container(),
         ),
       );
@@ -506,7 +506,7 @@ class _TargetPageState extends State<TargetPage> {
       await dbService.updateAllEndsOfTraining(widget.training.id, arrows);
 
       int endID = await dbService.addEnd(widget.training.id);
-      await dbService.addDefaultScores(endID, numArrowsForEnd(endIndex));
+      await dbService.addDefaultScores(endID, numArrowsForEnd(endIndex), widget.training.relativeArrowWidth());
 
       // just load all again and we are good
       Map<int, List<ScoreInstance>> allScoresMap = await dbService.getFullEndsOfTraining(widget.training.id);

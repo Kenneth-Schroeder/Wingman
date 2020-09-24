@@ -68,6 +68,24 @@ class _TrainingCreationState extends State<TrainingCreation> {
             },
             inputFormatters: [WhitelistingTextInputFormatter.digitsOnly],
           ),
+          TextFormField(
+            decoration: const InputDecoration(
+              hintText: 'Arrow Diameter',
+            ),
+            validator: (value) {
+              if (value.isEmpty) {
+                return 'Please enter the diameter of your arrows in millimeters.';
+              }
+              if (int.parse(value) <= 0) {
+                return 'Please enter a value greater than 0';
+              }
+              return null;
+            },
+            onSaved: (String value) {
+              newTraining.arrowsPerEnd = int.parse(value);
+            },
+            inputFormatters: [WhitelistingTextInputFormatter.digitsOnly],
+          ),
           DropdownButtonFormField(
             //value: _ratingController,
             items: ["Full Target", "Single Spot", "Triple Spot"]
