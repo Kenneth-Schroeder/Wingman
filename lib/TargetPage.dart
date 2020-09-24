@@ -15,6 +15,18 @@ class Archer {
   List<List<int>> arrowScores = [[]];
   String name;
   Archer(this.name);
+
+  void addToEnd(int endIndex, int number) {
+    endScores[endIndex] += number;
+  }
+
+  int scoreOfEnd(int endIndex) {
+    return endScores[endIndex];
+  }
+
+  int totalScoreUpToEnd(int endIndex) {
+    return endScores.sublist(0, endIndex + 1).reduce((a, b) => a + b);
+  }
 }
 
 class TargetPage extends StatefulWidget {
@@ -130,6 +142,10 @@ class _TargetPageState extends State<TargetPage> {
     startRoutineFinished = true;
 
     setState(() {});
+  }
+
+  Offset arrowDropOffset() {
+    return Offset(0, -_screenHeight() / 5);
   }
 
   int countNumberOfUntouchedArrows() {
@@ -261,7 +277,7 @@ class _TargetPageState extends State<TargetPage> {
             children: [
               Text(
                 currentMatchPoints[0].toString() + " VS " + currentMatchPoints[1].toString(),
-                style: TextStyle(fontSize: 20, color: Colors.white, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
               ),
               winDisplay,
             ],
@@ -282,7 +298,7 @@ class _TargetPageState extends State<TargetPage> {
       for (int i = 0; i < numOpponents; i++) {
         int score = simulator.getScore();
         opponents[i].arrowScores[endIndex].add(score);
-        opponents[i].endScores[endIndex] += score;
+        opponents[i].addToEnd(endIndex, score);
       }
 
       if (newUntouchedArrows == 0) {
@@ -323,27 +339,44 @@ class _TargetPageState extends State<TargetPage> {
         break;
       case 1:
         if (sortAscending) {
-          archers.sort((a, b) => a.endScores[endIndex].compareTo(b.endScores[endIndex]));
+          archers.sort((a, b) => a.scoreOfEnd(endIndex).compareTo(b.scoreOfEnd(endIndex)));
         } else {
-          archers.sort((b, a) => a.endScores[endIndex].compareTo(b.endScores[endIndex]));
+          archers.sort((b, a) => a.scoreOfEnd(endIndex).compareTo(b.scoreOfEnd(endIndex)));
         }
         break;
       default:
         if (sortAscending) {
-          archers.sort((a, b) => a.endScores
-              .sublist(0, endIndex + 1)
-              .reduce((a, b) => a + b)
-              .compareTo(b.endScores.sublist(0, endIndex + 1).reduce((a, b) => a + b)));
+          archers.sort((a, b) => a.totalScoreUpToEnd(endIndex).compareTo(b.totalScoreUpToEnd(endIndex)));
         } else {
-          archers.sort((b, a) => a.endScores
-              .sublist(0, endIndex + 1)
-              .reduce((a, b) => a + b)
-              .compareTo(b.endScores.sublist(0, endIndex + 1).reduce((a, b) => a + b)));
+          archers.sort((b, a) => a.totalScoreUpToEnd(endIndex).compareTo(b.totalScoreUpToEnd(endIndex)));
         }
         break;
     }
 
     return archers;
+  }
+
+  void onColumnSort(columnIndex, ascending) {
+    sortAscending = ascending;
+    sortColumnIndex = columnIndex;
+    setState(() {});
+  }
+
+  DataColumn tableColumn(String text, bool numeric) {
+    return DataColumn(
+      label: Text(text),
+      numeric: numeric,
+      onSort: onColumnSort,
+    );
+  }
+
+  DataCell tableCell(String content) {
+    return DataCell(
+      Text(
+        content,
+        style: TextStyle(fontSize: 16),
+      ),
+    );
   }
 
   Widget _opponentStats() {
@@ -359,64 +392,18 @@ class _TargetPageState extends State<TargetPage> {
     for (int i = 0; i < archers.length; i++) {
       List<DataCell> cells = [];
 
-      cells.add(
-        DataCell(
-          Text(
-            archers[i].name,
-            style: TextStyle(fontSize: 16),
-          ),
-        ),
-      );
-
-      cells.add(
-        DataCell(
-          Text(
-            archers[i].endScores[endIndex].toString(),
-            style: TextStyle(fontSize: 16),
-          ),
-        ),
-      );
-
-      cells.add(
-        DataCell(
-          Text(
-            archers[i].endScores.sublist(0, endIndex + 1).reduce((a, b) => a + b).toString(),
-            style: TextStyle(fontSize: 16),
-          ),
-        ),
-      );
+      cells.add(tableCell(archers[i].name));
+      cells.add(tableCell(archers[i].scoreOfEnd(endIndex).toString()));
+      cells.add(tableCell(archers[i].totalScoreUpToEnd(endIndex).toString()));
 
       rows.add(DataRow(cells: cells));
       cells = [];
     }
 
     List<DataColumn> columns = [
-      DataColumn(
-        label: Text('Archer'),
-        onSort: (columnIndex, ascending) {
-          sortAscending = ascending;
-          sortColumnIndex = columnIndex;
-          setState(() {});
-        },
-      ),
-      DataColumn(
-        label: Text('End Score'),
-        numeric: true,
-        onSort: (columnIndex, ascending) {
-          sortAscending = ascending;
-          sortColumnIndex = columnIndex;
-          setState(() {});
-        },
-      ),
-      DataColumn(
-        label: Text('Total Score'),
-        numeric: true,
-        onSort: (columnIndex, ascending) {
-          sortAscending = ascending;
-          sortColumnIndex = columnIndex;
-          setState(() {});
-        },
-      ),
+      tableColumn('Archer', false),
+      tableColumn('End Score', true),
+      tableColumn('Total Score', true),
     ];
 
     return Container(
@@ -438,7 +425,8 @@ class _TargetPageState extends State<TargetPage> {
     arrows[endIndex].forEach((element) {
       arrowPainters.add(
         CustomPaint(
-          painter: ArrowPainter.fromInstance(element, draggedTargetCenter(), scaledTargetRadius(), counter == _draggedArrow, _scaleFactor),
+          painter: ArrowPainter.fromInstance(
+              element, draggedTargetCenter(), scaledTargetRadius(), arrowDropOffset(), counter == _draggedArrow, _scaleFactor),
           child: Container(),
         ),
       );
@@ -456,10 +444,7 @@ class _TargetPageState extends State<TargetPage> {
       },
       onMoveEnd: (pointer, localPos, position) {
         if (_draggedArrow != -1) {
-          arrows[endIndex][_draggedArrow].moveByOffset(
-              Offset(0, -arrows[endIndex][_draggedArrow].arrowRadius * targetRadius * 6 * (1 / _scaleFactor + 1)),
-              targetRadius,
-              widget.training.targetType); // todo remove hardcoding
+          arrows[endIndex][_draggedArrow].moveByOffset(arrowDropOffset() / _scaleFactor, targetRadius, widget.training.targetType);
           arrows[endIndex][_draggedArrow].updateScore(widget.training.targetType, targetRadius);
         }
         _draggedArrow = -1;
@@ -537,7 +522,7 @@ class _TargetPageState extends State<TargetPage> {
 
       numberOfUntouchedArrows = countNumberOfUntouchedArrows();
 
-      endFinishedAction(); // todo getting error here when reentering saved match and clicking forward over the end?? this is because gameOver is not working properly
+      endFinishedAction();
 
       setState(() {});
     }
@@ -545,10 +530,9 @@ class _TargetPageState extends State<TargetPage> {
 
   void prevRound() async {
     // go back if possible
-    if (endIndex == 0) return;
-
-    // await dbService.updateAllEndsOfTraining(widget.training.id, arrows);
-
+    if (endIndex == 0) {
+      return;
+    }
     endIndex--;
     setState(() {});
   }
@@ -673,59 +657,49 @@ class _TargetPageState extends State<TargetPage> {
   }
 
   Widget _quickStats() {
-    return new Column(
-      mainAxisSize: MainAxisSize.min,
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        Container(
-          height: _screenHeight() * 0.04,
-          color: Colors.blue[300],
-          child: Center(
-            child: Icon(Icons.arrow_drop_up),
+    return Container(
+      color: Colors.white,
+      child: Column(
+        children: [
+          Text(
+            "End Statistics",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
-        ),
-        Container(
-          color: Colors.white,
-          child: Column(
+          Padding(
+            padding: EdgeInsets.all(2.0),
+            child: Container(
+              height: 1.0,
+              width: _screenWidth(),
+              //color: Colors.black,
+            ),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              Text("Quickstats"), // TODO add quickstats
-              Padding(
-                padding: EdgeInsets.all(2.0),
-                child: Container(
-                  height: 1.0,
-                  width: _screenWidth(),
-                  //color: Colors.black,
-                ),
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
+              Column(
                 children: [
-                  Column(
-                    children: [
-                      Text("End Score: " + getEndScore(endIndex).toString()),
-                      Text("Total: " + getTotalScore().toString()),
-                    ],
-                  ),
-                  Column(
-                    children: [
-                      Text("End Average: " + getEndAverage().toStringAsFixed(2)),
-                      Text("Perimeter: " + this._groupPerimeter.toStringAsFixed(2) + " cm"),
-                    ],
-                  ),
+                  Text("End Score: " + getEndScore(endIndex).toString(), style: TextStyle(fontSize: 16)),
+                  Text("Total: " + getTotalScore().toString(), style: TextStyle(fontSize: 16)),
                 ],
               ),
-              Padding(
-                padding: EdgeInsets.all(5.0),
-                child: Container(
-                  height: 1.0,
-                  width: _screenWidth(),
-                  color: Colors.black,
-                ),
+              Column(
+                children: [
+                  Text("End Average: " + getEndAverage().toStringAsFixed(2), style: TextStyle(fontSize: 16)),
+                  Text("Perimeter: " + this._groupPerimeter.toStringAsFixed(2) + " cm", style: TextStyle(fontSize: 16)),
+                ],
               ),
             ],
           ),
-        ),
-      ],
+          Padding(
+            padding: EdgeInsets.all(5.0),
+            child: Container(
+              height: 1.0,
+              width: _screenWidth(),
+              color: Colors.black,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -772,16 +746,48 @@ class _TargetPageState extends State<TargetPage> {
     );
   }
 
+  Widget _dragScrollSheetExtension() {
+    return Container(
+      height: _screenHeight() * 0.5,
+      color: Colors.white,
+    );
+  }
+
   Widget _dragScrollSheet() {
     return DraggableScrollableSheet(
       initialChildSize: 0.04,
-      maxChildSize: 0.8,
+      maxChildSize: 0.6,
       minChildSize: 0.04,
       builder: (context, scrollController) {
         return SingleChildScrollView(
           controller: scrollController,
           child: Column(
-            children: [_quickStats(), matchPointsDisplay(), _opponentStats()],
+            children: [
+              Container(
+                height: _screenHeight() * 0.045,
+                color: Colors.blue[300],
+                child: Center(
+                  child: Icon(Icons.arrow_drop_up),
+                ),
+              ),
+              Container(
+                color: Colors.blue[300],
+                child: Container(
+                  //padding: EdgeInsets.only(bottom: 10.0, left: 10.0, right: 10.0),
+                  margin: EdgeInsets.only(bottom: 10.0, left: 10.0, right: 10.0),
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      width: 10.0,
+                      color: Colors.white,
+                    ),
+                    borderRadius: BorderRadius.all(Radius.circular(20)),
+                  ),
+                  child: Column(
+                    children: [_quickStats(), matchPointsDisplay(), _opponentStats(), _dragScrollSheetExtension()],
+                  ),
+                ),
+              ),
+            ],
           ),
         );
       },
