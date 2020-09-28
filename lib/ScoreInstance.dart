@@ -8,6 +8,7 @@ class ScoreInstance {
   double relativeArrowRadius = 0.03; // percentage of target radius, which is normalized to 1
   int score = 0;
   int endID;
+  int arrowNumber = -1;
   double pRadius = 1.3; // polar radius
   double pAngle = 13 / 20 * pi; // polar angle
   int isUntouched = 1; // 1 == true
@@ -26,6 +27,7 @@ class ScoreInstance {
         relativeArrowRadius = map["relativeArrowRadius"],
         score = map["score"],
         endID = map["endID"],
+        arrowNumber = map["arrowNumber"],
         pRadius = map["pRadius"] == null ? -1 : map["pRadius"],
         pAngle = map["pAngle"] == null ? -1 : map["pAngle"],
         isUntouched = map["isUntouched"] == null ? 1 : map["isUntouched"];
@@ -35,6 +37,7 @@ class ScoreInstance {
       "relativeArrowRadius": this.relativeArrowRadius,
       "score": this.score,
       "endID": this.endID,
+      "arrowNumber": this.arrowNumber,
       "pRadius": this.pRadius,
       "pAngle": this.pAngle,
       "isUntouched": this.isUntouched,

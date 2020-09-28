@@ -486,6 +486,21 @@ class _TargetPageState extends State<TargetPage> {
     setState(() {});
   }
 
+  void deleteEnd() {
+    if (arrows.length <= 1) {
+      resetArrows();
+      return;
+    }
+
+    int endID = arrows[endIndex].first.endID;
+
+    arrows.removeAt(endIndex);
+    dbService.deleteEnd(endID);
+
+    endIndex = max(0, endIndex--);
+    setState(() {});
+  }
+
   void nextRound() async {
     endIndex++;
 
@@ -804,13 +819,20 @@ class _TargetPageState extends State<TargetPage> {
   Widget showContent() {
     return WillPopScope(
         child: Scaffold(
-          appBar: AppBar(title: Text("Score Recording"), actions: <Widget>[
-            // action button
-            IconButton(
-              icon: Icon(Icons.undo),
-              onPressed: resetArrows,
-            ),
-          ]),
+          appBar: AppBar(
+            title: Text("Score Recording"),
+            actions: <Widget>[
+              // action button
+              IconButton(
+                icon: Icon(Icons.undo),
+                onPressed: resetArrows,
+              ),
+              IconButton(
+                icon: Icon(Icons.delete),
+                onPressed: deleteEnd,
+              ),
+            ],
+          ),
           body: Stack(
             children: [createTarget(), loadArrows(), _dragScrollSheet()],
           ),

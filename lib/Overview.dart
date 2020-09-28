@@ -6,6 +6,7 @@ import 'TrainingCreation.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'CompetitionMenu.dart';
 import 'package:Wingman/icons/my_flutter_app_icons.dart';
+import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 
 class MyHomePage extends StatefulWidget {
   MyHomePage({Key key, this.title}) : super(key: key);
@@ -77,24 +78,24 @@ class _MyHomePageState extends State<MyHomePage> {
                   MaterialPageRoute(builder: (context) => TrainingSummary(_trainings[index])),
                 );
               },
-              child: new Slidable(
+              child: Slidable(
                 actionPane: SlidableDrawerActionPane(),
                 actionExtentRatio: 0.25,
                 secondaryActions: <Widget>[
-                  new IconSlideAction(
+                  IconSlideAction(
                     caption: 'Edit',
                     color: Colors.black45,
                     icon: Icons.more_horiz,
                     onTap: () => editTraining(_trainings[index]),
                   ),
-                  new IconSlideAction(
+                  IconSlideAction(
                     caption: 'Delete',
                     color: Colors.red,
                     icon: Icons.delete,
                     onTap: () => deleteTraining(_trainings[index].id),
                   ),
                 ],
-                child: new Container(
+                child: Container(
                   padding: EdgeInsets.all(5.0),
                   height: 50,
                   decoration: BoxDecoration(
@@ -169,6 +170,42 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
+  SpeedDial buildSpeedDial() {
+    return SpeedDial(
+      animatedIcon: AnimatedIcons.menu_close,
+      animatedIconTheme: IconThemeData(size: 22.0),
+      // child: Icon(Icons.add),
+      // onOpen: () => print('OPENING DIAL'),
+      // onClose: () => print('DIAL CLOSED'),
+      visible: true,
+      curve: Curves.bounceIn,
+      children: [
+        SpeedDialChild(
+          child: Icon(
+            MyFlutterApp.trophy,
+            color: Colors.black,
+          ),
+          backgroundColor: Colors.redAccent,
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => CompetitionMenu()),
+          ).then((value) => onStart()),
+          label: 'Competition Simulation',
+          labelStyle: TextStyle(fontWeight: FontWeight.w500, color: Colors.black),
+          labelBackgroundColor: Colors.redAccent,
+        ),
+        SpeedDialChild(
+          child: Icon(Icons.assignment, color: Colors.black),
+          backgroundColor: Colors.yellowAccent,
+          onTap: () => _addTraining(),
+          label: 'Open Training',
+          labelStyle: TextStyle(fontWeight: FontWeight.w500, color: Colors.black),
+          labelBackgroundColor: Colors.yellowAccent,
+        ),
+      ],
+    );
+  }
+
   Widget showContent() {
     return Scaffold(
       appBar: AppBar(
@@ -176,26 +213,15 @@ class _MyHomePageState extends State<MyHomePage> {
         // the App.build method, and use it to set our appbar title.
         title: Text(widget.title),
         actions: <Widget>[
+          // action button
           IconButton(
-            icon: Icon(
-              MyFlutterApp.trophy,
-              color: Colors.white,
-            ),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => CompetitionMenu()),
-              ).then((value) => onStart());
-            },
+            icon: Icon(Icons.settings),
+            onPressed: () {},
           ),
         ],
       ),
       body: overviewScreen(),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _addTraining,
-        tooltip: 'New Training',
-        child: Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+      floatingActionButton: buildSpeedDial(), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 

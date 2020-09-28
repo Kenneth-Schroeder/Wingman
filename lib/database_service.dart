@@ -69,6 +69,7 @@ class DatabaseService {
             pRadius REAL,
             pAngle REAL,
             isUntouched INTEGER,
+            arrowNumber INTEGER,
             endID INTEGER NOT NULL,
             FOREIGN KEY (endID) REFERENCES $tableEnds (endID) ON DELETE CASCADE ) 
           ''',
@@ -283,6 +284,11 @@ class DatabaseService {
   void deleteTraining(int trainingID) async {
     Database db = await database;
     await db.delete(tableTrainings, where: 'id = ?', whereArgs: [trainingID]);
+  }
+
+  void deleteEnd(int endID) async {
+    Database db = await database;
+    await db.delete(tableEnds, where: 'endID = ?', whereArgs: [endID]);
   }
 
   Future<List<TrainingInstance>> getAllTrainings() async {
