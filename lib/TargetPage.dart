@@ -208,8 +208,8 @@ class _TargetPageState extends State<TargetPage> {
     arrows[endIndex].forEach(
         (arrow) => distances.add(polarDistance(touchPRadius, touchPAngle, arrow.pRadius * targetRadius * _scaleFactor, arrow.pAngle)));
 
-    // TODO *3 is hardcoded here
-    if (argMin(distances)[0] <= arrows[endIndex][argMin(distances)[1]].relativeArrowRadius * targetRadius * _scaleFactor * 10) {
+    // todo pretty much hardcoded /7 same as in arrowpainter
+    if (argMin(distances)[0] <= -arrowDropOffset().dy / 7) {
       return argMin(distances)[1];
     }
 
@@ -486,18 +486,20 @@ class _TargetPageState extends State<TargetPage> {
     setState(() {});
   }
 
-  void deleteEnd() {
-    if (arrows.length <= 1) {
+  void deleteEnd() async {
+    if (arrows.length <= 1 || widget.training.competitionType == CompetitionType.qualifying) {
+      // todo make sure there are no other issues here
       resetArrows();
       return;
     }
 
     int endID = arrows[endIndex].first.endID;
 
+    await dbService.deleteEnd(endID);
     arrows.removeAt(endIndex);
-    dbService.deleteEnd(endID);
 
-    endIndex = max(0, endIndex--);
+    endIndex = max(0, endIndex - 1);
+
     setState(() {});
   }
 

@@ -286,9 +286,10 @@ class DatabaseService {
     await db.delete(tableTrainings, where: 'id = ?', whereArgs: [trainingID]);
   }
 
-  void deleteEnd(int endID) async {
+  Future<bool> deleteEnd(int endID) async {
     Database db = await database;
     await db.delete(tableEnds, where: 'endID = ?', whereArgs: [endID]);
+    return true;
   }
 
   Future<List<TrainingInstance>> getAllTrainings() async {

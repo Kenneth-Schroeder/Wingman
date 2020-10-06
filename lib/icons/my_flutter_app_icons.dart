@@ -31,5 +31,9 @@ class MyFlutterApp {
 
   static const IconData female = IconData(0xe802, fontFamily: _kFontFam, fontPackage: _kFontPkg);
   static const IconData male = IconData(0xe803, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData arrow_cluster = IconData(0xe911, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData arrow_flights = IconData(0xe912, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData supersonic_arrow = IconData(0xeac0, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData target_arrows = IconData(0xeac3, fontFamily: _kFontFam, fontPackage: _kFontPkg);
   static const IconData trophy = IconData(0xead7, fontFamily: _kFontFam, fontPackage: _kFontPkg);
 }

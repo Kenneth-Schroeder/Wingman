@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'ScoreInstance.dart';
+import 'dart:math';
 
 class ArrowPainter extends CustomPainter {
   ArrowPainter.fromInstance(ScoreInstance instance, Offset targetCenter, double targetRadius, this._dropOffset, this._isDragged)
       : this._offset = instance.getCartesianCoordinates(targetRadius) + targetCenter,
-        this._radius = instance.relativeArrowRadius * targetRadius;
+        this._radius = instance.relativeArrowRadius * targetRadius,
+        this._text = instance.arrowNumber.toString();
 
   final Offset _offset;
   final double _radius;
+  final String _text;
   bool _isDragged = true;
   Offset _dropOffset;
 
@@ -86,8 +89,56 @@ class ArrowPainter extends CustomPainter {
         Rect.fromLTWH(_offset.dx - wingRadius, _offset.dy - wingRadius / (factor * 2), wingRadius, wingRadius / factor), innerPaint);
 
     canvas.drawCircle(_offset, wingRadius, paint);
+
+    String text = _text == "-1" ? "" : _text;
+    double radius = wingRadius;
+
+    TextStyle textStyle = TextStyle(
+      fontSize: 18,
+      color: Colors.purple,
+      fontWeight: FontWeight.bold,
+    );
+
+    TextPainter textPainter = TextPainter(textDirection: TextDirection.ltr);
+    double initialAngle = 0; //-textPainter.width / 2;
+
+    canvas.translate(_offset.dx, _offset.dy - radius); // size.width / 2, size.height / 2 - radius);
+
+    if (initialAngle != 0) {
+      final d = 2 * radius * sin(initialAngle / 2);
+      final rotationAngle = _calculateRotationAngle(0, initialAngle);
+      canvas.rotate(rotationAngle);
+      canvas.translate(d, 0);
+    }
+
+    double angle = initialAngle;
+    for (int i = 0; i < text.length; i++) {
+      angle = _drawLetter(canvas, text[i], angle, radius, textStyle, textPainter);
+    }
   }
 
   @override
   bool shouldRepaint(CustomPainter oldDelegate) => true;
+
+  // thanks to https://developers.mews.com/flutter-how-to-draw-text-along-arc/
+  double _drawLetter(Canvas canvas, String letter, double prevAngle, double radius, TextStyle textStyle, TextPainter textPainter) {
+    textPainter.text = TextSpan(text: letter, style: textStyle);
+    textPainter.layout(
+      minWidth: 0,
+      maxWidth: double.maxFinite,
+    );
+
+    final double d = textPainter.width * 0.8;
+    final double alpha = 2 * asin(d / (2 * radius));
+
+    final newAngle = _calculateRotationAngle(prevAngle, alpha);
+    canvas.rotate(newAngle);
+
+    textPainter.paint(canvas, Offset(0, -textPainter.height));
+    canvas.translate(d, 0);
+
+    return alpha;
+  }
+
+  double _calculateRotationAngle(double prevAngle, double alpha) => (alpha + prevAngle) / 2;
 }
