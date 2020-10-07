@@ -820,27 +820,28 @@ class _TargetPageState extends State<TargetPage> {
 
   Widget showContent() {
     return WillPopScope(
-        child: Scaffold(
-          appBar: AppBar(
-            title: Text("Score Recording"),
-            actions: <Widget>[
-              // action button
-              IconButton(
-                icon: Icon(Icons.undo),
-                onPressed: resetArrows,
-              ),
-              IconButton(
-                icon: Icon(Icons.delete),
-                onPressed: deleteEnd,
-              ),
-            ],
-          ),
-          body: Stack(
-            children: [createTarget(), loadArrows(), _dragScrollSheet()],
-          ),
-          bottomNavigationBar: _bottomBar(),
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text("Score Recording"),
+          actions: <Widget>[
+            // action button
+            IconButton(
+              icon: Icon(Icons.undo),
+              onPressed: resetArrows,
+            ),
+            IconButton(
+              icon: Icon(Icons.delete),
+              onPressed: deleteEnd,
+            ),
+          ],
         ),
-        onWillPop: onLeave);
+        body: Stack(
+          children: [createTarget(), loadArrows(), _dragScrollSheet()],
+        ),
+        bottomNavigationBar: _bottomBar(),
+      ),
+      onWillPop: onLeave,
+    );
   }
 
   @override

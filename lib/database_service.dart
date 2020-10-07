@@ -4,12 +4,15 @@ import 'package:sqflite/sqflite.dart';
 import 'TrainingInstance.dart';
 import 'ScoreInstance.dart';
 import 'TargetPage.dart'; // todo move Archer definition
+import 'ArrowInformation.dart';
 
 final tableTrainings = "trainings";
 final tableOpponents = "opponents";
 final tableEnds = "ends";
 final tableScores = "scores";
-final tableArrows = "arrows"; // specific arrow information
+final tableArrowSets = "arrowSets";
+final tableArrowInfo = "arrowInfos";
+final tableTrainingArrowConnector = "trainingArrowConnector";
 
 class DatabaseService {
   Future<Database> database;
@@ -23,10 +26,15 @@ class DatabaseService {
     return emptyDB;
   }
 
+  static Future _onConfigure(Database db) async {
+    await db.execute('PRAGMA foreign_keys = ON');
+  }
+
   initDatabase() async {
     database = openDatabase(
       join(await getDatabasesPath(), 'beautiful_alarm.db'),
       // When the database is first created, create a table to store data.
+      onConfigure: _onConfigure,
       onCreate: (db, version) {
         db.execute(
           '''CREATE TABLE $tableTrainings(
@@ -40,7 +48,8 @@ class DatabaseService {
             numberOfEnds INTEGER,
             targetDiameterCM REAL,
             arrowDiameterMM REAL,
-            creationTime DATETIME)
+            creationTime DATETIME
+            )
           ''',
         );
         db.execute(
@@ -48,7 +57,8 @@ class DatabaseService {
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
             trainingID INTEGER NOT NULL,
-            FOREIGN KEY (trainingID) REFERENCES $tableTrainings (id) ON DELETE CASCADE )
+            FOREIGN KEY (trainingID) REFERENCES $tableTrainings (id) ON DELETE CASCADE 
+            )
           ''',
         );
         db.execute(
@@ -58,9 +68,27 @@ class DatabaseService {
             trainingID INTEGER,
             opponentID INTEGER,
             FOREIGN KEY (trainingID) REFERENCES $tableTrainings (id) ON DELETE CASCADE,
-            FOREIGN KEY (opponentID) REFERENCES $tableOpponents (id) ON DELETE CASCADE )
+            FOREIGN KEY (opponentID) REFERENCES $tableOpponents (id) ON DELETE CASCADE 
+            )
           ''',
         );
+        db.execute(
+          '''CREATE TABLE $tableArrowSets(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            label TEXT NOT NULL 
+            )
+          ''',
+        );
+        db.execute(
+          '''CREATE TABLE $tableArrowInfo(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            setID INTEGER NOT NULL,
+            label TEXT NOT NULL,
+            FOREIGN KEY (setID) REFERENCES $tableArrowSets (id) ON DELETE CASCADE 
+            ) 
+          ''',
+        );
+        // TODO check all on delete cascades if correct
         db.execute(
           '''CREATE TABLE $tableScores(
             shotID INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -69,16 +97,85 @@ class DatabaseService {
             pRadius REAL,
             pAngle REAL,
             isUntouched INTEGER,
-            arrowNumber INTEGER,
+            arrowInformationID INTEGER,
             endID INTEGER NOT NULL,
-            FOREIGN KEY (endID) REFERENCES $tableEnds (endID) ON DELETE CASCADE ) 
+            FOREIGN KEY (arrowInformationID) REFERENCES $tableArrowInfo (id) ON DELETE SET NULL,
+            FOREIGN KEY (endID) REFERENCES $tableEnds (endID) ON DELETE CASCADE
+            ) 
           ''',
         );
+        db.execute(
+          '''CREATE TABLE $tableTrainingArrowConnector(
+            trainingID INTEGER NOT NULL,
+            arrowID INTEGER NOT NULL,
+            FOREIGN KEY (trainingID) REFERENCES $tableTrainings (id) ON DELETE CASCADE,
+            FOREIGN KEY (arrowID) REFERENCES $tableArrowInfo (id) ON DELETE CASCADE,
+            PRIMARY KEY (trainingID, arrowID)
+            ) 
+          ''',
+        ); // ,
       },
       // Set the version. This executes the onCreate function and provides a
       // path to perform database upgrades and downgrades.
       version: 1,
     );
+  }
+
+  Future<ArrowInformation> getArrowInformationFromID(int id) async {
+    Database db = await database;
+    return await db.query(tableArrowInfo, where: 'id = ?', whereArgs: [id]).then((mapRows) => ArrowInformation.fromMap(mapRows.first));
+  }
+
+  Future<bool> addArrowInfoToTraining(List<int> arrowInformationIDs, int trainingID) async {
+    Database db = await database;
+    for (var arrowInfoID in arrowInformationIDs) {
+      await db.insert(tableTrainingArrowConnector, {"trainingID": trainingID, "arrowID": arrowInfoID});
+    }
+    return true;
+  }
+
+  Future<bool> clearArrowInfoTables() async {
+    Database db = await database;
+    await db.delete(tableArrowSets);
+    await db.delete(tableArrowInfo);
+    return true;
+  }
+
+  Future<bool> updateAllArrowSets(List<ArrowSet> arrowSets) async {
+    // just delete all and create new entries?
+    await clearArrowInfoTables(); // TODO this will fuck up a lot in combination with ON DELETE SET NULL, only update or add pls
+    Database db = await database;
+
+    for (var set in arrowSets) {
+      int setID = await db.insert(tableArrowSets, set.toMap());
+      for (var arrow in set.arrowInfos) {
+        await db.insert(tableArrowInfo, arrow.toMapWithSetID(setID));
+      }
+    }
+
+    return true;
+  }
+
+  Future<List<ArrowSet>> getAllArrowSets() async {
+    Database db = await database;
+    List<ArrowSet> arrowSets = [];
+
+    var setsTable = await db.query(tableArrowSets);
+    for (var set in setsTable) {
+      List<ArrowInformation> arrows = [];
+      await db.query(tableArrowInfo, where: 'setID = ?', whereArgs: [set['id']]).then((arrowsTable) {
+        for (var arrow in arrowsTable) {
+          arrows.add(ArrowInformation.fromMap(arrow));
+        }
+      });
+
+      arrowSets.add(ArrowSet.fromMap({
+        ...set,
+        ...{"arrowInfos": arrows}
+      }));
+    }
+
+    return arrowSets;
   }
 
   Future<int> addOpponent(int trainingID, String name) async {
@@ -232,7 +329,7 @@ class DatabaseService {
       if (!scoresByEnd.containsKey(item["endID"])) {
         scoresByEnd[item["endID"]] = [];
       }
-      scoresByEnd[item["endID"]].add(ScoreInstance.fromMap(item));
+      scoresByEnd[item["endID"]].add(ScoreInstance.fromMapAndDB(item, this));
     }
 
     return scoresByEnd;
@@ -266,19 +363,19 @@ class DatabaseService {
 
     List<ScoreInstance> scores = [];
     for (var row in scoresMap) {
-      scores.add(ScoreInstance.fromMap(row));
+      scores.add(ScoreInstance.fromMapAndDB(row, this));
     }
 
     return scores;
   }
 
-  void addTraining(TrainingInstance instance) async {
+  Future<int> addTraining(TrainingInstance instance) async {
     Database db = await database;
 
-    db
-        .insert(tableTrainings, instance.toMap())
-        .then((value) => addEnd(value))
-        .then((value) => addDefaultScores(value, instance.arrowsPerEnd, instance.relativeArrowWidth()));
+    int trainingID = await db.insert(tableTrainings, instance.toMap());
+    int endID = await addEnd(trainingID);
+    await addDefaultScores(endID, instance.arrowsPerEnd, instance.relativeArrowWidth());
+    return trainingID;
   }
 
   void deleteTraining(int trainingID) async {

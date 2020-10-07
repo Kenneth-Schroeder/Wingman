@@ -1,7 +1,10 @@
+import 'package:Wingman/ArrowInformation.dart';
 import 'package:flutter/material.dart';
 import 'database_service.dart';
 import 'package:flutter/services.dart';
 import 'TrainingInstance.dart';
+import 'package:Wingman/icons/my_flutter_app_icons.dart';
+import 'package:Wingman/QuiverOrganizer.dart';
 
 class TrainingCreation extends StatefulWidget {
   TrainingCreation({Key key}) : super(key: key);
@@ -12,7 +15,8 @@ class TrainingCreation extends StatefulWidget {
 
 class _TrainingCreationState extends State<TrainingCreation> {
   DatabaseService dbService;
-  TrainingInstance newTraining = TrainingInstance.fromMap({"title": "Training", "creationTime": DateTime.now(), "arrowsPerEnd": 6});
+  TrainingInstance newTraining = TrainingInstance.fromMap({"title": "Training", "creationTime": DateTime.now(), "arrowsPerEnd": -1});
+  List<int> _arrowInformationIDs = [];
 
   @override
   void initState() {
@@ -25,7 +29,34 @@ class _TrainingCreationState extends State<TrainingCreation> {
   }
 
   void _saveNewTraining() async {
-    await dbService.addTraining(newTraining);
+    int id = await dbService.addTraining(newTraining);
+    if (arrowSelectionValid()) {
+      dbService.addArrowInfoToTraining(_arrowInformationIDs, id);
+    }
+  }
+
+  bool arrowSelectionValid() {
+    print(_arrowInformationIDs);
+    if (_arrowInformationIDs.length != 0 && _arrowInformationIDs.length == newTraining.arrowsPerEnd) {
+      return true;
+    }
+    return false;
+  }
+
+  void setupArrows() {
+    if (newTraining.arrowsPerEnd > 0) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => QuiverOrganizer(newTraining.arrowsPerEnd)),
+      ).then((arrowInformationIDs) {
+        if (arrowInformationIDs != null) {
+          // can be null if back button is hit
+          setState(() {
+            _arrowInformationIDs = arrowInformationIDs;
+          });
+        }
+      });
+    }
   }
 
   Widget newTrainingForm() {
@@ -64,31 +95,47 @@ class _TrainingCreationState extends State<TrainingCreation> {
             ),
             Container(
               margin: EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
-              child: TextFormField(
-                decoration: const InputDecoration(
-                  labelText: 'Arrows per End',
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(
-                      Radius.circular(25.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      initialValue: newTraining.arrowsPerEnd > 0 ? newTraining.arrowsPerEnd.toString() : null,
+                      decoration: const InputDecoration(
+                        labelText: 'Arrows per End',
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.all(
+                            Radius.circular(25.0),
+                          ),
+                          borderSide: BorderSide(),
+                        ),
+                      ),
+                      keyboardType: TextInputType.number,
+                      validator: (value) {
+                        if (value.isEmpty) {
+                          return 'Please enter the number of arrows to shoot per end.';
+                        }
+                        if (int.parse(value) <= 0 || int.parse(value) > 24) {
+                          return 'Please enter a value greater than 0 and smaller than 25';
+                        }
+                        return null;
+                      },
+                      onFieldSubmitted: (String value) {
+                        // todo add proper listener
+                        newTraining.arrowsPerEnd = int.parse(value);
+                        setState(() {});
+                      },
+                      inputFormatters: [WhitelistingTextInputFormatter.digitsOnly],
                     ),
-                    borderSide: BorderSide(),
                   ),
-                ),
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value.isEmpty) {
-                    return 'Please enter the number of arrows to shoot per end.';
-                  }
-                  if (int.parse(value) <= 0 || int.parse(value) > 24) {
-                    return 'Please enter a value greater than 0 and smaller than 25';
-                  }
-                  return null;
-                },
-                onSaved: (String value) {
-                  newTraining.arrowsPerEnd = int.parse(value);
-                },
-                inputFormatters: [WhitelistingTextInputFormatter.digitsOnly],
+                  Expanded(
+                    child: RaisedButton(
+                      color: arrowSelectionValid() ? Colors.green : Colors.redAccent,
+                      child: Icon(MyFlutterApp.arrow_flights),
+                      onPressed: setupArrows,
+                    ),
+                  ),
+                ],
               ),
             ),
             Container(
@@ -121,7 +168,7 @@ class _TrainingCreationState extends State<TrainingCreation> {
                 onSaved: (String value) {
                   newTraining.arrowDiameterMM = double.parse(value);
                 },
-                inputFormatters: [WhitelistingTextInputFormatter.digitsOnly],
+                inputFormatters: [WhitelistingTextInputFormatter.digitsOnly], // TODO fix this
               ),
             ),
             Container(

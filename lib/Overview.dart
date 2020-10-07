@@ -1,4 +1,3 @@
-import 'package:Wingman/QuiverOrganizer.dart';
 import 'package:flutter/material.dart';
 import 'database_service.dart';
 import 'TrainingInstance.dart';
@@ -207,13 +206,6 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  void setupArrows() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => QuiverOrganizer()),
-    ).then((value) => onStart());
-  }
-
   Widget showContent() {
     return Scaffold(
       appBar: AppBar(
@@ -225,10 +217,6 @@ class _MyHomePageState extends State<MyHomePage> {
           IconButton(
             icon: Icon(Icons.settings),
             onPressed: () {},
-          ),
-          IconButton(
-            icon: Icon(MyFlutterApp.arrow_flights),
-            onPressed: setupArrows,
           ),
         ],
       ),

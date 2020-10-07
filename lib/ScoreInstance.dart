@@ -2,13 +2,15 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'dart:math';
 import 'TrainingInstance.dart';
+import 'ArrowInformation.dart';
+import 'database_service.dart';
 
 class ScoreInstance {
   int shotID = -1;
   double relativeArrowRadius = 0.03; // percentage of target radius, which is normalized to 1
   int score = 0;
   int endID;
-  int arrowNumber = -1;
+  ArrowInformation arrowInformation;
   double pRadius = 1.3; // polar radius
   double pAngle = 13 / 20 * pi; // polar angle
   int isUntouched = 1; // 1 == true
@@ -20,24 +22,52 @@ class ScoreInstance {
     setWithCartesianCoordinates(position, targetRadius);
   }
 
-  ScoreInstance.fromMap(Map<String, dynamic> map)
+  void setArrowInformation(ArrowInformation arrowInfo) {
+    arrowInformation = arrowInfo;
+  }
+
+  ScoreInstance.fromMapAndDB(Map<String, dynamic> map, DatabaseService dbService)
       : assert(map["score"] != null),
         assert(map["endID"] != null),
         shotID = map["shotID"],
         relativeArrowRadius = map["relativeArrowRadius"],
         score = map["score"],
         endID = map["endID"],
-        arrowNumber = map["arrowNumber"],
         pRadius = map["pRadius"] == null ? -1 : map["pRadius"],
         pAngle = map["pAngle"] == null ? -1 : map["pAngle"],
-        isUntouched = map["isUntouched"] == null ? 1 : map["isUntouched"];
+        isUntouched = map["isUntouched"] == null ? 1 : map["isUntouched"] {
+    if (map["arrowInformationID"] != null) {
+      gatherArrowInformation(dbService, map["arrowInformationID"]);
+    }
+  }
+
+  String getLabel() {
+    if (arrowInformation == null) {
+      return "";
+    }
+
+    return arrowInformation.label;
+  }
+
+  Future<bool> gatherArrowInformation(DatabaseService dbService, int id) async {
+    arrowInformation = await dbService.getArrowInformationFromID(id);
+    return true;
+  }
+
+  int _getArrowInformationID() {
+    if (arrowInformation == null) {
+      return null;
+    }
+
+    return arrowInformation.id;
+  }
 
   Map<String, dynamic> toMap() {
     return {
       "relativeArrowRadius": this.relativeArrowRadius,
       "score": this.score,
       "endID": this.endID,
-      "arrowNumber": this.arrowNumber,
+      "arrowInformationID": _getArrowInformationID(),
       "pRadius": this.pRadius,
       "pAngle": this.pAngle,
       "isUntouched": this.isUntouched,

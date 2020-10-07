@@ -5,12 +5,13 @@ import 'dart:math';
 class ArrowPainter extends CustomPainter {
   ArrowPainter.fromInstance(ScoreInstance instance, Offset targetCenter, double targetRadius, this._dropOffset, this._isDragged)
       : this._offset = instance.getCartesianCoordinates(targetRadius) + targetCenter,
-        this._radius = instance.relativeArrowRadius * targetRadius,
-        this._text = instance.arrowNumber.toString();
+        this._radius = instance.relativeArrowRadius * targetRadius {
+    this._text = instance.getLabel();
+  }
 
   final Offset _offset;
   final double _radius;
-  final String _text;
+  String _text;
   bool _isDragged = true;
   Offset _dropOffset;
 
