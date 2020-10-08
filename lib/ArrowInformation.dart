@@ -32,6 +32,7 @@ class ArrowSet {
   ArrowSet.fromMap(Map<String, dynamic> map)
       : assert(map["id"] != null),
         assert(map["label"] != null),
+        id = map["id"],
         label = map["label"],
         arrowInfos = map["arrowInfos"];
 

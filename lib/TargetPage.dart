@@ -152,8 +152,11 @@ class _TargetPageState extends State<TargetPage> {
     return Offset(0, -_screenHeight() / 5);
   }
 
-  int countNumberOfUntouchedArrows() {
-    return arrows[endIndex].where((element) => element.isUntouched == 1).length;
+  int countNumberOfUntouchedArrows([int index]) {
+    if (index == null) {
+      return arrows[endIndex].where((element) => element.isUntouched == 1).length;
+    }
+    return arrows[index].where((element) => element.isUntouched == 1).length;
   }
 
   Offset draggedTargetCenter() {
@@ -236,6 +239,11 @@ class _TargetPageState extends State<TargetPage> {
     }
 
     for (int i = 0; i < opponents[0].endScores.length; i++) {
+      // todo check if end has an untouched arrow, then stop here and dont allow clicking next if an arrow is not placed
+      if (countNumberOfUntouchedArrows(i) > 0) {
+        break;
+      }
+
       if (opponents[0].endScores[i] < getEndScore(i)) {
         points[0] += 2;
       } else if (opponents[0].endScores[i] > getEndScore(i)) {
@@ -246,6 +254,7 @@ class _TargetPageState extends State<TargetPage> {
       }
     }
 
+    print(points);
     return points;
   }
 
@@ -304,11 +313,11 @@ class _TargetPageState extends State<TargetPage> {
         opponents[i].arrowScores[endIndex].add(score);
         opponents[i].addToEnd(endIndex, score);
       }
+    }
 
-      if (newUntouchedArrows == 0) {
-        // all arrows placed
-        currentMatchPoints = getMatchPoints();
-      }
+    if (newUntouchedArrows == 0) {
+      // all arrows placed
+      currentMatchPoints = getMatchPoints();
     }
 
     numberOfUntouchedArrows = newUntouchedArrows;
@@ -423,7 +432,7 @@ class _TargetPageState extends State<TargetPage> {
     );
   }
 
-  Widget loadArrows() {
+  Widget loadArrows(BuildContext context) {
     List<CustomPaint> arrowPainters = [];
     int counter = 0;
     arrows[endIndex].forEach((element) {
@@ -445,6 +454,10 @@ class _TargetPageState extends State<TargetPage> {
       //onLongPress: onLongPress,
       onMoveStart: (pointer, localPos, position) {
         _draggedArrow = _touchedArrowIndex(localPos.dx, localPos.dy);
+        if (_draggedArrow != -1 && arrows[endIndex][_draggedArrow].isLocked == 1) {
+          Scaffold.of(context).hideCurrentSnackBar();
+          Scaffold.of(context).showSnackBar(SnackBar(content: Text('This Arrow is locked.')));
+        }
       },
       onMoveEnd: (pointer, localPos, position) {
         if (_draggedArrow != -1) {
@@ -507,7 +520,21 @@ class _TargetPageState extends State<TargetPage> {
     setState(() {});
   }
 
-  void nextRound() async {
+  void lockArrowsIfFinal() {
+    if (widget.training.competitionType == CompetitionType.finals) {
+      for (var arrow in arrows.last) {
+        arrow.lock();
+      }
+    }
+  }
+
+  void nextRound(BuildContext context) async {
+    if (countNumberOfUntouchedArrows() > 0) {
+      Scaffold.of(context).hideCurrentSnackBar();
+      Scaffold.of(context).showSnackBar(SnackBar(content: Text('Please place all arrows before continuing.')));
+      return;
+    }
+
     endIndex++;
 
     if (endIndex < arrows.length) {
@@ -523,6 +550,7 @@ class _TargetPageState extends State<TargetPage> {
     }
 
     if (arrows.length < widget.training.numberOfEnds || widget.training.numberOfEnds == 0) {
+      lockArrowsIfFinal();
       // create new
       await dbService.updateAllEndsOfTraining(widget.training.id, arrows);
 
@@ -724,7 +752,7 @@ class _TargetPageState extends State<TargetPage> {
     );
   }
 
-  Widget _bottomBar() {
+  Widget _bottomBar(BuildContext context) {
     if (_draggedArrow == -1)
       _groupPerimeter = getGroupPerimeter(widget.training.targetDiameterCM); // todo remove hardcoding here and further down
 
@@ -760,7 +788,9 @@ class _TargetPageState extends State<TargetPage> {
                 Text("Next"),
               ],
             ),
-            onPressed: nextRound,
+            onPressed: () {
+              nextRound(context);
+            },
           ),
         ],
       ),
@@ -839,10 +869,14 @@ class _TargetPageState extends State<TargetPage> {
             ),
           ],
         ),
-        body: Stack(
-          children: [createTarget(), loadArrows(), _dragScrollSheet()],
+        body: Builder(
+          builder: (context) => Stack(
+            children: [createTarget(), loadArrows(context), _dragScrollSheet()],
+          ),
         ),
-        bottomNavigationBar: _bottomBar(),
+        bottomNavigationBar: Builder(
+          builder: (context) => _bottomBar(context),
+        ),
       ),
       onWillPop: onLeave,
     );

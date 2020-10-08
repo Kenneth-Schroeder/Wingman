@@ -7,12 +7,14 @@ class ArrowPainter extends CustomPainter {
       : this._offset = instance.getCartesianCoordinates(targetRadius) + targetCenter,
         this._radius = instance.relativeArrowRadius * targetRadius {
     this._text = instance.getLabel();
+    this._isLocked = instance.isLocked == 1;
   }
 
   final Offset _offset;
   final double _radius;
   String _text;
-  bool _isDragged = true;
+  bool _isDragged;
+  bool _isLocked;
   Offset _dropOffset;
 
   @override
@@ -36,7 +38,7 @@ class ArrowPainter extends CustomPainter {
     double factor = 3.3;
     double wingRadius = -_dropOffset.dy / 7; //_radius * 10;
 
-    if (_isDragged) {
+    if (_isDragged && !_isLocked) {
       canvas.drawLine(_offset, _offset + _dropOffset, paint3);
       canvas.drawCircle(_offset + _dropOffset, _radius, innerPaint);
     }

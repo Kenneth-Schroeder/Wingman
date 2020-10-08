@@ -26,7 +26,7 @@ class _CompetitionMenuState extends State<CompetitionMenu> {
   }
 
   void _saveNewTraining(TrainingInstance training) async {
-    await dbService.addTraining(training);
+    await dbService.addTraining(training, []);
   }
 
   Widget floatingBoxWrapper(String image, String title, Color textColor, Alignment titleAlign, int category, int option) {

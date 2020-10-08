@@ -96,6 +96,7 @@ class DatabaseService {
             score INTEGER,
             pRadius REAL,
             pAngle REAL,
+            isLocked INTEGER,
             isUntouched INTEGER,
             arrowInformationID INTEGER,
             endID INTEGER NOT NULL,
@@ -154,22 +155,48 @@ class DatabaseService {
     return result;
   }
 
-  Future<bool> clearArrowInfoTables() async {
+  Future<int> updateArrowInformation(ArrowInformation arrowInformation, int setID) async {
     Database db = await database;
-    await db.delete(tableArrowSets);
-    await db.delete(tableArrowInfo);
+    int updateCount =
+        await db.update(tableArrowInfo, arrowInformation.toMapWithSetID(setID), where: 'id = ?', whereArgs: [arrowInformation.id]);
+    return updateCount;
+  }
+
+  Future<int> updateArrowSet(ArrowSet arrowSet) async {
+    Database db = await database;
+    int updateCount = await db.update(tableArrowSets, arrowSet.toMap(), where: 'id = ?', whereArgs: [arrowSet.id]);
+    return updateCount;
+  }
+
+  Future<bool> addArrowInfoToSet(ArrowInformation arrowInformation, int setID) async {
+    Database db = await database;
+    await db.insert(tableArrowInfo, arrowInformation.toMapWithSetID(setID));
+    return true;
+  }
+
+  Future<bool> addArrowSetWithInfos(ArrowSet set) async {
+    Database db = await database;
+    int setID = await db.insert(tableArrowSets, set.toMap());
+    for (var arrow in set.arrowInfos) {
+      await addArrowInfoToSet(arrow, setID);
+    }
     return true;
   }
 
   Future<bool> updateAllArrowSets(List<ArrowSet> arrowSets) async {
-    // just delete all and create new entries?
-    await clearArrowInfoTables(); // TODO this will fuck up a lot in combination with ON DELETE SET NULL, only update or add pls
     Database db = await database;
-
-    for (var set in arrowSets) {
-      int setID = await db.insert(tableArrowSets, set.toMap());
-      for (var arrow in set.arrowInfos) {
-        await db.insert(tableArrowInfo, arrow.toMapWithSetID(setID));
+    for (var arrowSet in arrowSets) {
+      if (arrowSet.id != null) {
+        await updateArrowSet(arrowSet);
+        for (var arrowInfo in arrowSet.arrowInfos) {
+          if (arrowInfo.id != null) {
+            await updateArrowInformation(arrowInfo, arrowSet.id);
+          } else {
+            await addArrowInfoToSet(arrowInfo, arrowSet.id);
+          }
+        }
+      } else {
+        await addArrowSetWithInfos(arrowSet);
       }
     }
 
@@ -322,9 +349,7 @@ class DatabaseService {
 
   Future<int> updateScore(ScoreInstance instance) async {
     Database db = await database;
-
     int updateCount = await db.update(tableScores, instance.toMap(), where: 'shotID = ?', whereArgs: [instance.shotID]);
-
     return updateCount;
   }
 
@@ -395,7 +420,7 @@ class DatabaseService {
     return scores;
   }
 
-  Future<int> addTraining(TrainingInstance instance, [List<int> arrowInformationIDs]) async {
+  Future<int> addTraining(TrainingInstance instance, List<int> arrowInformationIDs) async {
     Database db = await database;
 
     int trainingID = await db.insert(tableTrainings, instance.toMap());

@@ -13,6 +13,7 @@ class ScoreInstance {
   ArrowInformation arrowInformation;
   double pRadius = 1.3; // polar radius
   double pAngle = 13 / 20 * pi; // polar angle
+  int isLocked = 0;
   int isUntouched = 1; // 1 == true
 
   ScoreInstance.scoreOnly(this.endID, this.score); // for opponent scores
@@ -35,10 +36,15 @@ class ScoreInstance {
         endID = map["endID"],
         pRadius = map["pRadius"] == null ? -1 : map["pRadius"],
         pAngle = map["pAngle"] == null ? -1 : map["pAngle"],
+        isLocked = map["isLocked"],
         isUntouched = map["isUntouched"] == null ? 1 : map["isUntouched"] {
     if (map["arrowInformationID"] != null) {
       gatherArrowInformation(dbService, map["arrowInformationID"]);
     }
+  }
+
+  void lock() {
+    isLocked = 1;
   }
 
   String getLabel() {
@@ -70,6 +76,7 @@ class ScoreInstance {
       "arrowInformationID": _getArrowInformationID(),
       "pRadius": this.pRadius,
       "pAngle": this.pAngle,
+      "isLocked": this.isLocked,
       "isUntouched": this.isUntouched,
     };
   }
@@ -118,6 +125,10 @@ class ScoreInstance {
   }
 
   int updateScore(TargetType targetType, double targetRadius) {
+    if (isLocked == 1) {
+      return score;
+    }
+
     switch (targetType) {
       case TargetType.Full:
         score = fullTargetScore();
@@ -178,6 +189,9 @@ class ScoreInstance {
   }
 
   void moveByOffset(Offset offset, double targetRadius, TargetType targetType) {
+    if (isLocked == 1) {
+      return;
+    }
     // convert own coordinates to cartesian, add offset, convert back
     isUntouched = 0;
     Offset cartesian = getCartesianCoordinates(targetRadius);
@@ -187,6 +201,9 @@ class ScoreInstance {
   }
 
   void reset() {
+    if (isLocked == 1) {
+      return;
+    }
     score = 0;
     pRadius = 1.3;
     pAngle = 13 / 20 * pi;
