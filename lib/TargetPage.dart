@@ -9,6 +9,7 @@ import 'ArrowPainter.dart';
 import 'SizeConfig.dart';
 import 'dart:math';
 import 'CompetitionSimulator.dart';
+import 'ArrowInformation.dart';
 
 class Archer {
   List<int> endScores = [0];
@@ -45,6 +46,7 @@ class _TargetPageState extends State<TargetPage> {
   Offset targetCenter;
   double targetRadius;
   int _draggedArrow = -1;
+  List<ArrowInformation> arrowInformation = [];
 
   int endIndex = 0;
 
@@ -85,6 +87,8 @@ class _TargetPageState extends State<TargetPage> {
   void onStart() async {
     dbService = await DatabaseService.create();
     SizeConfig().init(context);
+
+    arrowInformation = await dbService.getArrowInformationToTraining(widget.training.id);
 
     switch (widget.training.targetType) {
       case TargetType.Full:
@@ -523,7 +527,7 @@ class _TargetPageState extends State<TargetPage> {
       await dbService.updateAllEndsOfTraining(widget.training.id, arrows);
 
       int endID = await dbService.addEnd(widget.training.id);
-      await dbService.addDefaultScores(endID, numArrowsForEnd(endIndex), widget.training.relativeArrowWidth());
+      await dbService.addDefaultScores(endID, numArrowsForEnd(endIndex), widget.training.relativeArrowWidth(), arrowInformation);
 
       // just load all again and we are good
       Map<int, List<ScoreInstance>> allScoresMap = await dbService.getFullEndsOfTraining(widget.training.id);

@@ -17,6 +17,8 @@ class _TrainingCreationState extends State<TrainingCreation> {
   DatabaseService dbService;
   TrainingInstance newTraining = TrainingInstance.fromMap({"title": "Training", "creationTime": DateTime.now(), "arrowsPerEnd": -1});
   List<int> _arrowInformationIDs = [];
+  final numArrowsController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
@@ -26,28 +28,35 @@ class _TrainingCreationState extends State<TrainingCreation> {
 
   void onStart() async {
     dbService = await DatabaseService.create();
+    numArrowsController.addListener(() {
+      setState(() {});
+    });
+  }
+
+  int getNumArrows() {
+    if (numArrowsController.text.isEmpty) {
+      return 0;
+    }
+
+    return int.parse(numArrowsController.text);
   }
 
   void _saveNewTraining() async {
-    int id = await dbService.addTraining(newTraining);
-    if (arrowSelectionValid()) {
-      dbService.addArrowInfoToTraining(_arrowInformationIDs, id);
-    }
+    int id = await dbService.addTraining(newTraining, _arrowInformationIDs);
   }
 
   bool arrowSelectionValid() {
-    print(_arrowInformationIDs);
-    if (_arrowInformationIDs.length != 0 && _arrowInformationIDs.length == newTraining.arrowsPerEnd) {
+    if (_arrowInformationIDs.length != 0 && _arrowInformationIDs.length == getNumArrows()) {
       return true;
     }
     return false;
   }
 
   void setupArrows() {
-    if (newTraining.arrowsPerEnd > 0) {
+    if (getNumArrows() > 0) {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => QuiverOrganizer(newTraining.arrowsPerEnd)),
+        MaterialPageRoute(builder: (context) => QuiverOrganizer(getNumArrows(), _arrowInformationIDs)),
       ).then((arrowInformationIDs) {
         if (arrowInformationIDs != null) {
           // can be null if back button is hit
@@ -60,8 +69,6 @@ class _TrainingCreationState extends State<TrainingCreation> {
   }
 
   Widget newTrainingForm() {
-    final _formKey = GlobalKey<FormState>();
-
     return SingleChildScrollView(
       child: Form(
         key: _formKey,
@@ -99,7 +106,8 @@ class _TrainingCreationState extends State<TrainingCreation> {
                 children: [
                   Expanded(
                     child: TextFormField(
-                      initialValue: newTraining.arrowsPerEnd > 0 ? newTraining.arrowsPerEnd.toString() : null,
+                      // todo needs controller for setupArrows() to get current value, when we dont need onFieldSubmitted anymore
+                      controller: numArrowsController,
                       decoration: const InputDecoration(
                         labelText: 'Arrows per End',
                         fillColor: Colors.white,
@@ -120,10 +128,11 @@ class _TrainingCreationState extends State<TrainingCreation> {
                         }
                         return null;
                       },
-                      onFieldSubmitted: (String value) {
-                        // todo add proper listener
-                        newTraining.arrowsPerEnd = int.parse(value);
+                      onFieldSubmitted: (String text) {
                         setState(() {});
+                      },
+                      onSaved: (String value) {
+                        newTraining.arrowsPerEnd = getNumArrows();
                       },
                       inputFormatters: [WhitelistingTextInputFormatter.digitsOnly],
                     ),

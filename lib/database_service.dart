@@ -123,7 +123,11 @@ class DatabaseService {
 
   Future<ArrowInformation> getArrowInformationFromID(int id) async {
     Database db = await database;
-    return await db.query(tableArrowInfo, where: 'id = ?', whereArgs: [id]).then((mapRows) => ArrowInformation.fromMap(mapRows.first));
+    ArrowInformation result;
+
+    var mapRows = await db.query(tableArrowInfo, where: 'id = ?', whereArgs: [id]);
+    result = ArrowInformation.fromMap(mapRows.first);
+    return result;
   }
 
   Future<bool> addArrowInfoToTraining(List<int> arrowInformationIDs, int trainingID) async {
@@ -132,6 +136,22 @@ class DatabaseService {
       await db.insert(tableTrainingArrowConnector, {"trainingID": trainingID, "arrowID": arrowInfoID});
     }
     return true;
+  }
+
+  Future<List<ArrowInformation>> getArrowInformationToTraining(int trainingID) async {
+    Database db = await database;
+    List<ArrowInformation> result = [];
+
+    List<Map> rows = await db.rawQuery("SELECT * "
+        "FROM $tableArrowInfo "
+        "INNER JOIN $tableTrainingArrowConnector ON $tableTrainingArrowConnector.arrowID = $tableArrowInfo.id "
+        "WHERE $tableTrainingArrowConnector.trainingID == $trainingID");
+
+    for (var row in rows) {
+      result.add(ArrowInformation.fromMap(row));
+    }
+
+    return result;
   }
 
   Future<bool> clearArrowInfoTables() async {
@@ -294,7 +314,7 @@ class DatabaseService {
     return id;
   }
 
-  Future<int> addScore(ScoreInstance instance) async {
+  Future<int> addScore(ScoreInstance instance, [ArrowInformation arrowInformation]) async {
     Database db = await database;
     int id = await db.insert(tableScores, instance.toMap());
     return id;
@@ -308,9 +328,15 @@ class DatabaseService {
     return updateCount;
   }
 
-  void addDefaultScores(int endID, int number, double relativeArrowRadius) async {
+  void addDefaultScores(int endID, int number, double relativeArrowRadius, [List<ArrowInformation> arrowsInformation]) async {
     for (var i = 0; i < number; i++) {
-      addScore(ScoreInstance(endID, relativeArrowRadius));
+      ScoreInstance instance = ScoreInstance(endID, relativeArrowRadius);
+
+      if (arrowsInformation != null && arrowsInformation.length > i) {
+        instance.setArrowInformation(arrowsInformation[i]);
+      }
+
+      addScore(instance);
     }
   }
 
@@ -369,12 +395,14 @@ class DatabaseService {
     return scores;
   }
 
-  Future<int> addTraining(TrainingInstance instance) async {
+  Future<int> addTraining(TrainingInstance instance, [List<int> arrowInformationIDs]) async {
     Database db = await database;
 
     int trainingID = await db.insert(tableTrainings, instance.toMap());
+    await addArrowInfoToTraining(arrowInformationIDs, trainingID);
     int endID = await addEnd(trainingID);
-    await addDefaultScores(endID, instance.arrowsPerEnd, instance.relativeArrowWidth());
+    List<ArrowInformation> fullArrowInformation = await getArrowInformationToTraining(trainingID);
+    await addDefaultScores(endID, instance.arrowsPerEnd, instance.relativeArrowWidth(), fullArrowInformation);
     return trainingID;
   }
 

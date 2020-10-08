@@ -96,7 +96,7 @@ class ArrowPainter extends CustomPainter {
 
     TextStyle textStyle = TextStyle(
       fontSize: 18,
-      color: Colors.purple,
+      color: Colors.black,
       fontWeight: FontWeight.bold,
     );
 

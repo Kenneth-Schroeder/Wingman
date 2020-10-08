@@ -4,9 +4,10 @@ import 'SizeConfig.dart';
 import 'ArrowInformation.dart';
 
 class QuiverOrganizer extends StatefulWidget {
-  QuiverOrganizer(this.numArrowsToSelect, {Key key}) : super(key: key);
+  QuiverOrganizer(this.numArrowsToSelect, this.selectedArrowInformationIDs, {Key key}) : super(key: key);
 
   int numArrowsToSelect;
+  List<int> selectedArrowInformationIDs = [];
 
   @override
   _QuiverOrganizerState createState() => _QuiverOrganizerState();
@@ -27,18 +28,28 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> {
     onStart();
   }
 
-  double _screenWidth() {
-    // todo make sure to use these
-    return SizeConfig.screenWidth == null ? 1 : SizeConfig.screenWidth;
-  }
-
   void onStart() async {
     dbService = await DatabaseService.create();
     arrowSets = await dbService.getAllArrowSets();
     enabled = List.filled(arrowSets.length, false, growable: true);
+
+    for (var arrowSet in arrowSets) {
+      for (var arrowInfo in arrowSet.arrowInfos) {
+        if (widget.selectedArrowInformationIDs.contains(arrowInfo.id)) {
+          arrowInfo.selected = true;
+          selectedArrows += 1;
+        }
+      }
+    }
+
     SizeConfig().init(context);
     startRoutineFinished = true;
     setState(() {});
+  }
+
+  double _screenWidth() {
+    // todo make sure to use these
+    return SizeConfig.screenWidth == null ? 1 : SizeConfig.screenWidth;
   }
 
   void prepareEdit(int index) async {
