@@ -110,7 +110,7 @@ class _CompetitionMenuState extends State<CompetitionMenu> {
 
   void submitSelection() {
     if (!selected.contains(-1)) {
-      TrainingInstance training = TrainingInstance("Competition", DateTime.now());
+      TrainingInstance training = TrainingInstance("", DateTime.now());
 
       training.competitionLevel = sliderValue.toInt();
 
@@ -118,6 +118,7 @@ class _CompetitionMenuState extends State<CompetitionMenu> {
         // outdoor
         training.targetDiameterCM = 122;
         training.targetType = TargetType.Full;
+        training.title += "Outd.";
 
         if (selected[2] == 0) {
           // qualifying
@@ -133,6 +134,7 @@ class _CompetitionMenuState extends State<CompetitionMenu> {
         training.targetDiameterCM = 40;
         training.targetType = TargetType.TripleSpot;
         training.arrowsPerEnd = 3;
+        training.title += "Ind.";
 
         if (selected[2] == 0) {
           // qualifying
@@ -146,17 +148,21 @@ class _CompetitionMenuState extends State<CompetitionMenu> {
       if (selected[1] == 0) {
         // female
         training.referencedGender = Gender.female;
+        training.title += "♀";
       } else {
         // male
         training.referencedGender = Gender.male;
+        training.title += "♂";
       }
 
       if (selected[2] == 0) {
         // qualifying
         training.competitionType = CompetitionType.qualifying;
+        training.title += "Qual.";
       } else {
         // finals
         training.competitionType = CompetitionType.finals;
+        training.title += "Final";
       }
 
       _saveNewTraining(training);
@@ -230,7 +236,7 @@ class _CompetitionMenuState extends State<CompetitionMenu> {
                     ),
                     Padding(
                       padding: EdgeInsets.only(right: 22),
-                      child: Text("Inhuman", style: TextStyle(fontSize: 16)),
+                      child: Text("World Champion", style: TextStyle(fontSize: 16)),
                     ),
                   ],
                 ),

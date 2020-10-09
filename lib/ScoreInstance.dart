@@ -20,14 +20,14 @@ class ScoreInstance {
   ScoreInstance(this.endID, this.relativeArrowRadius);
   ScoreInstance.positioned(this.endID, this.score, Offset position, double targetRadius) {
     // todo - is this used anymore?
-    setWithCartesianCoordinates(position, targetRadius);
+    setWithCartesianCoordinatesRelativeToTarget(position, targetRadius);
   }
 
   void setArrowInformation(ArrowInformation arrowInfo) {
     arrowInformation = arrowInfo;
   }
 
-  ScoreInstance.fromMapAndDB(Map<String, dynamic> map, DatabaseService dbService)
+  ScoreInstance.fromMapAndArrowInformation(Map<String, dynamic> map, ArrowInformation arrowInfo)
       : assert(map["score"] != null),
         assert(map["endID"] != null),
         shotID = map["shotID"],
@@ -39,7 +39,7 @@ class ScoreInstance {
         isLocked = map["isLocked"],
         isUntouched = map["isUntouched"] == null ? 1 : map["isUntouched"] {
     if (map["arrowInformationID"] != null) {
-      gatherArrowInformation(dbService, map["arrowInformationID"]);
+      arrowInformation = arrowInfo;
     }
   }
 
@@ -53,11 +53,6 @@ class ScoreInstance {
     }
 
     return arrowInformation.label;
-  }
-
-  Future<bool> gatherArrowInformation(DatabaseService dbService, int id) async {
-    arrowInformation = await dbService.getArrowInformationFromID(id);
-    return true;
   }
 
   int _getArrowInformationID() {
@@ -176,7 +171,11 @@ class ScoreInstance {
     return Offset(radius * cos(angle), radius * sin(angle));
   }
 
-  void setWithCartesianCoordinates(Offset offset, double targetRadius) {
+  void setWithGlobalCartesianCoordinates(Offset offset, double targetRadius, Offset targetCenter) {
+    setWithCartesianCoordinatesRelativeToTarget(offset - targetCenter, targetRadius);
+  }
+
+  void setWithCartesianCoordinatesRelativeToTarget(Offset offset, double targetRadius) {
     double radius = sqrt(offset.dx * offset.dx + offset.dy * offset.dy);
     pAngle = atan2(offset.dy, offset.dx);
     pRadius = radius / targetRadius;
@@ -185,7 +184,7 @@ class ScoreInstance {
   void _moveForTriSpot(double targetRadius, int direction) {
     Offset cartesian = getCartesianCoordinates(targetRadius);
     cartesian += Offset(0, targetRadius * 1.1 * direction);
-    setWithCartesianCoordinates(cartesian, targetRadius);
+    setWithCartesianCoordinatesRelativeToTarget(cartesian, targetRadius);
   }
 
   void moveByOffset(Offset offset, double targetRadius, TargetType targetType) {
@@ -196,7 +195,7 @@ class ScoreInstance {
     isUntouched = 0;
     Offset cartesian = getCartesianCoordinates(targetRadius);
     cartesian += offset;
-    setWithCartesianCoordinates(cartesian, targetRadius);
+    setWithCartesianCoordinatesRelativeToTarget(cartesian, targetRadius);
     // updateScore(targetType, targetRadius);
   }
 
@@ -207,6 +206,7 @@ class ScoreInstance {
     score = 0;
     pRadius = 1.3;
     pAngle = 13 / 20 * pi;
+    // position only temporary, will be set by targetpage to be on screen side
   }
 
   String toString() {

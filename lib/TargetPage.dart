@@ -42,6 +42,8 @@ class TargetPage extends StatefulWidget {
 
 class _TargetPageState extends State<TargetPage> {
   List<List<ScoreInstance>> arrows;
+  Offset arrowTopPosition;
+  Offset arrowBotPosition;
 
   Offset targetCenter;
   double targetRadius;
@@ -50,6 +52,7 @@ class _TargetPageState extends State<TargetPage> {
 
   int endIndex = 0;
 
+  double _previousScaleFactor = 1.0;
   double _scaleFactor = 1.0;
   double _initialScaleFactor = 1.0;
   Offset _initialScaleCenter = Offset(0, 0);
@@ -88,6 +91,9 @@ class _TargetPageState extends State<TargetPage> {
     dbService = await DatabaseService.create();
     SizeConfig().init(context);
 
+    arrowTopPosition = Offset(SizeConfig.screenWidth / 10, SizeConfig.screenHeight * 7 / 12);
+    arrowBotPosition = Offset(SizeConfig.screenWidth / 10, SizeConfig.screenHeight * 11 / 12);
+
     arrowInformation = await dbService.getArrowInformationToTraining(widget.training.id);
 
     switch (widget.training.targetType) {
@@ -106,6 +112,7 @@ class _TargetPageState extends State<TargetPage> {
     }
 
     targetRadius = SizeConfig().minDim() / 2.2;
+    setUntouchedArrowsPosition();
 
     numberOfUntouchedArrows = countNumberOfUntouchedArrows(); // has to be called before first getMatchPoints()
 
@@ -125,7 +132,7 @@ class _TargetPageState extends State<TargetPage> {
         opponents = [];
 
         for (int i = 0; i < numOpponents; i++) {
-          opponents.add(Archer(i.toString()));
+          opponents.add(Archer("Rival " + (i + 1).toString().padLeft(2, '0')));
           dbService.addOpponent(widget.training.id, i.toString());
         }
       } else {
@@ -144,7 +151,6 @@ class _TargetPageState extends State<TargetPage> {
     }
 
     startRoutineFinished = true;
-
     setState(() {});
   }
 
@@ -254,7 +260,6 @@ class _TargetPageState extends State<TargetPage> {
       }
     }
 
-    print(points);
     return points;
   }
 
@@ -377,7 +382,10 @@ class _TargetPageState extends State<TargetPage> {
 
   DataColumn tableColumn(String text, bool numeric) {
     return DataColumn(
-      label: Text(text),
+      label: Text(
+        text,
+        textAlign: TextAlign.right,
+      ),
       numeric: numeric,
       onSort: onColumnSort,
     );
@@ -421,15 +429,35 @@ class _TargetPageState extends State<TargetPage> {
 
     return Container(
       color: Colors.white,
-      child: DataTable(
-        columns: columns,
-        rows: rows,
-        sortAscending: sortAscending,
-        sortColumnIndex: sortColumnIndex,
-        columnSpacing: 25,
-        dataRowHeight: 25,
+      child: SizedBox(
+        width: double.infinity,
+        child: Center(
+          child: SingleChildScrollView(
+            child: DataTable(
+              columns: columns,
+              rows: rows,
+              sortAscending: sortAscending,
+              sortColumnIndex: sortColumnIndex,
+              columnSpacing: 15,
+              dataRowHeight: 25,
+            ),
+            scrollDirection: Axis.horizontal,
+          ),
+        ),
       ),
     );
+  }
+
+  void setUntouchedArrowsPosition() {
+    for (int endIdx = 0; endIdx < arrows.length; endIdx++) {
+      for (int i = 0; i < arrows[endIdx].length; i++) {
+        if (arrows[endIdx][i].isUntouched == 1) {
+          // arrow.moveWithScale(scaleDelta, -_scaleCenterDelta, scaledTargetRadius());
+          Offset position = arrowTopPosition + (arrowBotPosition - arrowTopPosition) / (arrows[endIdx].length - 1.0) * i.toDouble();
+          arrows[endIdx][i].setWithGlobalCartesianCoordinates(position, scaledTargetRadius(), draggedTargetCenter());
+        }
+      }
+    }
   }
 
   Widget loadArrows(BuildContext context) {
@@ -475,15 +503,19 @@ class _TargetPageState extends State<TargetPage> {
         }
       },
       onScaleStart: (initialFocusPoint) {
+        // todo if arrow is untouched, move it in sync with scale
         _initialScaleCenter = initialFocusPoint;
         _initialScaleFactor = _scaleFactor;
       },
       onScaleUpdate: (changedFocusPoint, scale, rotation) {
+        _previousScaleFactor = _scaleFactor;
         _scaleFactor = scale * _initialScaleFactor;
+        double scaleDelta = _scaleFactor / _previousScaleFactor;
         Offset newScaleCenterOffset = _initialScaleCenter - changedFocusPoint;
         _scaleCenterDelta = _scaleCenterOffset - newScaleCenterOffset;
         _scaleCenterOffset = newScaleCenterOffset;
         _targetCenterOffset += _scaleCenterDelta;
+        setUntouchedArrowsPosition();
         setState(() {});
       },
       onScaleEnd: () {
@@ -499,6 +531,7 @@ class _TargetPageState extends State<TargetPage> {
   void resetArrows() {
     arrows[endIndex].forEach((element) {
       element.reset();
+      setUntouchedArrowsPosition();
     });
     setState(() {});
   }
@@ -569,10 +602,9 @@ class _TargetPageState extends State<TargetPage> {
         counter++;
       });
 
+      setUntouchedArrowsPosition();
       numberOfUntouchedArrows = countNumberOfUntouchedArrows();
-
       endFinishedAction();
-
       setState(() {});
     }
   }

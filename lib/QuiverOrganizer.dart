@@ -192,17 +192,16 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> {
       itemCount: arrowSets.length + 1,
       tabBuilder: (context, index) => Tab(
         child: tabHeaderGenerator(index, arrowSets.length),
-      ), //Text(data[index])),
+      ),
       pageBuilder: (context, index) => tabBodyGenerator(index, arrowSets.length),
       onPositionChange: (index) {
         for (int i = 0; i < enabled.length; i++) {
           enabled[i] = false;
         }
-        // print('current position: $index');
         initPosition = index;
         setState(() {});
       },
-      onScroll: (position) {}, // (position) => print('$position'),
+      onScroll: (position) {},
     );
   }
 

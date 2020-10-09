@@ -6,8 +6,11 @@ class CompetitionSimulator {
     assert(this._type != CompetitionType.training);
     assert(this._gender != Gender.none);
 
-    _lambda = _lambdaTable[this._type.index - 1][this._outdoors == true ? 0 : 1][this._gender.index - 1];
-    _lambda *= 1 + (1 - this._level / 18) * 5.0; // 1/9 to 10/9, 8/9 to -1/9, 17/9 to 8/9
+    double lambdaPro = _lambdaTablePro[this._type.index - 1][this._outdoors == true ? 0 : 1][this._gender.index - 1];
+    double lambdaBeginner = _lambdaTableBeginner[this._type.index - 1][this._outdoors == true ? 0 : 1][this._gender.index - 1];
+    double lambdaStepSize = (lambdaBeginner - lambdaPro) / 19; // todo hardcoded because 19 levels
+    _lambda = lambdaBeginner - lambdaStepSize * (this._level - 1);
+    // _lambda *= 1 + (1 - this._level / 18) * 5.0; // 1/9 to 10/9, 8/9 to -1/9, 17/9 to 8/9
     cumulativeProbabilities = generateCumulativeProbabilityList(_lambda);
     //test();
   }
@@ -19,7 +22,7 @@ class CompetitionSimulator {
   double _lambda;
   List<double> cumulativeProbabilities;
 
-  List<List<List<double>>> _lambdaTable = [
+  List<List<List<double>>> _lambdaTablePro = [
     [
       // qualifying
       [1.328704, 1.256944], // outdoors
@@ -29,6 +32,19 @@ class CompetitionSimulator {
       // finals
       [1.640000, 1.404412], // outdoors
       [0.290323, 0.171429], // indoors
+    ],
+  ];
+
+  List<List<List<double>>> _lambdaTableBeginner = [
+    [
+      // qualifying
+      [7.0, 7.0], // outdoors, female - male
+      [4.0, 4.0], // indoors
+    ],
+    [
+      // finals
+      [7.0, 7.0], // outdoors
+      [4.0, 4.0], // indoors
     ],
   ];
 

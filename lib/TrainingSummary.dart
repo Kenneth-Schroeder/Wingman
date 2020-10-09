@@ -32,6 +32,20 @@ class _TrainingSummaryState extends State<TrainingSummary> {
     setState(() {});
   }
 
+  DataCell defaultDataCell(String text, [Color c]) {
+    Color color = Colors.black;
+    if (c != null) {
+      color = c;
+    }
+
+    return DataCell(
+      Text(
+        text,
+        style: TextStyle(color: color, fontSize: 16),
+      ),
+    );
+  }
+
   Widget createSummaryTable() {
     // ends, arrows
     List<DataRow> rows = [];
@@ -69,23 +83,24 @@ class _TrainingSummaryState extends State<TrainingSummary> {
             content = endCounter.toString();
           }
 
-          cells.add(
-            DataCell(
-              Text(
-                content,
-                style: TextStyle(color: Colors.grey, fontSize: 16),
-              ),
-            ),
-          );
+          cells.add(defaultDataCell(content, Colors.grey));
 
           rowOfEndCounter++;
         }
 
         cells.add(
           DataCell(
-            Text(
-              scoreInstance.score.toString(),
-              style: TextStyle(fontSize: 16),
+            Row(
+              children: [
+                Text(
+                  scoreInstance.score.toString(),
+                  style: TextStyle(fontSize: 16),
+                ),
+                Text(
+                  scoreInstance.arrowInformation == null ? "" : scoreInstance.arrowInformation.label, // todo dont leave it like this
+                  style: TextStyle(fontSize: 8),
+                ),
+              ],
             ),
           ),
         );
@@ -95,21 +110,14 @@ class _TrainingSummaryState extends State<TrainingSummary> {
 
         if (endScoreCounter == scores.length && scores.length % 3 != 0) {
           for (int i = 0; i < 3 - (scores.length % 3); i++) {
-            cells.add(DataCell(Text("", style: TextStyle(fontSize: 16))));
+            cells.add(defaultDataCell(""));
             rowScoreCounter++;
           }
         }
 
         if (rowScoreCounter == 3) {
           // finish row
-          cells.add(
-            DataCell(
-              Text(
-                rowSum.toString(),
-                style: TextStyle(fontSize: 16),
-              ),
-            ),
-          );
+          cells.add(defaultDataCell(rowSum.toString()));
 
           String endSumText = "";
           String totalSumText = "";
@@ -120,23 +128,9 @@ class _TrainingSummaryState extends State<TrainingSummary> {
             totalSumText = totalSum.toString();
           }
 
-          cells.add(
-            DataCell(
-              Text(
-                endSumText,
-                style: TextStyle(fontSize: 16),
-              ),
-            ),
-          );
+          cells.add(defaultDataCell(endSumText));
 
-          cells.add(
-            DataCell(
-              Text(
-                totalSumText,
-                style: TextStyle(fontSize: 16),
-              ),
-            ),
-          );
+          cells.add(defaultDataCell(totalSumText));
 
           rows.add(DataRow(cells: cells));
 

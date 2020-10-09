@@ -123,6 +123,11 @@ class DatabaseService {
   }
 
   Future<ArrowInformation> getArrowInformationFromID(int id) async {
+    if (id == null) {
+      // todo check if this is sufficient or other errors might arise
+      return ArrowInformation("");
+    }
+
     Database db = await database;
     ArrowInformation result;
 
@@ -285,6 +290,13 @@ class DatabaseService {
         "INNER JOIN $tableOpponents ON $tableOpponents.id = $tableEnds.opponentID "
         "WHERE $tableEnds.opponentID == $opponentID");
 
+    if (endsMap.isEmpty) {
+      // no ends created for the opponent so far
+      var opponentMap = await db.query(tableOpponents, where: 'id = ?', whereArgs: [opponentID]);
+      Archer opponent = Archer(opponentMap.first['name']);
+      return opponent;
+    }
+
     Archer opponent = Archer(endsMap.first['name'].toString());
 
     Map<int, List<int>> scoresByEnd = Map<int, List<int>>(); // maps from endID to the scores
@@ -380,7 +392,9 @@ class DatabaseService {
       if (!scoresByEnd.containsKey(item["endID"])) {
         scoresByEnd[item["endID"]] = [];
       }
-      scoresByEnd[item["endID"]].add(ScoreInstance.fromMapAndDB(item, this));
+
+      ArrowInformation arrowInformation = await getArrowInformationFromID(item['arrowInformationID']);
+      scoresByEnd[item["endID"]].add(ScoreInstance.fromMapAndArrowInformation(item, arrowInformation));
     }
 
     return scoresByEnd;
@@ -414,7 +428,8 @@ class DatabaseService {
 
     List<ScoreInstance> scores = [];
     for (var row in scoresMap) {
-      scores.add(ScoreInstance.fromMapAndDB(row, this));
+      ArrowInformation arrowInformation = await getArrowInformationFromID(row['arrowInformationID']);
+      scores.add(ScoreInstance.fromMapAndArrowInformation(row, arrowInformation));
     }
 
     return scores;
