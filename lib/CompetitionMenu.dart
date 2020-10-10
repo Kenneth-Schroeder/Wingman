@@ -177,93 +177,109 @@ class _CompetitionMenuState extends State<CompetitionMenu> {
       appBar: AppBar(
         title: Text("Competition Simulation"),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          Row(
-            children: [
-              floatingBoxWrapper("outdoor.jpg", "Outdoors", Colors.white, Alignment.bottomLeft, 0, 0),
-              SizedBox(width: 20),
-              floatingBoxWrapper("indoor.jpg", "Indoors", Colors.white, Alignment.topRight, 0, 1),
-            ],
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: RadialGradient(
+            radius: 1.7,
+            center: Alignment.bottomRight,
+            colors: [
+              Colors.grey[100],
+              Colors.grey[200],
+              Colors.grey[400],
+              //Colors.black45,
+              //Colors.black54,
+            ], //, Colors.black, Colors.white],
+            stops: [0.0, 0.5, 1.0], //[0.0, 0.25, 0.5, 0.75, 1.0],
           ),
-          SizedBox(height: 20),
-          Row(
-            children: [
-              floatingBoxWrapper("female.png", "Female", Colors.white, Alignment.bottomLeft, 1, 0),
-              SizedBox(width: 20),
-              floatingBoxWrapper("male.png", "Male", Colors.white, Alignment.topRight, 1, 1),
-            ],
-          ),
-          SizedBox(height: 20),
-          Row(
-            children: [
-              floatingBoxWrapper("qualification.jpg", "Qualifying", Colors.white, Alignment.bottomLeft, 2, 0),
-              SizedBox(width: 20),
-              floatingBoxWrapper("finals.jpg", "Finals", Colors.white, Alignment.topRight, 2, 1),
-            ],
-          ),
-          SizedBox(height: 20),
-          Container(
-            padding: EdgeInsets.symmetric(vertical: 15),
-            child: Column(
+        ),
+        child: ListView(
+          padding: const EdgeInsets.all(20),
+          children: [
+            Row(
               children: [
-                Text(
-                  "Difficulty",
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                SizedBox(height: 5),
-                Slider(
-                  value: sliderValue,
-                  onChanged: (newVal) {
-                    sliderValue = newVal;
-                    setState(() {});
-                  },
-                  min: 1,
-                  max: 20,
-                  divisions: 19,
-                  label: sliderValue.toInt().toString(),
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Padding(
-                      padding: EdgeInsets.only(left: 22),
-                      child: Text("Beginner", style: TextStyle(fontSize: 16)),
-                    ),
-                    Padding(
-                      padding: EdgeInsets.only(right: 22),
-                      child: Text("World Champion", style: TextStyle(fontSize: 16)),
-                    ),
-                  ],
-                ),
+                floatingBoxWrapper("outdoor.jpg", "Outdoors", Colors.white, Alignment.bottomLeft, 0, 0),
+                SizedBox(width: 20),
+                floatingBoxWrapper("indoor.jpg", "Indoors", Colors.white, Alignment.topRight, 0, 1),
               ],
             ),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(10.0),
-              boxShadow: customBoxShadow(),
+            SizedBox(height: 20),
+            Row(
+              children: [
+                floatingBoxWrapper("female.png", "Female", Colors.white, Alignment.bottomLeft, 1, 0),
+                SizedBox(width: 20),
+                floatingBoxWrapper("male.png", "Male", Colors.white, Alignment.topRight, 1, 1),
+              ],
             ),
-          ),
-          SizedBox(height: 20),
-          InkWell(
-            child: Container(
-              padding: EdgeInsets.all(8),
-              child: Center(
-                child: Text("Let's go", style: TextStyle(fontSize: 20, color: Colors.white, fontWeight: FontWeight.bold)),
+            SizedBox(height: 20),
+            Row(
+              children: [
+                floatingBoxWrapper("qualification.jpg", "Qualifying", Colors.white, Alignment.bottomLeft, 2, 0),
+                SizedBox(width: 20),
+                floatingBoxWrapper("finals.jpg", "Finals", Colors.white, Alignment.topRight, 2, 1),
+              ],
+            ),
+            SizedBox(height: 20),
+            Container(
+              padding: EdgeInsets.symmetric(vertical: 15),
+              child: Column(
+                children: [
+                  Text(
+                    "Difficulty",
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(height: 5),
+                  Slider(
+                    value: sliderValue,
+                    onChanged: (newVal) {
+                      sliderValue = newVal;
+                      setState(() {});
+                    },
+                    min: 1,
+                    max: 20,
+                    divisions: 19,
+                    label: sliderValue.toInt().toString(),
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Padding(
+                        padding: EdgeInsets.only(left: 22),
+                        child: Text("Beginner", style: TextStyle(fontSize: 16)),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.only(right: 22),
+                        child: Text("World Champion", style: TextStyle(fontSize: 16)),
+                      ),
+                    ],
+                  ),
+                ],
               ),
               decoration: BoxDecoration(
-                color: selected.contains(-1) ? Colors.grey : Colors.greenAccent,
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(10.0),
                 boxShadow: customBoxShadow(),
               ),
             ),
-            onTap: submitSelection,
-          ),
-        ],
+            SizedBox(height: 20),
+            InkWell(
+              child: Container(
+                padding: EdgeInsets.all(8),
+                child: Center(
+                  child: Text("Let's go", style: TextStyle(fontSize: 20, color: Colors.white, fontWeight: FontWeight.bold)),
+                ),
+                decoration: BoxDecoration(
+                  color: selected.contains(-1) ? Colors.grey : Colors.blue[800],
+                  borderRadius: BorderRadius.circular(10.0),
+                  boxShadow: customBoxShadow(),
+                ),
+              ),
+              onTap: submitSelection,
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -5,6 +5,21 @@ void main() {
   runApp(MyApp());
 }
 
+MaterialColor swatchify(MaterialColor color, int value) {
+  return MaterialColor(color[value].hashCode, <int, Color>{
+    50: color[value],
+    100: color[value],
+    200: color[value],
+    300: color[value],
+    400: color[value],
+    500: color[value],
+    600: color[value],
+    700: color[value],
+    800: color[value],
+    900: color[value],
+  });
+}
+
 class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
@@ -21,15 +36,13 @@ class MyApp extends StatelessWidget {
         // or simply save your changes to "hot reload" in a Flutter IDE).
         // Notice that the counter didn't reset back to zero; the application
         // is not restarted.
-        primarySwatch: Colors.blue,
+        primarySwatch: swatchify(Colors.blue, 800),
         // This makes the visual density adapt to the platform that you run
         // the app on. For desktop platforms, the controls will be smaller and
         // closer together (more dense) than on mobile platforms.
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: MyHomePage(title: 'Recent Training Sessions'), // new ListDisplay(), //
+      home: MyHomePage(title: 'Recent Training Sessions'),
     );
   }
 }
-
-

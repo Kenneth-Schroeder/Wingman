@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'ScoreInstance.dart';
 import 'package:gesture_x_detector/gesture_x_detector.dart';
 import 'database_service.dart';
@@ -103,7 +104,7 @@ class _TargetPageState extends State<TargetPage> {
         break;
       case TargetType.SingleSpot:
         targetCenter = SizeConfig().threeSideCenter();
-        _scaleFactor = 1.3;
+        _scaleFactor = 1.7;
         break;
       case TargetType.TripleSpot:
         targetCenter = SizeConfig().center();
@@ -112,7 +113,6 @@ class _TargetPageState extends State<TargetPage> {
     }
 
     targetRadius = SizeConfig().minDim() / 2.2;
-    setUntouchedArrowsPosition();
 
     numberOfUntouchedArrows = countNumberOfUntouchedArrows(); // has to be called before first getMatchPoints()
 
@@ -515,7 +515,7 @@ class _TargetPageState extends State<TargetPage> {
         _scaleCenterDelta = _scaleCenterOffset - newScaleCenterOffset;
         _scaleCenterOffset = newScaleCenterOffset;
         _targetCenterOffset += _scaleCenterDelta;
-        setUntouchedArrowsPosition();
+        //setUntouchedArrowsPosition();
         setState(() {});
       },
       onScaleEnd: () {
@@ -531,7 +531,7 @@ class _TargetPageState extends State<TargetPage> {
   void resetArrows() {
     arrows[endIndex].forEach((element) {
       element.reset();
-      setUntouchedArrowsPosition();
+      //setUntouchedArrowsPosition();
     });
     setState(() {});
   }
@@ -771,14 +771,6 @@ class _TargetPageState extends State<TargetPage> {
               ),
             ],
           ),
-          Padding(
-            padding: EdgeInsets.all(5.0),
-            child: Container(
-              height: 1.0,
-              width: _screenWidth(),
-              color: Colors.black,
-            ),
-          ),
         ],
       ),
     );
@@ -831,50 +823,71 @@ class _TargetPageState extends State<TargetPage> {
 
   Widget _dragScrollSheetExtension() {
     return Container(
-      height: _screenHeight() * 0.5,
+      height: _screenHeight() * 0.0,
       color: Colors.white,
     );
   }
 
-  Widget _dragScrollSheet() {
-    return DraggableScrollableSheet(
-      initialChildSize: 0.04,
-      maxChildSize: 0.6,
-      minChildSize: 0.04,
-      builder: (context, scrollController) {
-        return SingleChildScrollView(
-          controller: scrollController,
-          child: Column(
-            children: [
-              Container(
-                height: _screenHeight() * 0.045,
-                color: Colors.blue[300],
-                child: Center(
-                  child: Icon(Icons.arrow_drop_up),
-                ),
-              ),
-              Container(
-                color: Colors.blue[300],
-                child: Container(
-                  //padding: EdgeInsets.only(bottom: 10.0, left: 10.0, right: 10.0),
-                  margin: EdgeInsets.only(bottom: 10.0, left: 10.0, right: 10.0),
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                      width: 10.0,
-                      color: Colors.white,
-                    ),
-                    borderRadius: BorderRadius.all(Radius.circular(20)),
-                  ),
-                  child: Column(
-                    children: [_quickStats(), matchPointsDisplay(), _opponentStats(), _dragScrollSheetExtension()],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
+  Widget sheetItemWrapper(Widget child, bool enabled) {
+    if (!enabled) {
+      return Container();
+    }
+
+    return Container(
+      //padding: EdgeInsets.only(bottom: 10.0, left: 10.0, right: 10.0),
+      margin: EdgeInsets.only(bottom: 10.0, left: 10.0, right: 10.0),
+      decoration: BoxDecoration(
+        border: Border.all(
+          width: 10.0,
+          color: Colors.white,
+        ),
+        borderRadius: BorderRadius.all(Radius.circular(20)),
+      ),
+      child: child,
     );
+  }
+
+  Widget _dragScrollSheet() {
+    double maxChildSize = 0.4;
+    return DraggableScrollableSheet(
+        initialChildSize: 0.04,
+        maxChildSize: maxChildSize,
+        minChildSize: 0.04,
+        builder: (context, scrollController) {
+          return SingleChildScrollView(
+            controller: scrollController,
+            child: Container(
+              color: Colors.blue[800],
+              height: _screenHeight() * maxChildSize,
+              child: Column(
+                children: [
+                  Container(
+                    height: _screenHeight() * 0.045,
+                    color: Colors.blue[800],
+                    child: Center(
+                      child: Icon(
+                        Icons.arrow_drop_up,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    height: _screenHeight() * (maxChildSize - 0.045 * 1.5), // 1.5 creates bottom border
+                    child: SingleChildScrollView(
+                      child: Column(
+                        children: [
+                          sheetItemWrapper(_quickStats(), true),
+                          sheetItemWrapper(matchPointsDisplay(), widget.training.competitionType == CompetitionType.finals),
+                          sheetItemWrapper(_opponentStats(), widget.training.competitionType != CompetitionType.training),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        });
   }
 
   Widget emptyScreen() {
@@ -917,6 +930,11 @@ class _TargetPageState extends State<TargetPage> {
   @override
   Widget build(BuildContext context) {
     if (startRoutineFinished) {
+      SizeConfig().init(context);
+      arrowTopPosition = Offset(SizeConfig.screenWidth / 10, SizeConfig.screenHeight * 7 / 12);
+      arrowBotPosition = Offset(SizeConfig.screenWidth / 10, SizeConfig.screenHeight * 11 / 12);
+      targetRadius = SizeConfig().minDim() / 2.2;
+      setUntouchedArrowsPosition();
       return showContent();
     }
 

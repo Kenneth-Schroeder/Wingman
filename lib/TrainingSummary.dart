@@ -27,6 +27,7 @@ class _TrainingSummaryState extends State<TrainingSummary> {
 
   void onStart() async {
     dbService = await DatabaseService.create();
+    SizeConfig().init(context);
     scoresByEnd = await dbService.getFullEndsOfTraining(widget.training.id);
     startRoutineFinished = true;
     setState(() {});
@@ -43,6 +44,62 @@ class _TrainingSummaryState extends State<TrainingSummary> {
         text,
         style: TextStyle(color: color, fontSize: 16),
       ),
+    );
+  }
+
+  Widget scoreBlob(ScoreInstance scoreInstance) {
+    Color backgroundColor;
+    Color textColor = Colors.black;
+    int swatchValue = 400;
+
+    switch (scoreInstance.score) {
+      case 10:
+      case 9:
+        backgroundColor = Colors.yellow[swatchValue];
+        break;
+      case 8:
+      case 7:
+        backgroundColor = Colors.red[swatchValue];
+        break;
+      case 6:
+      case 5:
+        backgroundColor = Colors.blue[swatchValue];
+        break;
+      case 4:
+      case 3:
+        backgroundColor = Colors.black;
+        textColor = Colors.white;
+        break;
+      default:
+        backgroundColor = Colors.white;
+        break;
+    }
+
+    return Container(
+      width: 30,
+      height: 30,
+      decoration: BoxDecoration(color: backgroundColor, borderRadius: BorderRadius.all(Radius.circular(30))),
+      child: Center(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              scoreInstance.score.toString(),
+              style: TextStyle(color: textColor, fontSize: 16, fontWeight: FontWeight.w600),
+            ),
+            Text(
+              scoreInstance.arrowInformation == null ? "" : scoreInstance.arrowInformation.label,
+              style: TextStyle(color: textColor, fontSize: 10),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  DataCell scoreCell(ScoreInstance scoreInstance) {
+    return DataCell(
+      scoreBlob(scoreInstance),
     );
   }
 
@@ -83,27 +140,12 @@ class _TrainingSummaryState extends State<TrainingSummary> {
             content = endCounter.toString();
           }
 
-          cells.add(defaultDataCell(content, Colors.grey));
+          cells.add(defaultDataCell(content, Colors.grey[800]));
 
           rowOfEndCounter++;
         }
 
-        cells.add(
-          DataCell(
-            Row(
-              children: [
-                Text(
-                  scoreInstance.score.toString(),
-                  style: TextStyle(fontSize: 16),
-                ),
-                Text(
-                  scoreInstance.arrowInformation == null ? "" : scoreInstance.arrowInformation.label, // todo dont leave it like this
-                  style: TextStyle(fontSize: 8),
-                ),
-              ],
-            ),
-          ),
-        );
+        cells.add(scoreCell(scoreInstance));
 
         endScoreCounter++;
         rowScoreCounter++;
@@ -129,9 +171,7 @@ class _TrainingSummaryState extends State<TrainingSummary> {
           }
 
           cells.add(defaultDataCell(endSumText));
-
           cells.add(defaultDataCell(totalSumText));
-
           rows.add(DataRow(cells: cells));
 
           cells = [];
@@ -143,54 +183,84 @@ class _TrainingSummaryState extends State<TrainingSummary> {
 
     List<DataColumn> columns = [
       DataColumn(
-        label: Text('End'),
+        label: Expanded(
+          child: Text('End', textAlign: TextAlign.center, textScaleFactor: 1.3),
+        ),
         numeric: true,
       ),
       DataColumn(
-        label: Text('1'),
+        label: Expanded(
+          child: Text('1', textAlign: TextAlign.center, textScaleFactor: 1.3),
+        ),
+        numeric: false,
+      ),
+      DataColumn(
+        label: Expanded(
+          child: Text('2', textAlign: TextAlign.center, textScaleFactor: 1.3),
+        ),
+        numeric: false,
+      ),
+      DataColumn(
+        label: Expanded(
+          child: Text('3', textAlign: TextAlign.center, textScaleFactor: 1.3),
+        ),
+        numeric: false,
+      ),
+      DataColumn(
+        label: Expanded(
+          child: Text('Row\nSum', textAlign: TextAlign.center, textScaleFactor: 1.1),
+        ),
         numeric: true,
       ),
       DataColumn(
-        label: Text('2'),
+        label: Expanded(
+          child: Text('End\nSum', textAlign: TextAlign.center, textScaleFactor: 1.1),
+        ),
         numeric: true,
       ),
       DataColumn(
-        label: Text('3'),
-        numeric: true,
-      ),
-      DataColumn(
-        label: Text('Row\nSum'),
-        numeric: true,
-      ),
-      DataColumn(
-        label: Text('End\nSum'),
-        numeric: true,
-      ),
-      DataColumn(
-        label: Text('Total'),
+        label: Expanded(
+          child: Text('Total', textAlign: TextAlign.center, textScaleFactor: 1.1),
+        ),
         numeric: true,
       )
     ];
 
     //MediaQueryData _mediaQueryData = MediaQuery.of(context);
 
-    return ListView(
-      children: <Widget>[
-        Center(
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: DataTable(
-              columns: columns,
-              rows: rows,
-              columnSpacing: 25,
-              dataRowHeight: 25,
+    return Container(
+      decoration: BoxDecoration(
+        gradient: RadialGradient(
+          radius: 1.7,
+          center: Alignment.bottomRight,
+          colors: [
+            Colors.grey[100],
+            Colors.grey[200],
+            Colors.grey[400],
+            //Colors.black45,
+            //Colors.black54,
+          ], //, Colors.black, Colors.white],
+          stops: [0.0, 0.5, 1.0], //[0.0, 0.25, 0.5, 0.75, 1.0],
+        ),
+      ),
+      child: ListView(
+        children: <Widget>[
+          Center(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: DataTable(
+                columns: columns,
+                rows: rows,
+                columnSpacing: 25,
+                dataRowHeight: 35,
+              ),
             ),
           ),
-        ),
-        Container(
-          height: SizeConfig.screenHeight == null ? 100 : SizeConfig.screenHeight / 5,
-        ),
-      ],
+          Container(
+            height: SizeConfig.screenHeight == null ? 100 : SizeConfig.screenHeight / 5,
+          ),
+        ],
+      ),
     );
   }
 

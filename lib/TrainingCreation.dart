@@ -138,10 +138,19 @@ class _TrainingCreationState extends State<TrainingCreation> {
                     ),
                   ),
                   Expanded(
-                    child: RaisedButton(
-                      color: arrowSelectionValid() ? Colors.green : Colors.redAccent,
-                      child: Icon(MyFlutterApp.arrow_flights),
-                      onPressed: setupArrows,
+                    child: Container(
+                      child: Center(
+                        child: ButtonTheme(
+                          minWidth: 100.0,
+                          height: 50.0,
+                          child: RaisedButton(
+                            color: arrowSelectionValid() ? Colors.green : Colors.redAccent,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18.0), side: BorderSide(color: Colors.red)),
+                            child: Icon(MyFlutterApp.arrow_flights),
+                            onPressed: setupArrows,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -270,7 +279,7 @@ class _TrainingCreationState extends State<TrainingCreation> {
               child: SizedBox(
                 width: double.infinity,
                 child: RaisedButton(
-                  color: Colors.blue,
+                  color: Colors.blue[800],
                   onPressed: () {
                     // Validate will return true if the form is valid, or false if
                     // the form is invalid.
@@ -300,7 +309,26 @@ class _TrainingCreationState extends State<TrainingCreation> {
       appBar: AppBar(
         title: Text("Create new Training"),
       ),
-      body: newTrainingForm(),
+      body: Container(
+          decoration: BoxDecoration(
+            gradient: RadialGradient(
+              radius: 1.7,
+              center: Alignment.bottomRight,
+              colors: [
+                Colors.grey[100],
+                Colors.grey[200],
+                Colors.grey[400],
+                //Colors.black45,
+                //Colors.black54,
+              ], //, Colors.black, Colors.white],
+              stops: [0.0, 0.5, 1.0], //[0.0, 0.25, 0.5, 0.75, 1.0],
+            ),
+          ),
+          child: SizedBox(
+            height: double.infinity,
+            width: double.infinity,
+            child: newTrainingForm(),
+          )),
     );
   }
 }

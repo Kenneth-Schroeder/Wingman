@@ -31,4 +31,8 @@ class SizeConfig {
   double minDim() {
     return min(screenWidth, screenHeight);
   }
+
+  double maxDim() {
+    return max(screenWidth, screenHeight);
+  }
 }
