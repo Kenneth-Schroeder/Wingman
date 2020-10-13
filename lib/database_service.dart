@@ -122,6 +122,26 @@ class DatabaseService {
     );
   }
 
+  Future<bool> deleteArrowSet(ArrowSet arrowSet) async {
+    if (arrowSet.id == null) {
+      return false;
+    }
+
+    Database db = await database;
+    await db.delete(tableArrowSets, where: 'id = ?', whereArgs: [arrowSet.id]);
+    return true;
+  }
+
+  Future<bool> deleteArrowInformation(ArrowInformation arrowInformation) async {
+    if (arrowInformation.id == null) {
+      return false;
+    }
+
+    Database db = await database;
+    await db.delete(tableArrowInfo, where: 'id = ?', whereArgs: [arrowInformation.id]);
+    return true;
+  }
+
   Future<ArrowInformation> getArrowInformationFromID(int id) async {
     if (id == null) {
       // todo check if this is sufficient or other errors might arise

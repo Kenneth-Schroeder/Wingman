@@ -43,8 +43,6 @@ class ArrowSet {
   }
 
   void addArrow(String label) {
-    arrowInfos.add(ArrowInformation(
-      label,
-    ));
+    arrowInfos.add(ArrowInformation(label));
   }
 }

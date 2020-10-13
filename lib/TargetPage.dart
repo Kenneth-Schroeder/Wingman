@@ -311,7 +311,7 @@ class _TargetPageState extends State<TargetPage> {
     if (widget.training.competitionType == CompetitionType.training) return;
 
     int newUntouchedArrows = countNumberOfUntouchedArrows();
-    if (newUntouchedArrows != numberOfUntouchedArrows && opponents[0].arrowScores[endIndex].length < numArrowsForEnd(endIndex)) {
+    if (newUntouchedArrows < numberOfUntouchedArrows && opponents[0].arrowScores[endIndex].length < numArrowsForEnd(endIndex)) {
       // add new arrow to opponents scores
       for (int i = 0; i < numOpponents; i++) {
         int score = simulator.getScore();

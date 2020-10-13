@@ -18,7 +18,6 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> {
   bool startRoutineFinished = false;
   int selectedArrows = 0;
   List<ArrowSet> arrowSets;
-  List<bool> enabled = [];
 
   int initPosition = 0;
 
@@ -31,7 +30,6 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> {
   void onStart() async {
     dbService = await DatabaseService.create();
     arrowSets = await dbService.getAllArrowSets();
-    enabled = List.filled(arrowSets.length, false, growable: true);
 
     for (var arrowSet in arrowSets) {
       for (var arrowInfo in arrowSet.arrowInfos) {
@@ -43,6 +41,7 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> {
     }
 
     SizeConfig().init(context);
+
     startRoutineFinished = true;
     setState(() {});
   }
@@ -52,48 +51,87 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> {
     return SizeConfig.screenWidth == null ? 1 : SizeConfig.screenWidth;
   }
 
-  void prepareEdit(int index) async {
-    enabled[index] = true;
-    setState(() {});
-  }
-
   DataColumn tableColumn(String text, bool numeric) {
     return DataColumn(
-      label: Text(text),
+      label: Expanded(
+        child: Text(text, textAlign: TextAlign.center, textScaleFactor: 1.3),
+      ),
       numeric: numeric,
     );
   }
 
-  DataCell tableCell(String content) {
+  DataCell tableCell(ArrowInformation arrowInformation) {
     return DataCell(
-      Text(
-        content,
-        style: TextStyle(fontSize: 24),
+      Center(
+        child: Container(
+          padding: EdgeInsets.all(5),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.grey[200],
+              borderRadius: BorderRadius.circular(32),
+            ),
+            child: TextFormField(
+              key: Key(arrowInformation.label),
+              decoration: new InputDecoration(
+                suffixIcon: Icon(Icons.edit),
+                border: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                errorBorder: InputBorder.none,
+                disabledBorder: InputBorder.none,
+                contentPadding: EdgeInsets.only(left: 15, bottom: 11, top: 11, right: 15),
+                hintText: "",
+              ),
+              style: TextStyle(fontSize: 20),
+              textAlign: TextAlign.center,
+              initialValue: arrowInformation.label,
+              keyboardType: TextInputType.name,
+              onChanged: (text) {
+                arrowInformation.label = text;
+              },
+            ),
+          ),
+        ),
       ),
     );
   }
 
-  Widget arrowTableForSet(ArrowSet set) {
+  Widget arrowTableForSetWithIndex(int index) {
     List<DataRow> rows = [];
 
-    for (int i = 0; i < set.arrowInfos.length; i++) {
+    for (int i = 0; i < arrowSets[index].arrowInfos.length; i++) {
       List<DataCell> cells = [];
-      cells.add(tableCell(set.arrowInfos[i].label));
+      cells.add(tableCell(arrowSets[index].arrowInfos[i]));
       cells.add(
         DataCell(
-          Checkbox(
-            value: set.arrowInfos[i].selected,
-            onChanged: (bool value) {
-              setState(() {
-                if (value) {
-                  selectedArrows += 1;
-                } else {
-                  selectedArrows -= 1;
-                }
+          Center(
+            child: Checkbox(
+              value: arrowSets[index].arrowInfos[i].selected,
+              onChanged: (bool value) {
+                setState(() {
+                  if (value) {
+                    selectedArrows += 1;
+                  } else {
+                    selectedArrows -= 1;
+                  }
 
-                set.arrowInfos[i].selected = value;
-              });
-            },
+                  arrowSets[index].arrowInfos[i].selected = value;
+                });
+              },
+            ),
+          ),
+        ),
+      );
+
+      cells.add(
+        DataCell(
+          Center(
+            child: IconButton(
+              icon: Icon(Icons.remove_circle_outline),
+              onPressed: () {
+                deleteArrowInformation(index, i);
+              },
+            ),
           ),
         ),
       );
@@ -104,59 +142,169 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> {
 
     List<DataColumn> columns = [
       tableColumn('Arrow Label', false),
-      tableColumn('Selected', false),
+      tableColumn('Select', false),
+      tableColumn('Delete', false),
     ];
 
-    return Container(
-      color: Colors.white,
-      child: SingleChildScrollView(
-        child: Column(
-          children: [
-            DataTable(
-              showCheckboxColumn: true,
-              columns: columns,
-              rows: rows,
-              columnSpacing: 25,
-              dataRowHeight: 40,
-            ),
-            RaisedButton(
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          DataTable(
+            showCheckboxColumn: true,
+            columns: columns,
+            rows: rows,
+            columnSpacing: 25,
+            dataRowHeight: 60,
+          ),
+          Container(
+            width: 100,
+            child: RaisedButton(
               color: Colors.greenAccent,
-              child: Text("+"),
+              padding: EdgeInsets.all(0),
+              //shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(1000.0)),
+              //padding: EdgeInsets.all(4.0),
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.add),
+                    Text(
+                      "add arrow",
+                      textScaleFactor: 0.8,
+                    )
+                  ],
+                ),
+              ),
               onPressed: () {
-                set.addArrow(set.arrowInfos.length.toString());
+                arrowSets[index].addArrow(arrowSets[index].arrowInfos.length.toString());
                 setState(() {});
                 return;
               },
             ),
-            Text("selected " + selectedArrows.toString() + "/" + widget.numArrowsToSelect.toString()),
-          ],
+          ),
+          Container(
+            padding: EdgeInsets.all(10),
+            child: Text(
+              "selected " + selectedArrows.toString() + "/" + widget.numArrowsToSelect.toString() + " arrows",
+              style: TextStyle(fontSize: 15),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<bool> deleteArrowInformation(int setIndex, int infoIndex) async {
+    await dbService.deleteArrowInformation(arrowSets[setIndex].arrowInfos[infoIndex]);
+    arrowSets[setIndex].arrowInfos.removeAt(infoIndex);
+    setState(() {});
+  }
+
+  Future<bool> deleteArrowSetAtIndex(int index) async {
+    await dbService.deleteArrowSet(arrowSets[index]);
+    arrowSets.removeAt(index);
+    setState(() {});
+  }
+
+  Widget tabBodyGenerator(int index, int length) {
+    if (index == length) {
+      return Center(
+        child: Text(
+          "Press the green button on top\nto create a new set of arrows.",
+          textScaleFactor: 1.3,
+        ),
+      );
+    }
+
+    return Container(
+      color: Colors.white,
+      child: SizedBox(
+        width: double.infinity,
+        height: double.infinity,
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              Container(
+                //width: _screenWidth(),
+                padding: EdgeInsets.only(top: 20), //.all(50),
+                child: Center(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: _screenWidth() * 0.3,
+                        child: TextFormField(
+                          key: Key(arrowSets[index].label),
+                          initialValue: arrowSets[index].label,
+                          decoration: const InputDecoration(
+                            labelText: 'Change Set Label',
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.all(
+                                Radius.circular(25.0),
+                              ),
+                              borderSide: BorderSide(),
+                            ),
+                          ),
+                          keyboardType: TextInputType.name,
+                          onChanged: (text) {
+                            arrowSets[index].label = text;
+                          },
+                        ),
+                      ),
+                      Container(
+                        padding: EdgeInsets.all(20),
+                        width: 120,
+                        child: Container(
+                          width: 100.0,
+                          height: 50.0,
+                          child: RaisedButton(
+                            color: Colors.redAccent,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18.0), side: BorderSide(color: Colors.red)),
+                            child: Icon(Icons.delete),
+                            onPressed: () {
+                              deleteArrowSetAtIndex(index);
+                            },
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              arrowTableForSetWithIndex(index),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget tabBodyGenerator(int index, int length) {
-    if (index == length) {
-      return Container();
-    }
-
-    return arrowTableForSet(arrowSets[index]);
-  }
-
-  Widget tabHeaderGenerator(int index, int length) {
+  Widget tabHeaderGenerator(BuildContext context, int index, int length) {
     if (index == length) {
       return Container(
         width: _screenWidth() / 7,
         child: SizedBox(
           width: double.infinity, // match_parent
           height: double.infinity,
-          child: FlatButton(
-            color: Colors.lightGreen,
+          child: RaisedButton(
+            color: Colors.greenAccent,
+            padding: EdgeInsets.all(0),
             //shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(1000.0)),
             //padding: EdgeInsets.all(4.0),
-            child: Icon(Icons.add),
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.add),
+                  Text(
+                    "add set",
+                    textScaleFactor: 0.8,
+                  )
+                ],
+              ),
+            ),
             onPressed: () {
-              enabled.add(false);
               arrowSets.add(ArrowSet("Set " + arrowSets.length.toString()));
               setState(() {});
             },
@@ -165,24 +313,9 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> {
       );
     }
 
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          padding: EdgeInsets.all(0), // ???
-          width: _screenWidth() / 7,
-          child: TextField(
-            enabled: enabled[index],
-            controller: TextEditingController()..text = arrowSets[index].label,
-            onChanged: (text) => {arrowSets[index].label = text},
-          ),
-        ),
-        GestureDetector(
-            onTap: () {
-              prepareEdit(index);
-            },
-            child: Icon(Icons.edit)),
-      ],
+    return Container(
+      padding: EdgeInsets.all(15),
+      child: Text(arrowSets[index].label),
     );
   }
 
@@ -190,14 +323,13 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> {
     return CustomTabView(
       initPosition: initPosition,
       itemCount: arrowSets.length + 1,
-      tabBuilder: (context, index) => Tab(
-        child: tabHeaderGenerator(index, arrowSets.length),
-      ),
+      tabBuilder: (context, index) {
+        return Tab(
+          child: tabHeaderGenerator(context, index, arrowSets.length),
+        );
+      },
       pageBuilder: (context, index) => tabBodyGenerator(index, arrowSets.length),
       onPositionChange: (index) {
-        for (int i = 0; i < enabled.length; i++) {
-          enabled[i] = false;
-        }
         initPosition = index;
         setState(() {});
       },
@@ -270,6 +402,7 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> {
     return WillPopScope(
       child: Scaffold(
         appBar: AppBar(
+          elevation: 0,
           title: Text("Quiver"),
         ),
         bottomNavigationBar: _bottomBar(),
@@ -321,6 +454,15 @@ class _CustomTabsState extends State<CustomTabView> with TickerProviderStateMixi
   int _currentCount;
   int _currentPosition;
 
+  onTap() {
+    if (controller.index == widget.itemCount - 1) {
+      int index = controller.previousIndex;
+      setState(() {
+        controller.index = index;
+      });
+    }
+  }
+
   @override
   void initState() {
     _currentPosition = widget.initPosition ?? 0;
@@ -330,6 +472,7 @@ class _CustomTabsState extends State<CustomTabView> with TickerProviderStateMixi
       initialIndex: _currentPosition,
     );
     controller.addListener(onPositionChange);
+    controller.addListener(onTap);
     controller.animation.addListener(onScroll);
     _currentCount = widget.itemCount;
     super.initState();
@@ -340,6 +483,7 @@ class _CustomTabsState extends State<CustomTabView> with TickerProviderStateMixi
     if (_currentCount != widget.itemCount) {
       controller.animation.removeListener(onScroll);
       controller.removeListener(onPositionChange);
+      controller.removeListener(onTap);
       controller.dispose();
 
       if (widget.initPosition != null) {
@@ -366,6 +510,7 @@ class _CustomTabsState extends State<CustomTabView> with TickerProviderStateMixi
           initialIndex: _currentPosition,
         );
         controller.addListener(onPositionChange);
+        controller.addListener(onTap);
         controller.animation.addListener(onScroll);
       });
     } else if (widget.initPosition != null) {
@@ -379,6 +524,7 @@ class _CustomTabsState extends State<CustomTabView> with TickerProviderStateMixi
   void dispose() {
     controller.animation.removeListener(onScroll);
     controller.removeListener(onPositionChange);
+    controller.removeListener(onTap);
     controller.dispose();
     super.dispose();
   }
@@ -391,12 +537,19 @@ class _CustomTabsState extends State<CustomTabView> with TickerProviderStateMixi
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
         Container(
+          color: Theme.of(context).primaryColor,
           alignment: Alignment.center,
           child: TabBar(
             labelPadding: EdgeInsets.all(0),
             isScrollable: true,
             controller: controller,
             labelColor: Theme.of(context).primaryColor,
+            unselectedLabelColor: Colors.white,
+            indicatorSize: TabBarIndicatorSize.label,
+            indicator: BoxDecoration(
+                borderRadius: BorderRadius.only(topLeft: Radius.circular(10), topRight: Radius.circular(10)), color: Colors.white),
+
+            /*labelColor: Theme.of(context).primaryColor,
             unselectedLabelColor: Theme.of(context).hintColor,
             indicator: BoxDecoration(
               border: Border(
@@ -406,6 +559,8 @@ class _CustomTabsState extends State<CustomTabView> with TickerProviderStateMixi
                 ),
               ),
             ),
+            */
+
             tabs: List.generate(
               widget.itemCount,
               (index) => widget.tabBuilder(context, index),
@@ -414,6 +569,7 @@ class _CustomTabsState extends State<CustomTabView> with TickerProviderStateMixi
         ),
         Expanded(
           child: TabBarView(
+            physics: NeverScrollableScrollPhysics(),
             controller: controller,
             children: List.generate(
               widget.itemCount,
