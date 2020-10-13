@@ -32,10 +32,10 @@ class Archer {
 }
 
 class TargetPage extends StatefulWidget {
-  TargetPage(this.training, this.scoresByEndMap, {Key key}) : super(key: key);
+  TargetPage(this.training, this.arrows, {Key key}) : super(key: key);
 
   final TrainingInstance training;
-  Map<int, List<ScoreInstance>> scoresByEndMap;
+  List<List<ScoreInstance>> arrows;
 
   @override
   _TargetPageState createState() => _TargetPageState();
@@ -76,14 +76,7 @@ class _TargetPageState extends State<TargetPage> {
   @override
   void initState() {
     super.initState();
-    arrows = new List.generate(widget.scoresByEndMap.length, (i) => []);
-    int counter = 0;
-    widget.scoresByEndMap.forEach((key, value) {
-      value.forEach((element) {
-        arrows[counter].add(element);
-      });
-      counter++;
-    });
+    arrows = widget.arrows;
 
     onStart();
   }
@@ -522,7 +515,7 @@ class _TargetPageState extends State<TargetPage> {
         _scaleCenterOffset = Offset(0, 0);
       },
       bypassTapEventOnDoubleTap: false,
-      child: new Stack(
+      child: Stack(
         children: arrowPainters,
       ),
     );
@@ -531,7 +524,6 @@ class _TargetPageState extends State<TargetPage> {
   void resetArrows() {
     arrows[endIndex].forEach((element) {
       element.reset();
-      //setUntouchedArrowsPosition();
     });
     setState(() {});
   }
@@ -591,16 +583,8 @@ class _TargetPageState extends State<TargetPage> {
       await dbService.addDefaultScores(endID, numArrowsForEnd(endIndex), widget.training.relativeArrowWidth(), arrowInformation);
 
       // just load all again and we are good
-      Map<int, List<ScoreInstance>> allScoresMap = await dbService.getFullEndsOfTraining(widget.training.id);
-
-      arrows = new List.generate(allScoresMap.length, (i) => []);
-      int counter = 0;
-      allScoresMap.forEach((key, value) {
-        value.forEach((element) {
-          arrows[counter].add(element);
-        });
-        counter++;
-      });
+      arrows = await dbService.getFullEndsOfTraining(widget.training.id);
+      assert(arrows.length != 0);
 
       setUntouchedArrowsPosition();
       numberOfUntouchedArrows = countNumberOfUntouchedArrows();

@@ -1,9 +1,12 @@
+import 'package:Wingman/ArrowInformation.dart';
 import 'package:flutter/material.dart';
 import 'ScoreInstance.dart';
 import 'SizeConfig.dart';
 import 'database_service.dart';
 import 'TrainingInstance.dart';
 import 'TargetPage.dart';
+import 'package:Wingman/TargetPainter.dart';
+import 'ArrowPainter.dart';
 
 class TrainingSummary extends StatefulWidget {
   TrainingSummary(this.training, {Key key}) : super(key: key);
@@ -16,7 +19,7 @@ class TrainingSummary extends StatefulWidget {
 
 class _TrainingSummaryState extends State<TrainingSummary> {
   DatabaseService dbService; // = DatabaseService.old();
-  Map<int, List<ScoreInstance>> scoresByEnd = Map<int, List<ScoreInstance>>();
+  List<List<ScoreInstance>> arrows;
   bool startRoutineFinished = false;
 
   @override
@@ -28,7 +31,7 @@ class _TrainingSummaryState extends State<TrainingSummary> {
   void onStart() async {
     dbService = await DatabaseService.create();
     SizeConfig().init(context);
-    scoresByEnd = await dbService.getFullEndsOfTraining(widget.training.id);
+    arrows = await dbService.getFullEndsOfTraining(widget.training.id);
     startRoutineFinished = true;
     setState(() {});
   }
@@ -103,18 +106,71 @@ class _TrainingSummaryState extends State<TrainingSummary> {
     );
   }
 
+  Widget drawArrows(List<ScoreInstance> instances, Offset targetCenter, double targetRadius) {
+    List<CustomPaint> arrowPainters = [];
+    instances.forEach((instance) {
+      arrowPainters.add(
+        CustomPaint(
+          painter: ArrowPainter.fromInstanceForSummary(
+              instance,
+              targetCenter,
+              targetRadius,
+              SizeConfig().maxDim(),
+              widget.training.targetType ==
+                  TargetType.TripleSpot), // providing a negative dropoffset will create a circle around the arrows
+          child: Container(),
+        ),
+      );
+    });
+    return Stack(
+      children: arrowPainters,
+    );
+  }
+
+  Widget createHitMap(List<ScoreInstance> instances, double radius) {
+    if (instances == null || instances.isEmpty) {
+      return Container();
+    }
+
+    double scaleFactor = 1.0;
+
+    switch (widget.training.targetType) {
+      case TargetType.Full:
+        scaleFactor = 1.0;
+        break;
+      case TargetType.SingleSpot:
+        scaleFactor = 2.0;
+        break;
+      case TargetType.TripleSpot:
+        scaleFactor = 2.0;
+        break;
+    }
+
+    double scaledRadius = radius * scaleFactor;
+
+    double xCenter = SizeConfig.screenWidth / 2;
+    return Stack(
+      children: [
+        CustomPaint(
+            size: Size(radius, radius * 2),
+            painter: TargetPainter.forSummary(Offset(xCenter, radius), scaledRadius, widget.training.targetType)),
+        drawArrows(instances, Offset(xCenter, radius), scaledRadius),
+      ],
+    );
+  }
+
   Widget createSummaryTable() {
     // ends, arrows
     List<DataRow> rows = [];
 
-    if (scoresByEnd == null || scoresByEnd.isEmpty) {
+    if (arrows == null || arrows.isEmpty) {
       return Text("Can't find results for this training.");
     }
 
     int totalSum = 0;
     int endCounter = 0;
 
-    scoresByEnd.forEach((endID, scores) {
+    arrows.forEach((scores) {
       // for each end
       int endSum = 0;
       endCounter++;
@@ -228,38 +284,13 @@ class _TrainingSummaryState extends State<TrainingSummary> {
 
     //MediaQueryData _mediaQueryData = MediaQuery.of(context);
 
-    return Container(
-      decoration: BoxDecoration(
-        gradient: RadialGradient(
-          radius: 1.7,
-          center: Alignment.bottomRight,
-          colors: [
-            Colors.grey[100],
-            Colors.grey[200],
-            Colors.grey[400],
-            //Colors.black45,
-            //Colors.black54,
-          ], //, Colors.black, Colors.white],
-          stops: [0.0, 0.5, 1.0], //[0.0, 0.25, 0.5, 0.75, 1.0],
-        ),
-      ),
-      child: ListView(
-        children: <Widget>[
-          Center(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: DataTable(
-                columns: columns,
-                rows: rows,
-                columnSpacing: 25,
-                dataRowHeight: 35,
-              ),
-            ),
-          ),
-          Container(
-            height: SizeConfig.screenHeight == null ? 100 : SizeConfig.screenHeight / 5,
-          ),
-        ],
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: DataTable(
+        columns: columns,
+        rows: rows,
+        columnSpacing: 25,
+        dataRowHeight: 35,
       ),
     );
   }
@@ -267,7 +298,7 @@ class _TrainingSummaryState extends State<TrainingSummary> {
   void _changeScores() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => TargetPage(widget.training, scoresByEnd)),
+      MaterialPageRoute(builder: (context) => TargetPage(widget.training, arrows)),
     ).then((value) => onStart());
   }
 
@@ -280,12 +311,109 @@ class _TrainingSummaryState extends State<TrainingSummary> {
     );
   }
 
+  List<ScoreInstance> allArrows([int id]) {
+    if (id != null) {
+      return arrows
+          .expand((element) => element)
+          .toList()
+          .where((element) => element.isUntouched == 0)
+          .toList()
+          .where((element) => element.arrowInformation.id == id)
+          .toList();
+    }
+    return arrows.expand((element) => element).toList().where((element) => element.isUntouched == 0).toList();
+  }
+
+  List<ArrowInformation> allArrowInformation() {
+    return allArrows().map((e) => e.arrowInformation).toSet().toList();
+  }
+
+  List<Widget> allArrowHitmaps(double radius) {
+    List<Widget> hitmaps = [];
+    for (var arrowInformation in allArrowInformation()) {
+      hitmaps.add(createHitMap(allArrows(arrowInformation.id), radius));
+    }
+    return hitmaps;
+  }
+
+  Widget allArrowHitmapsColumn(double radius) {
+    List<Widget> widgets = [];
+
+    if (allArrowInformation() == null || allArrowInformation().isEmpty || allArrowInformation().contains(null)) {
+      return Container();
+    }
+
+    for (var arrowInformation in allArrowInformation()) {
+      widgets.add(SizedBox(
+        height: 20,
+      ));
+      widgets.add(
+        Text(
+          "Hitmap of Arrow " + arrowInformation.label,
+          style: TextStyle(
+            fontSize: 18,
+          ),
+        ),
+      );
+      widgets.add(createHitMap(allArrows(arrowInformation.id), radius));
+    }
+    return Column(children: widgets);
+  }
+
   Widget showContent() {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.training.title),
       ),
-      body: createSummaryTable(),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: RadialGradient(
+            radius: 1.7,
+            center: Alignment.bottomRight,
+            colors: [
+              Colors.grey[100],
+              Colors.grey[200],
+              Colors.grey[400],
+              //Colors.black45,
+              //Colors.black54,
+            ], //, Colors.black, Colors.white],
+            stops: [0.0, 0.5, 1.0], //[0.0, 0.25, 0.5, 0.75, 1.0],
+          ),
+        ),
+        child: SizedBox(
+          width: double.infinity,
+          height: double.infinity,
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                createSummaryTable(),
+                SizedBox(
+                  height: 40,
+                ),
+                Text(
+                  "Statistics",
+                  style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  "Hitmaps",
+                  style: TextStyle(fontSize: 24),
+                ),
+                SizedBox(
+                  height: 20,
+                ),
+                Text(
+                  "Hitmap of all arrows",
+                  style: TextStyle(
+                    fontSize: 18,
+                  ),
+                ),
+                createHitMap(allArrows(), 150),
+                allArrowHitmapsColumn(150),
+              ],
+            ),
+          ),
+        ),
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: _changeScores,
         tooltip: 'Change Scores',

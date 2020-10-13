@@ -3,10 +3,15 @@ import 'TrainingInstance.dart';
 
 class TargetPainter extends CustomPainter {
   TargetPainter(this._offset, this._radius, this._targetType);
+  TargetPainter.forSummary(this._offset, this._radius, this._targetType) {
+    if (this._targetType == TargetType.TripleSpot) {
+      this._targetType = TargetType.SingleSpot;
+    }
+  }
 
   Offset _offset;
-  final double _radius;
-  final TargetType _targetType;
+  double _radius;
+  TargetType _targetType;
 
   void drawCircle(Canvas canvas, Color color, double strokeWidth, PaintingStyle style, Offset offset, double radius) {
     Paint paint = Paint()

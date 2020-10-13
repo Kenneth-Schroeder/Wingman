@@ -119,6 +119,23 @@ class ScoreInstance {
     return score;
   }
 
+  Offset tripleSpotLocalRelativeCoordinates(double targetRadius) {
+    // local spot, relative to local spot center
+
+    Offset bestPosition = getCartesianCoordinates(targetRadius);
+    _moveForTriSpot(targetRadius, 1);
+    if (getCartesianCoordinates(targetRadius).distance < bestPosition.distance) {
+      bestPosition = getCartesianCoordinates(targetRadius);
+    }
+    _moveForTriSpot(targetRadius, -2);
+    if (getCartesianCoordinates(targetRadius).distance < bestPosition.distance) {
+      bestPosition = getCartesianCoordinates(targetRadius);
+    }
+    _moveForTriSpot(targetRadius, 1);
+
+    return bestPosition;
+  }
+
   int updateScore(TargetType targetType, double targetRadius) {
     if (isLocked == 1) {
       return score;

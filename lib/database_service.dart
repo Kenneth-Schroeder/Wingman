@@ -397,7 +397,40 @@ class DatabaseService {
     }
   }
 
-  Future<Map<int, List<ScoreInstance>>> getFullEndsOfTraining(int trainingID) async {
+  Future<List<List<ScoreInstance>>> getFullEndsOfTraining(int trainingID) async {
+    // get all ends first and then get scores for each end
+    Database db = await database;
+    List<Map> endsMap = await db.rawQuery("SELECT * "
+        "FROM $tableEnds "
+        "INNER JOIN $tableTrainings ON $tableEnds.trainingID = $tableTrainings.id "
+        "INNER JOIN $tableScores ON $tableEnds.endID = $tableScores.endID "
+        "WHERE $tableEnds.trainingID == $trainingID");
+
+    List<List<ScoreInstance>> arrows = [];
+    Map<int, List<ScoreInstance>> scoresByEnd = Map<int, List<ScoreInstance>>();
+
+    for (var item in endsMap) {
+      if (!scoresByEnd.containsKey(item["endID"])) {
+        scoresByEnd[item["endID"]] = [];
+      }
+
+      ArrowInformation arrowInformation = await getArrowInformationFromID(item['arrowInformationID']);
+      scoresByEnd[item["endID"]].add(ScoreInstance.fromMapAndArrowInformation(item, arrowInformation));
+    }
+
+    int counter = 0;
+    for (var scores in scoresByEnd.values) {
+      arrows.add([]);
+      for (var score in scores) {
+        arrows[counter].add(score);
+      }
+      counter++;
+    }
+
+    return arrows;
+  }
+
+  /*Future<Map<int, List<ScoreInstance>>> getFullEndsOfTraining(int trainingID) async {
     // get all ends first and then get scores for each end
     Database db = await database;
     List<Map> endsMap = await db.rawQuery("SELECT * "
@@ -418,7 +451,7 @@ class DatabaseService {
     }
 
     return scoresByEnd;
-  }
+  }*/
 
   Future<bool> updateAllEndsOfTraining(int trainingID, List<List<ScoreInstance>> arrows) async {
     // iterate over all ends and as long as arrows have an id, update them individually

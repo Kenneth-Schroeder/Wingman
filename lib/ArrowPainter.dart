@@ -10,8 +10,24 @@ class ArrowPainter extends CustomPainter {
     this._isLocked = instance.isLocked == 1;
   }
 
-  final Offset _offset;
-  final double _radius;
+  ArrowPainter.fromInstanceForSummary(
+      ScoreInstance instance, Offset targetCenter, double targetRadius, double screenMaxDim, bool tripleSpot)
+      : this._radius = instance.relativeArrowRadius * targetRadius {
+    if (tripleSpot) {
+      this._offset = instance.tripleSpotLocalRelativeCoordinates(targetRadius) + targetCenter;
+    } else {
+      this._offset = instance.getCartesianCoordinates(targetRadius) + targetCenter;
+    }
+    this._text = instance.getLabel();
+    this._dropOffset = Offset(0, screenMaxDim / 10);
+    this._isLocked = instance.isLocked == 1;
+    this._isDragged = false;
+    this.displayLabels = false;
+  }
+
+  bool displayLabels = true;
+  Offset _offset;
+  double _radius;
   String _text;
   bool _isDragged;
   bool _isLocked;
@@ -93,30 +109,32 @@ class ArrowPainter extends CustomPainter {
 
     canvas.drawCircle(_offset, wingRadius, paint);
 
-    String text = _text == "-1" ? "" : _text;
-    double radius = wingRadius;
+    if (this.displayLabels) {
+      String text = _text == "-1" ? "" : _text;
+      double radius = wingRadius;
 
-    TextStyle textStyle = TextStyle(
-      fontSize: 18,
-      color: Colors.black,
-      fontWeight: FontWeight.bold,
-    );
+      TextStyle textStyle = TextStyle(
+        fontSize: 18,
+        color: Colors.black,
+        fontWeight: FontWeight.bold,
+      );
 
-    TextPainter textPainter = TextPainter(textDirection: TextDirection.ltr);
-    double initialAngle = 0; //-textPainter.width / 2;
+      TextPainter textPainter = TextPainter(textDirection: TextDirection.ltr);
+      double initialAngle = 0; //-textPainter.width / 2;
 
-    canvas.translate(_offset.dx, _offset.dy - radius); // size.width / 2, size.height / 2 - radius);
+      canvas.translate(_offset.dx, _offset.dy - radius); // size.width / 2, size.height / 2 - radius);
 
-    if (initialAngle != 0) {
-      final d = 2 * radius * sin(initialAngle / 2);
-      final rotationAngle = _calculateRotationAngle(0, initialAngle);
-      canvas.rotate(rotationAngle);
-      canvas.translate(d, 0);
-    }
+      if (initialAngle != 0) {
+        final d = 2 * radius * sin(initialAngle / 2);
+        final rotationAngle = _calculateRotationAngle(0, initialAngle);
+        canvas.rotate(rotationAngle);
+        canvas.translate(d, 0);
+      }
 
-    double angle = initialAngle;
-    for (int i = 0; i < text.length; i++) {
-      angle = _drawLetter(canvas, text[i], angle, radius, textStyle, textPainter);
+      double angle = initialAngle;
+      for (int i = 0; i < text.length; i++) {
+        angle = _drawLetter(canvas, text[i], angle, radius, textStyle, textPainter);
+      }
     }
   }
 

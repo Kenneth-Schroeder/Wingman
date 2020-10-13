@@ -6,6 +6,19 @@ class ArrowInformation {
 
   ArrowInformation(this.label);
 
+  int get hashCode => id.hashCode;
+
+  bool operator ==(other) {
+    // Dart ensures that operator== isn't called with null
+    // if(other == null) {
+    //   return false;
+    // }
+    if (other is! ArrowInformation) {
+      return false;
+    }
+    return id == other.id;
+  }
+
   ArrowInformation.fromMap(Map<String, dynamic> map)
       : assert(map["id"] != null),
         assert(map["setID"] != null),
