@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'database_service.dart';
 import 'SizeConfig.dart';
 import 'ArrowInformation.dart';
+import 'package:flutter/services.dart';
 
 class QuiverOrganizer extends StatefulWidget {
   QuiverOrganizer(this.numArrowsToSelect, this.selectedArrowInformationIDs, {Key key}) : super(key: key);
@@ -60,7 +61,7 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> {
     );
   }
 
-  DataCell tableCell(ArrowInformation arrowInformation) {
+  DataCell tableCell(BuildContext context, ArrowInformation arrowInformation) {
     return DataCell(
       Center(
         child: Container(
@@ -73,6 +74,7 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> {
             child: TextFormField(
               key: Key(arrowInformation.label),
               decoration: new InputDecoration(
+                //counter: SizedBox.shrink(),
                 suffixIcon: Icon(Icons.edit),
                 border: InputBorder.none,
                 focusedBorder: InputBorder.none,
@@ -82,12 +84,17 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> {
                 contentPadding: EdgeInsets.only(left: 15, bottom: 11, top: 11, right: 15),
                 hintText: "",
               ),
+              inputFormatters: [
+                LengthLimitingTextInputFormatter(5),
+              ],
               style: TextStyle(fontSize: 20),
               textAlign: TextAlign.center,
               initialValue: arrowInformation.label,
               keyboardType: TextInputType.name,
               onChanged: (text) {
-                arrowInformation.label = text;
+                if (text.length <= 5) {
+                  arrowInformation.label = text;
+                }
               },
             ),
           ),
@@ -96,12 +103,12 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> {
     );
   }
 
-  Widget arrowTableForSetWithIndex(int index) {
+  Widget arrowTableForSetWithIndex(BuildContext context, int index) {
     List<DataRow> rows = [];
 
     for (int i = 0; i < arrowSets[index].arrowInfos.length; i++) {
       List<DataCell> cells = [];
-      cells.add(tableCell(arrowSets[index].arrowInfos[i]));
+      cells.add(tableCell(context, arrowSets[index].arrowInfos[i]));
       cells.add(
         DataCell(
           Center(
@@ -206,7 +213,7 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> {
     setState(() {});
   }
 
-  Widget tabBodyGenerator(int index, int length) {
+  Widget tabBodyGenerator(BuildContext context, int index, int length) {
     if (index == length) {
       return Center(
         child: Text(
@@ -272,7 +279,7 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> {
                   ),
                 ),
               ),
-              arrowTableForSetWithIndex(index),
+              arrowTableForSetWithIndex(context, index),
             ],
           ),
         ),
@@ -280,7 +287,7 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> {
     );
   }
 
-  Widget tabHeaderGenerator(BuildContext context, int index, int length) {
+  Widget tabHeaderGenerator(int index, int length) {
     if (index == length) {
       return Container(
         width: _screenWidth() / 7,
@@ -325,10 +332,10 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> {
       itemCount: arrowSets.length + 1,
       tabBuilder: (context, index) {
         return Tab(
-          child: tabHeaderGenerator(context, index, arrowSets.length),
+          child: tabHeaderGenerator(index, arrowSets.length),
         );
       },
-      pageBuilder: (context, index) => tabBodyGenerator(index, arrowSets.length),
+      pageBuilder: (context, index) => tabBodyGenerator(context, index, arrowSets.length),
       onPositionChange: (index) {
         initPosition = index;
         setState(() {});
@@ -390,24 +397,28 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> {
   }
 
   Widget emptyScreen() {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text("Quiver"),
+    return SafeArea(
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text("Quiver"),
+        ),
+        body: Text("loading..."),
       ),
-      body: Text("loading..."),
     );
   }
 
   Widget showContent() {
     return WillPopScope(
-      child: Scaffold(
-        appBar: AppBar(
-          elevation: 0,
-          title: Text("Quiver"),
-        ),
-        bottomNavigationBar: _bottomBar(),
-        body: SafeArea(
-          child: createTabScreen(),
+      child: SafeArea(
+        child: Scaffold(
+          appBar: AppBar(
+            elevation: 0,
+            title: Text("Quiver"),
+          ),
+          bottomNavigationBar: _bottomBar(),
+          body: SafeArea(
+            child: createTabScreen(),
+          ),
         ),
       ),
       onWillPop: onLeave,
@@ -548,19 +559,6 @@ class _CustomTabsState extends State<CustomTabView> with TickerProviderStateMixi
             indicatorSize: TabBarIndicatorSize.label,
             indicator: BoxDecoration(
                 borderRadius: BorderRadius.only(topLeft: Radius.circular(10), topRight: Radius.circular(10)), color: Colors.white),
-
-            /*labelColor: Theme.of(context).primaryColor,
-            unselectedLabelColor: Theme.of(context).hintColor,
-            indicator: BoxDecoration(
-              border: Border(
-                bottom: BorderSide(
-                  color: Theme.of(context).primaryColor,
-                  width: 2,
-                ),
-              ),
-            ),
-            */
-
             tabs: List.generate(
               widget.itemCount,
               (index) => widget.tabBuilder(context, index),

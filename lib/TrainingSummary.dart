@@ -78,25 +78,31 @@ class _TrainingSummaryState extends State<TrainingSummary> {
         break;
     }
 
-    return Container(
-      width: 30,
-      height: 30,
-      decoration: BoxDecoration(color: backgroundColor, borderRadius: BorderRadius.all(Radius.circular(30))),
-      child: Center(
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              scoreInstance.score.toString(),
-              style: TextStyle(color: textColor, fontSize: 16, fontWeight: FontWeight.w600),
-            ),
-            Text(
-              scoreInstance.arrowInformation == null ? "" : scoreInstance.arrowInformation.label,
-              style: TextStyle(color: textColor, fontSize: 10),
-            ),
-          ],
+    return Stack(
+      children: [
+        Center(
+          child: Container(
+            width: 30,
+            height: 30,
+            decoration: BoxDecoration(color: backgroundColor, borderRadius: BorderRadius.all(Radius.circular(30))),
+          ),
         ),
-      ),
+        Center(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                scoreInstance.displayScore(true, widget.training.indoor),
+                style: TextStyle(color: textColor, fontSize: 16, fontWeight: FontWeight.w600),
+              ),
+              Text(
+                scoreInstance.arrowInformation == null ? "" : scoreInstance.arrowInformation.label,
+                style: TextStyle(color: textColor, fontSize: 10),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -177,7 +183,7 @@ class _TrainingSummaryState extends State<TrainingSummary> {
 
       List<DataCell> cells = [];
 
-      scores.sort((b, a) => a.score.compareTo(b.score));
+      scores.sort((a, b) => a.pRadius.compareTo(b.pRadius));
 
       int endScoreCounter = 0;
       int rowScoreCounter = 0;
@@ -303,11 +309,13 @@ class _TrainingSummaryState extends State<TrainingSummary> {
   }
 
   Widget emptyScreen() {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.training.title),
+    return SafeArea(
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(widget.training.title),
+        ),
+        body: Text("loading..."),
       ),
-      body: Text("loading..."),
     );
   }
 
@@ -361,63 +369,65 @@ class _TrainingSummaryState extends State<TrainingSummary> {
   }
 
   Widget showContent() {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.training.title),
-      ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: RadialGradient(
-            radius: 1.7,
-            center: Alignment.bottomRight,
-            colors: [
-              Colors.grey[100],
-              Colors.grey[200],
-              Colors.grey[400],
-              //Colors.black45,
-              //Colors.black54,
-            ], //, Colors.black, Colors.white],
-            stops: [0.0, 0.5, 1.0], //[0.0, 0.25, 0.5, 0.75, 1.0],
-          ),
+    return SafeArea(
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(widget.training.title),
         ),
-        child: SizedBox(
-          width: double.infinity,
-          height: double.infinity,
-          child: SingleChildScrollView(
-            child: Column(
-              children: [
-                createSummaryTable(),
-                SizedBox(
-                  height: 40,
-                ),
-                Text(
-                  "Statistics",
-                  style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
-                ),
-                Text(
-                  "Hitmaps",
-                  style: TextStyle(fontSize: 24),
-                ),
-                SizedBox(
-                  height: 20,
-                ),
-                Text(
-                  "Hitmap of all arrows",
-                  style: TextStyle(
-                    fontSize: 18,
+        body: Container(
+          decoration: BoxDecoration(
+            gradient: RadialGradient(
+              radius: 1.7,
+              center: Alignment.bottomRight,
+              colors: [
+                Colors.grey[100],
+                Colors.grey[200],
+                Colors.grey[400],
+                //Colors.black45,
+                //Colors.black54,
+              ], //, Colors.black, Colors.white],
+              stops: [0.0, 0.5, 1.0], //[0.0, 0.25, 0.5, 0.75, 1.0],
+            ),
+          ),
+          child: SizedBox(
+            width: double.infinity,
+            height: double.infinity,
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  createSummaryTable(),
+                  SizedBox(
+                    height: 40,
                   ),
-                ),
-                createHitMap(allArrows(), 150),
-                allArrowHitmapsColumn(150),
-              ],
+                  Text(
+                    "Statistics",
+                    style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    "Hitmaps",
+                    style: TextStyle(fontSize: 24),
+                  ),
+                  SizedBox(
+                    height: 20,
+                  ),
+                  Text(
+                    "Hitmap of all arrows",
+                    style: TextStyle(
+                      fontSize: 18,
+                    ),
+                  ),
+                  createHitMap(allArrows(), 150),
+                  allArrowHitmapsColumn(150),
+                ],
+              ),
             ),
           ),
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _changeScores,
-        tooltip: 'Change Scores',
-        child: Icon(Icons.assignment),
+        floatingActionButton: FloatingActionButton(
+          onPressed: _changeScores,
+          tooltip: 'Change Scores',
+          child: Icon(Icons.assignment),
+        ),
       ),
     );
   }

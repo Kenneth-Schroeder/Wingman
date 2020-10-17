@@ -26,6 +26,7 @@ class TrainingInstance {
   CompetitionType competitionType = CompetitionType.training;
   Gender referencedGender = Gender.none;
   int competitionLevel = 1;
+  bool indoor = false;
 
   TrainingInstance(this.title, this.creationTime);
 
@@ -40,6 +41,7 @@ class TrainingInstance {
         arrowDiameterMM = map["arrowDiameterMM"] == null ? 5 : map["arrowDiameterMM"],
         numberOfEnds = map["numberOfEnds"] == null ? 0 : map["numberOfEnds"],
         title = map["title"],
+        indoor = map["indoor"] == 1 ? true : false,
         arrowsPerEnd = map["arrowsPerEnd"],
         competitionLevel = map["competitionLevel"],
         creationTime = map["creationTime"] is String // if it is passed as string, we can convert it to DateTime object
@@ -58,6 +60,7 @@ class TrainingInstance {
       "referencedGender": this.referencedGender.index,
       "numberOfEnds": this.numberOfEnds,
       "competitionLevel": this.competitionLevel,
+      "indoor": this.indoor ? 1 : 0,
     };
   }
 

@@ -208,11 +208,13 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget emptyScreen() {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.title),
+    return SafeArea(
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(widget.title),
+        ),
+        body: Text("loading..."),
       ),
-      body: Text("loading..."),
     );
   }
 
@@ -253,21 +255,23 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget showContent() {
-    return Scaffold(
-      appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-        actions: <Widget>[
-          // action button
-          IconButton(
-            icon: Icon(Icons.settings),
-            onPressed: () {},
-          ),
-        ],
+    return SafeArea(
+      child: Scaffold(
+        appBar: AppBar(
+          // Here we take the value from the MyHomePage object that was created by
+          // the App.build method, and use it to set our appbar title.
+          title: Text(widget.title),
+          actions: <Widget>[
+            // action button
+            IconButton(
+              icon: Icon(Icons.settings),
+              onPressed: () {},
+            ),
+          ],
+        ),
+        body: overviewScreen(),
+        floatingActionButton: buildSpeedDial(), // This trailing comma makes auto-formatting nicer for build methods.
       ),
-      body: overviewScreen(),
-      floatingActionButton: buildSpeedDial(), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 

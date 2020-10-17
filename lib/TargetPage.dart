@@ -85,8 +85,8 @@ class _TargetPageState extends State<TargetPage> {
     dbService = await DatabaseService.create();
     SizeConfig().init(context);
 
-    arrowTopPosition = Offset(SizeConfig.screenWidth / 10, SizeConfig.screenHeight * 7 / 12);
-    arrowBotPosition = Offset(SizeConfig.screenWidth / 10, SizeConfig.screenHeight * 11 / 12);
+    arrowTopPosition = Offset(SizeConfig.screenWidth / 10, SizeConfig.screenHeight * 4 / 12);
+    arrowBotPosition = Offset(SizeConfig.screenWidth / 10, SizeConfig.screenHeight * 8 / 12);
 
     arrowInformation = await dbService.getArrowInformationToTraining(widget.training.id);
 
@@ -233,7 +233,8 @@ class _TargetPageState extends State<TargetPage> {
   List<int> getMatchPoints() {
     List<int> points = [0, 0];
 
-    if (opponents == null || numberOfUntouchedArrows == arrows[endIndex].length) {
+    if (opponents == null || countNumberOfUntouchedArrows(endIndex) == arrows[endIndex].length) {
+      // second condition probably unnecessary
       return points;
     }
 
@@ -243,7 +244,20 @@ class _TargetPageState extends State<TargetPage> {
         break;
       }
 
-      if (opponents[0].endScores[i] < getEndScore(i)) {
+      if (i == 5) {
+        Random random = Random();
+        if (opponents[0].endScores[i] < getEndScore(i)) {
+          points[0] += 1;
+        } else if (opponents[0].endScores[i] > getEndScore(i)) {
+          points[1] += 1;
+        } else {
+          if (random.nextBool()) {
+            points[0] += 1;
+          } else {
+            points[1] += 1;
+          }
+        }
+      } else if (opponents[0].endScores[i] < getEndScore(i)) {
         points[0] += 2;
       } else if (opponents[0].endScores[i] > getEndScore(i)) {
         points[1] += 2;
@@ -446,7 +460,12 @@ class _TargetPageState extends State<TargetPage> {
       for (int i = 0; i < arrows[endIdx].length; i++) {
         if (arrows[endIdx][i].isUntouched == 1) {
           // arrow.moveWithScale(scaleDelta, -_scaleCenterDelta, scaledTargetRadius());
-          Offset position = arrowTopPosition + (arrowBotPosition - arrowTopPosition) / (arrows[endIdx].length - 1.0) * i.toDouble();
+          Offset position;
+          if (arrows[endIdx].length == 1) {
+            position = arrowBotPosition;
+          } else {
+            position = arrowTopPosition + ((arrowBotPosition - arrowTopPosition) / (arrows[endIdx].length.toDouble() - 1.0)) * i.toDouble();
+          }
           arrows[endIdx][i].setWithGlobalCartesianCoordinates(position, scaledTargetRadius(), draggedTargetCenter());
         }
       }
@@ -507,6 +526,7 @@ class _TargetPageState extends State<TargetPage> {
         Offset newScaleCenterOffset = _initialScaleCenter - changedFocusPoint;
         _scaleCenterDelta = _scaleCenterOffset - newScaleCenterOffset;
         _scaleCenterOffset = newScaleCenterOffset;
+        _targetCenterOffset *= scaleDelta;
         _targetCenterOffset += _scaleCenterDelta;
         //setUntouchedArrowsPosition();
         setState(() {});
@@ -875,36 +895,40 @@ class _TargetPageState extends State<TargetPage> {
   }
 
   Widget emptyScreen() {
-    return Scaffold(
-      appBar: AppBar(title: Text("Score Recording")),
-      body: Text("loading..."),
+    return SafeArea(
+      child: Scaffold(
+        appBar: AppBar(title: Text("Score Recording")),
+        body: Text("loading..."),
+      ),
     );
   }
 
   Widget showContent() {
     return WillPopScope(
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text("Score Recording"),
-          actions: <Widget>[
-            // action button
-            IconButton(
-              icon: Icon(Icons.undo),
-              onPressed: resetArrows,
-            ),
-            IconButton(
-              icon: Icon(Icons.delete),
-              onPressed: deleteEnd,
-            ),
-          ],
-        ),
-        body: Builder(
-          builder: (context) => Stack(
-            children: [createTarget(), loadArrows(context), _dragScrollSheet()],
+      child: SafeArea(
+        child: Scaffold(
+          appBar: AppBar(
+            title: Text("Score Recording"),
+            actions: <Widget>[
+              // action button
+              IconButton(
+                icon: Icon(Icons.undo),
+                onPressed: resetArrows,
+              ),
+              IconButton(
+                icon: Icon(Icons.delete),
+                onPressed: deleteEnd,
+              ),
+            ],
           ),
-        ),
-        bottomNavigationBar: Builder(
-          builder: (context) => _bottomBar(context),
+          body: Builder(
+            builder: (context) => Stack(
+              children: [createTarget(), loadArrows(context), _dragScrollSheet()],
+            ),
+          ),
+          bottomNavigationBar: Builder(
+            builder: (context) => _bottomBar(context),
+          ),
         ),
       ),
       onWillPop: onLeave,
@@ -915,8 +939,8 @@ class _TargetPageState extends State<TargetPage> {
   Widget build(BuildContext context) {
     if (startRoutineFinished) {
       SizeConfig().init(context);
-      arrowTopPosition = Offset(SizeConfig.screenWidth / 10, SizeConfig.screenHeight * 7 / 12);
-      arrowBotPosition = Offset(SizeConfig.screenWidth / 10, SizeConfig.screenHeight * 11 / 12);
+      arrowTopPosition = Offset(SizeConfig.screenWidth / 10, SizeConfig.screenHeight * 4 / 12);
+      arrowBotPosition = Offset(SizeConfig.screenWidth / 10, SizeConfig.screenHeight * 8 / 12);
       targetRadius = SizeConfig().minDim() / 2.2;
       setUntouchedArrowsPosition();
       return showContent();

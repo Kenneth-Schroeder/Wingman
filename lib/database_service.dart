@@ -40,6 +40,7 @@ class DatabaseService {
           '''CREATE TABLE $tableTrainings(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             title TEXT,
+            indoor INTEGER,
             arrowsPerEnd INTEGER,
             targetType INTEGER,
             competitionType INTEGER,
@@ -94,8 +95,9 @@ class DatabaseService {
             shotID INTEGER PRIMARY KEY AUTOINCREMENT,
             relativeArrowRadius REAL,
             score INTEGER,
-            pRadius REAL,
-            pAngle REAL,
+            isX INTEGER,
+            pRadius REAL NOT NULL,
+            pAngle REAL NOT NULL,
             isLocked INTEGER,
             isUntouched INTEGER,
             arrowInformationID INTEGER,
@@ -373,6 +375,7 @@ class DatabaseService {
     return id;
   }
 
+  // todo why is arrowInformation not used here??
   Future<int> addScore(ScoreInstance instance, [ArrowInformation arrowInformation]) async {
     Database db = await database;
     int id = await db.insert(tableScores, instance.toMap());
@@ -393,7 +396,7 @@ class DatabaseService {
         instance.setArrowInformation(arrowsInformation[i]);
       }
 
-      addScore(instance);
+      await addScore(instance);
     }
   }
 

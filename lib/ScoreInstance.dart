@@ -15,12 +15,26 @@ class ScoreInstance {
   double pAngle = 13 / 20 * pi; // polar angle
   int isLocked = 0;
   int isUntouched = 1; // 1 == true
+  bool isX = false;
 
   ScoreInstance.scoreOnly(this.endID, this.score); // for opponent scores
   ScoreInstance(this.endID, this.relativeArrowRadius);
-  ScoreInstance.positioned(this.endID, this.score, Offset position, double targetRadius) {
-    // todo - is this used anymore?
-    setWithCartesianCoordinatesRelativeToTarget(position, targetRadius);
+
+  // todo check if compound scores are right and also adjust all the score calculations for compound if enabled later on
+  String displayScore(bool recurve, bool indoor) {
+    if (recurve) {
+      if (isX && !indoor) {
+        return "X";
+      }
+      return score.toString();
+    } else {
+      if (isX) {
+        return "10";
+      } else if (score == 10) {
+        return "9";
+      }
+      return score.toString();
+    }
   }
 
   void setArrowInformation(ArrowInformation arrowInfo) {
@@ -33,6 +47,7 @@ class ScoreInstance {
         shotID = map["shotID"],
         relativeArrowRadius = map["relativeArrowRadius"],
         score = map["score"],
+        isX = map["isX"] == 1 ? true : false,
         endID = map["endID"],
         pRadius = map["pRadius"] == null ? -1 : map["pRadius"],
         pAngle = map["pAngle"] == null ? -1 : map["pAngle"],
@@ -67,6 +82,7 @@ class ScoreInstance {
     return {
       "relativeArrowRadius": this.relativeArrowRadius,
       "score": this.score,
+      "isX": this.isX ? 1 : 0,
       "endID": this.endID,
       "arrowInformationID": _getArrowInformationID(),
       "pRadius": this.pRadius,
@@ -95,6 +111,7 @@ class ScoreInstance {
     distance *= 10; // range [0, 10) for 1 to 10
     distance += 1; // range [1, 11) for 1 to 10
 
+    isX = distance >= 10.5;
     score = distance.floor();
 
     return score;
@@ -228,6 +245,6 @@ class ScoreInstance {
   }
 
   String toString() {
-    return score.toString();
+    return score.toString() + "-" + shotID.toString() + "at" + pRadius.toString() + "/" + pAngle.toString();
   }
 }
