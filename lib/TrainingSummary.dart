@@ -373,6 +373,13 @@ class _TrainingSummaryState extends State<TrainingSummary> {
       child: Scaffold(
         appBar: AppBar(
           title: Text(widget.training.title),
+          actions: <Widget>[
+            // action button
+            IconButton(
+              icon: Icon(Icons.info),
+              onPressed: () {},
+            ),
+          ],
         ),
         body: Container(
           decoration: BoxDecoration(

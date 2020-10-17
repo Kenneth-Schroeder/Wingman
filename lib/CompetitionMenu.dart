@@ -177,6 +177,13 @@ class _CompetitionMenuState extends State<CompetitionMenu> {
       child: Scaffold(
         appBar: AppBar(
           title: Text("Competition Simulation"),
+          actions: <Widget>[
+            // action button
+            IconButton(
+              icon: Icon(Icons.info),
+              onPressed: () {},
+            ),
+          ],
         ),
         body: Container(
           decoration: BoxDecoration(

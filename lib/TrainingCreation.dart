@@ -1,4 +1,3 @@
-import 'package:Wingman/ArrowInformation.dart';
 import 'package:flutter/material.dart';
 import 'database_service.dart';
 import 'package:flutter/services.dart';
@@ -7,7 +6,9 @@ import 'package:Wingman/icons/my_flutter_app_icons.dart';
 import 'package:Wingman/QuiverOrganizer.dart';
 
 class TrainingCreation extends StatefulWidget {
-  TrainingCreation({Key key}) : super(key: key);
+  TrainingCreation([this.editInstance]);
+
+  TrainingInstance editInstance;
 
   @override
   _TrainingCreationState createState() => _TrainingCreationState();
@@ -32,6 +33,11 @@ class _TrainingCreationState extends State<TrainingCreation> {
     numArrowsController.addListener(() {
       setState(() {});
     });
+
+    if (widget.editInstance != null) {
+      newTraining = widget.editInstance;
+      numArrowsController.text = newTraining.arrowsPerEnd.toString();
+    }
     startRoutineFinished = true;
     setState(() {});
   }
@@ -46,6 +52,10 @@ class _TrainingCreationState extends State<TrainingCreation> {
 
   void _saveNewTraining() async {
     int id = await dbService.addTraining(newTraining, _arrowInformationIDs);
+  }
+
+  void _updateTraining() async {
+    int id = await dbService.updateTraining(newTraining);
   }
 
   bool arrowSelectionValid() {
@@ -71,6 +81,56 @@ class _TrainingCreationState extends State<TrainingCreation> {
     }
   }
 
+  void onChangedTargetType(String item) {
+    switch (item) {
+      case "Full Target":
+        newTraining.targetType = TargetType.Full;
+        break;
+      case "Single Spot":
+        newTraining.targetType = TargetType.SingleSpot;
+        break;
+      case "Triple Spot":
+        newTraining.targetType = TargetType.TripleSpot;
+        break;
+    }
+  }
+
+  void onChangedTargetDiameter(String item) {
+    switch (item) {
+      case "40cm":
+        newTraining.targetDiameterCM = 40;
+        break;
+      case "60cm":
+        newTraining.targetDiameterCM = 60;
+        break;
+      case "80cm":
+        newTraining.targetDiameterCM = 80;
+        break;
+      case "122cm":
+        newTraining.targetDiameterCM = 122;
+        break;
+    }
+  }
+
+  List<DropdownMenuItem> targetTypeOptions = ["Full Target", "Single Spot", "Triple Spot"]
+      .map((label) => DropdownMenuItem<String>(
+            child: Text(label),
+            value: label,
+          ))
+      .toList();
+
+  String getLabelToTargetType(TargetType targetType) {
+    //newTraining.targetType.toString()
+    switch (targetType) {
+      case TargetType.Full:
+        return "Full Target";
+      case TargetType.SingleSpot:
+        return "Single Spot";
+      default:
+        return "Triple Spot";
+    }
+  }
+
   Widget newTrainingForm() {
     return SingleChildScrollView(
       child: Form(
@@ -81,6 +141,8 @@ class _TrainingCreationState extends State<TrainingCreation> {
             Container(
               margin: EdgeInsets.only(top: 20.0, left: 20.0, right: 20.0, bottom: 10.0),
               child: TextFormField(
+                enabled: true, //widget.editInstance == null,
+                initialValue: widget.editInstance == null ? null : newTraining.title,
                 decoration: const InputDecoration(
                   errorMaxLines: 2,
                   labelText: 'Training Title',
@@ -111,6 +173,7 @@ class _TrainingCreationState extends State<TrainingCreation> {
                   Expanded(
                     child: TextFormField(
                       // todo needs controller for setupArrows() to get current value, when we dont need onFieldSubmitted anymore
+                      enabled: widget.editInstance == null,
                       controller: numArrowsController,
                       decoration: const InputDecoration(
                         errorMaxLines: 3,
@@ -149,10 +212,12 @@ class _TrainingCreationState extends State<TrainingCreation> {
                           minWidth: 100.0,
                           height: 50.0,
                           child: RaisedButton(
+                            // todo disable button if in edit mode
+
                             color: arrowSelectionValid() ? Colors.green : Colors.redAccent,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18.0), side: BorderSide(color: Colors.red)),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18.0)),
                             child: Icon(MyFlutterApp.arrow_flights),
-                            onPressed: setupArrows,
+                            onPressed: widget.editInstance == null ? setupArrows : null,
                           ),
                         ),
                       ),
@@ -164,6 +229,8 @@ class _TrainingCreationState extends State<TrainingCreation> {
             Container(
               margin: EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
               child: TextFormField(
+                initialValue: widget.editInstance == null ? null : newTraining.arrowDiameterMM.toStringAsFixed(0),
+                enabled: widget.editInstance == null,
                 decoration: const InputDecoration(
                   labelText: 'Arrow Diameter in Millimeters',
                   helperMaxLines: 8,
@@ -196,7 +263,9 @@ class _TrainingCreationState extends State<TrainingCreation> {
             ),
             Container(
               margin: EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
-              child: DropdownButtonFormField(
+              child: DropdownButtonFormField<String>(
+                value: widget.editInstance == null ? null : getLabelToTargetType(widget.editInstance.targetType),
+                disabledHint: widget.editInstance == null ? null : Text(getLabelToTargetType(widget.editInstance.targetType)),
                 decoration: const InputDecoration(
                   errorMaxLines: 2,
                   labelText: 'Target Type',
@@ -208,36 +277,26 @@ class _TrainingCreationState extends State<TrainingCreation> {
                     borderSide: BorderSide(),
                   ),
                 ),
-                items: ["Full Target", "Single Spot", "Triple Spot"]
-                    .map((label) => DropdownMenuItem(
-                          child: Text(label),
-                          value: label,
-                        ))
-                    .toList(),
+                items: targetTypeOptions,
                 validator: (value) {
                   if (value == null) {
                     return 'Please select a target type.';
                   }
                   return null;
                 },
-                onChanged: (String item) {
-                  switch (item) {
-                    case "Full Target":
-                      newTraining.targetType = TargetType.Full;
-                      break;
-                    case "Single Spot":
-                      newTraining.targetType = TargetType.SingleSpot;
-                      break;
-                    case "Triple Spot":
-                      newTraining.targetType = TargetType.TripleSpot;
-                      break;
-                  }
-                },
+                onChanged: widget.editInstance == null
+                    ? (String text) {
+                        onChangedTargetType(text);
+                      }
+                    : null,
               ),
             ),
             Container(
               margin: EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
               child: DropdownButtonFormField(
+                // todo disable in edit mode
+                value: widget.editInstance == null ? "122cm" : newTraining.targetDiameterCM.toStringAsFixed(0) + "cm",
+                disabledHint: widget.editInstance == null ? null : Text(newTraining.targetDiameterCM.toStringAsFixed(0) + "cm"),
                 decoration: const InputDecoration(
                   errorMaxLines: 2,
                   labelText: 'Target Size',
@@ -249,7 +308,6 @@ class _TrainingCreationState extends State<TrainingCreation> {
                     borderSide: BorderSide(),
                   ),
                 ),
-                value: "122cm",
                 items: ["40cm", "60cm", "80cm", "122cm"]
                     .map((label) => DropdownMenuItem(
                           child: Text(label.toString()),
@@ -263,22 +321,11 @@ class _TrainingCreationState extends State<TrainingCreation> {
                   }
                   return null;
                 },
-                onChanged: (String item) {
-                  switch (item) {
-                    case "40cm":
-                      newTraining.targetDiameterCM = 40;
-                      break;
-                    case "60cm":
-                      newTraining.targetDiameterCM = 60;
-                      break;
-                    case "80cm":
-                      newTraining.targetDiameterCM = 80;
-                      break;
-                    case "122cm":
-                      newTraining.targetDiameterCM = 122;
-                      break;
-                  }
-                },
+                onChanged: widget.editInstance == null
+                    ? (String text) {
+                        onChangedTargetDiameter(text);
+                      }
+                    : null,
               ),
             ),
             Container(
@@ -293,7 +340,7 @@ class _TrainingCreationState extends State<TrainingCreation> {
                     if (_formKey.currentState.validate()) {
                       // Process data.
                       _formKey.currentState.save();
-                      _saveNewTraining();
+                      widget.editInstance == null ? _saveNewTraining() : _updateTraining();
                       Navigator.pop(context);
                     }
                   },
@@ -314,7 +361,7 @@ class _TrainingCreationState extends State<TrainingCreation> {
     return SafeArea(
       child: Scaffold(
         appBar: AppBar(
-          title: Text("Create new Training"),
+          title: widget.editInstance == null ? Text("Create new Training") : Text("Edit Training"),
         ),
         body: Text("loading..."),
       ),
@@ -325,7 +372,14 @@ class _TrainingCreationState extends State<TrainingCreation> {
     return SafeArea(
       child: Scaffold(
         appBar: AppBar(
-          title: Text("Create new Training"),
+          title: widget.editInstance == null ? Text("Create new Training") : Text("Edit Training"),
+          actions: <Widget>[
+            // action button
+            IconButton(
+              icon: Icon(Icons.info),
+              onPressed: () {},
+            ),
+          ],
         ),
         body: Container(
             decoration: BoxDecoration(

@@ -502,6 +502,13 @@ class DatabaseService {
     return trainingID;
   }
 
+  Future<int> updateTraining(TrainingInstance instance) async {
+    Database db = await database;
+    print(instance.id);
+    int trainingID = await db.update(tableTrainings, instance.toMap(), where: 'id = ?', whereArgs: [instance.id]);
+    return trainingID;
+  }
+
   void deleteTraining(int trainingID) async {
     Database db = await database;
     await db.delete(tableTrainings, where: 'id = ?', whereArgs: [trainingID]);

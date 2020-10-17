@@ -59,7 +59,10 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void editTraining(TrainingInstance training) {
-    // TODO implement
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => TrainingCreation(training)),
+    ).then((value) => onStart());
   }
 
   void deleteTraining(int trainingID) async {
@@ -264,7 +267,7 @@ class _MyHomePageState extends State<MyHomePage> {
           actions: <Widget>[
             // action button
             IconButton(
-              icon: Icon(Icons.settings),
+              icon: Icon(Icons.info),
               onPressed: () {},
             ),
           ],

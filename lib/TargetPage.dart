@@ -912,6 +912,10 @@ class _TargetPageState extends State<TargetPage> {
             actions: <Widget>[
               // action button
               IconButton(
+                icon: Icon(Icons.info),
+                onPressed: () {},
+              ),
+              IconButton(
                 icon: Icon(Icons.undo),
                 onPressed: resetArrows,
               ),

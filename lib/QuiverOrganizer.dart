@@ -414,6 +414,13 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> {
           appBar: AppBar(
             elevation: 0,
             title: Text("Quiver"),
+            actions: <Widget>[
+              // action button
+              IconButton(
+                icon: Icon(Icons.info),
+                onPressed: () {},
+              ),
+            ],
           ),
           bottomNavigationBar: _bottomBar(),
           body: SafeArea(
