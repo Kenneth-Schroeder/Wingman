@@ -241,32 +241,6 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  Widget _helpOverlay() {
-    if (showHelpOverlay) {
-      return GestureDetector(
-        child: Container(
-          color: Colors.black,
-          child: SizedBox(
-            height: double.infinity,
-            width: double.infinity,
-            child: Container(
-              padding: EdgeInsets.all(20),
-              child: Image.asset(
-                "assets/images/help/overview.jpg",
-                fit: BoxFit.scaleDown,
-              ),
-            ),
-          ),
-        ),
-        onTap: () {
-          showHelpOverlay = false;
-          setState(() {});
-        },
-      );
-    }
-    return Container();
-  }
-
   Widget showContent() {
     return Stack(
       children: [
@@ -291,7 +265,14 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
           floatingActionButton: buildSpeedDial(), // This trailing comma makes auto-formatting nicer for build methods.
         ),
-        _helpOverlay(),
+        helpOverlay(
+          "assets/images/help/overview.jpg",
+          showHelpOverlay,
+          () {
+            showHelpOverlay = false;
+            setState(() {});
+          },
+        ),
       ],
     );
   }

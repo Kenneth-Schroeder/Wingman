@@ -407,32 +407,6 @@ class _TrainingSummaryState extends State<TrainingSummary> {
     );
   }
 
-  Widget _helpOverlay() {
-    if (showHelpOverlay) {
-      return GestureDetector(
-        child: Container(
-          color: Colors.black,
-          child: SizedBox(
-            height: double.infinity,
-            width: double.infinity,
-            child: Container(
-              padding: EdgeInsets.all(20),
-              child: Image.asset(
-                "assets/images/help/summary.jpg",
-                fit: BoxFit.scaleDown,
-              ),
-            ),
-          ),
-        ),
-        onTap: () {
-          showHelpOverlay = false;
-          setState(() {});
-        },
-      );
-    }
-    return Container();
-  }
-
   Widget showContent() {
     return Stack(
       children: [
@@ -493,7 +467,14 @@ class _TrainingSummaryState extends State<TrainingSummary> {
             child: Icon(Icons.assignment),
           ),
         ),
-        _helpOverlay(),
+        helpOverlay(
+          "assets/images/help/summary.jpg",
+          showHelpOverlay,
+          () {
+            showHelpOverlay = false;
+            setState(() {});
+          },
+        ),
       ],
     );
   }

@@ -1,6 +1,7 @@
 import 'package:Wingman/TrainingInstance.dart';
 import 'package:flutter/material.dart';
 import 'database_service.dart';
+import 'utilities.dart';
 
 class CompetitionMenu extends StatefulWidget {
   CompetitionMenu({Key key}) : super(key: key);
@@ -171,32 +172,6 @@ class _CompetitionMenuState extends State<CompetitionMenu> {
     }
   }
 
-  Widget _helpOverlay() {
-    if (showHelpOverlay) {
-      return GestureDetector(
-        child: Container(
-          color: Colors.black,
-          child: SizedBox(
-            height: double.infinity,
-            width: double.infinity,
-            child: Container(
-              padding: EdgeInsets.all(20),
-              child: Image.asset(
-                "assets/images/help/competition.jpg",
-                fit: BoxFit.scaleDown,
-              ),
-            ),
-          ),
-        ),
-        onTap: () {
-          showHelpOverlay = false;
-          setState(() {});
-        },
-      );
-    }
-    return Container();
-  }
-
   // images from https://svgsilh.com/image/2025609.html and https://svgsilh.com/image/156849.html
   @override
   Widget build(BuildContext context) {
@@ -323,7 +298,14 @@ class _CompetitionMenuState extends State<CompetitionMenu> {
             ),
           ),
         ),
-        _helpOverlay(),
+        helpOverlay(
+          "assets/images/help/competition.jpg",
+          showHelpOverlay,
+          () {
+            showHelpOverlay = false;
+            setState(() {});
+          },
+        ),
       ],
     );
   }

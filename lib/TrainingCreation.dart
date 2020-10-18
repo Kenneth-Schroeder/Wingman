@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'TrainingInstance.dart';
 import 'package:Wingman/icons/my_flutter_app_icons.dart';
 import 'package:Wingman/QuiverOrganizer.dart';
+import 'utilities.dart';
 
 class TrainingCreation extends StatefulWidget {
   TrainingCreation([this.editInstance]);
@@ -369,32 +370,6 @@ class _TrainingCreationState extends State<TrainingCreation> {
     );
   }
 
-  Widget _helpOverlay() {
-    if (showHelpOverlay) {
-      return GestureDetector(
-        child: Container(
-          color: Colors.black,
-          child: SizedBox(
-            height: double.infinity,
-            width: double.infinity,
-            child: Container(
-              padding: EdgeInsets.all(20),
-              child: Image.asset(
-                "assets/images/help/training.jpg",
-                fit: BoxFit.scaleDown,
-              ),
-            ),
-          ),
-        ),
-        onTap: () {
-          showHelpOverlay = false;
-          setState(() {});
-        },
-      );
-    }
-    return Container();
-  }
-
   Widget showContent() {
     return Stack(
       children: [
@@ -435,7 +410,14 @@ class _TrainingCreationState extends State<TrainingCreation> {
                 )),
           ),
         ),
-        _helpOverlay(),
+        helpOverlay(
+          "assets/images/help/training.jpg",
+          showHelpOverlay,
+          () {
+            showHelpOverlay = false;
+            setState(() {});
+          },
+        ),
       ],
     );
   }

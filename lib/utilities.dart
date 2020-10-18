@@ -22,7 +22,6 @@ class Archer {
 }
 
 double screenWidth() {
-  // todo make sure to use these
   return SizeConfig.screenWidth == null ? 1 : SizeConfig.screenWidth;
 }
 
@@ -127,10 +126,6 @@ Widget helpOverlay(String image, bool showOverlay, Function onTap) {
         ),
       ),
       onTap: onTap,
-      /*() {
-        showHelpOverlay = false;
-        setState(() {});
-      },*/
     );
   }
   return Container();

@@ -393,32 +393,6 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> {
     return true;
   }
 
-  Widget _helpOverlay() {
-    if (showHelpOverlay) {
-      return GestureDetector(
-        child: Container(
-          color: Colors.black,
-          child: SizedBox(
-            height: double.infinity,
-            width: double.infinity,
-            child: Container(
-              padding: EdgeInsets.all(20),
-              child: Image.asset(
-                "assets/images/help/quiver.jpg",
-                fit: BoxFit.scaleDown,
-              ),
-            ),
-          ),
-        ),
-        onTap: () {
-          showHelpOverlay = false;
-          setState(() {});
-        },
-      );
-    }
-    return Container();
-  }
-
   Widget emptyScreen() {
     return Scaffold(
       appBar: AppBar(
@@ -455,7 +429,14 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> {
               child: createTabScreen(),
             ),
           ),
-          _helpOverlay(),
+          helpOverlay(
+            "assets/images/help/quiver.jpg",
+            showHelpOverlay,
+            () {
+              showHelpOverlay = false;
+              setState(() {});
+            },
+          ),
         ],
       ),
       onWillPop: onLeave,
