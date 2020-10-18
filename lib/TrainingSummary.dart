@@ -21,6 +21,7 @@ class _TrainingSummaryState extends State<TrainingSummary> {
   DatabaseService dbService; // = DatabaseService.old();
   List<List<ScoreInstance>> arrows;
   bool startRoutineFinished = false;
+  bool showHelpOverlay = false;
 
   @override
   void initState() {
@@ -190,6 +191,7 @@ class _TrainingSummaryState extends State<TrainingSummary> {
       int rowOfEndCounter = 0;
       int rowSum = 0;
       scores.forEach((scoreInstance) {
+        // .where((element) => element.isUntouched == 0).toList()
         // for each scoreInstance in end
         rowSum += scoreInstance.score;
         endSum += scoreInstance.score;
@@ -368,73 +370,129 @@ class _TrainingSummaryState extends State<TrainingSummary> {
     return Column(children: widgets);
   }
 
-  Widget showContent() {
-    return SafeArea(
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(widget.training.title),
-          actions: <Widget>[
-            // action button
-            IconButton(
-              icon: Icon(Icons.info),
-              onPressed: () {},
-            ),
-          ],
+  Widget createStatistics() {
+    if (allArrows().isEmpty) {
+      return Container();
+    }
+
+    return Column(
+      children: [
+        SizedBox(
+          height: 30,
         ),
-        body: Container(
-          decoration: BoxDecoration(
-            gradient: RadialGradient(
-              radius: 1.7,
-              center: Alignment.bottomRight,
-              colors: [
-                Colors.grey[100],
-                Colors.grey[200],
-                Colors.grey[400],
-                //Colors.black45,
-                //Colors.black54,
-              ], //, Colors.black, Colors.white],
-              stops: [0.0, 0.5, 1.0], //[0.0, 0.25, 0.5, 0.75, 1.0],
-            ),
+        Text(
+          "Statistics",
+          style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+        ),
+        SizedBox(
+          height: 5,
+        ),
+        Text(
+          "Hitmaps",
+          style: TextStyle(fontSize: 24),
+        ),
+        SizedBox(
+          height: 5,
+        ),
+        Text(
+          "Hitmap of all arrows",
+          style: TextStyle(
+            fontSize: 18,
           ),
+        ),
+        createHitMap(allArrows(), 150),
+        allArrowHitmapsColumn(150)
+      ],
+    );
+  }
+
+  Widget _helpOverlay() {
+    if (showHelpOverlay) {
+      return GestureDetector(
+        child: Container(
+          color: Colors.black,
           child: SizedBox(
-            width: double.infinity,
             height: double.infinity,
-            child: SingleChildScrollView(
-              child: Column(
-                children: [
-                  createSummaryTable(),
-                  SizedBox(
-                    height: 40,
-                  ),
-                  Text(
-                    "Statistics",
-                    style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
-                  ),
-                  Text(
-                    "Hitmaps",
-                    style: TextStyle(fontSize: 24),
-                  ),
-                  SizedBox(
-                    height: 20,
-                  ),
-                  Text(
-                    "Hitmap of all arrows",
-                    style: TextStyle(
-                      fontSize: 18,
-                    ),
-                  ),
-                  createHitMap(allArrows(), 150),
-                  allArrowHitmapsColumn(150),
-                ],
+            width: double.infinity,
+            child: Container(
+              padding: EdgeInsets.all(20),
+              child: Image.asset(
+                "assets/images/help/summary.jpg",
+                fit: BoxFit.scaleDown,
               ),
             ),
           ),
         ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: _changeScores,
-          tooltip: 'Change Scores',
-          child: Icon(Icons.assignment),
-        ),
+        onTap: () {
+          showHelpOverlay = false;
+          setState(() {});
+        },
+      );
+    }
+    return Container();
+  }
+
+  Widget showContent() {
+    return SafeArea(
+      child: Stack(
+        children: [
+          Scaffold(
+            appBar: AppBar(
+              title: Text(widget.training.title),
+              actions: <Widget>[
+                // action button
+                IconButton(
+                  icon: Icon(Icons.help),
+                  onPressed: () {
+                    showHelpOverlay = true;
+                    setState(() {});
+                  },
+                ),
+              ],
+            ),
+            body: Container(
+              decoration: BoxDecoration(
+                gradient: RadialGradient(
+                  radius: 1.7,
+                  center: Alignment.bottomRight,
+                  colors: [
+                    Colors.grey[100],
+                    Colors.grey[200],
+                    Colors.grey[400],
+                    //Colors.black45,
+                    //Colors.black54,
+                  ], //, Colors.black, Colors.white],
+                  stops: [0.0, 0.5, 1.0], //[0.0, 0.25, 0.5, 0.75, 1.0],
+                ),
+              ),
+              child: SizedBox(
+                width: double.infinity,
+                height: double.infinity,
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      SizedBox(
+                        height: 20,
+                      ),
+                      Text(
+                        "Score Table",
+                        style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+                      ),
+                      createSummaryTable(),
+                      createStatistics(),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            floatingActionButton: FloatingActionButton(
+              onPressed: _changeScores,
+              tooltip: 'Change Scores',
+              child: Icon(Icons.assignment),
+            ),
+          ),
+          _helpOverlay(),
+        ],
       ),
     );
   }

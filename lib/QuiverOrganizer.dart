@@ -21,6 +21,7 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> {
   List<ArrowSet> arrowSets;
 
   int initPosition = 0;
+  bool showHelpOverlay = false;
 
   @override
   void initState() {
@@ -396,6 +397,32 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> {
     return true;
   }
 
+  Widget _helpOverlay() {
+    if (showHelpOverlay) {
+      return GestureDetector(
+        child: Container(
+          color: Colors.black,
+          child: SizedBox(
+            height: double.infinity,
+            width: double.infinity,
+            child: Container(
+              padding: EdgeInsets.all(20),
+              child: Image.asset(
+                "assets/images/help/quiver.jpg",
+                fit: BoxFit.scaleDown,
+              ),
+            ),
+          ),
+        ),
+        onTap: () {
+          showHelpOverlay = false;
+          setState(() {});
+        },
+      );
+    }
+    return Container();
+  }
+
   Widget emptyScreen() {
     return SafeArea(
       child: Scaffold(
@@ -410,22 +437,30 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> {
   Widget showContent() {
     return WillPopScope(
       child: SafeArea(
-        child: Scaffold(
-          appBar: AppBar(
-            elevation: 0,
-            title: Text("Quiver"),
-            actions: <Widget>[
-              // action button
-              IconButton(
-                icon: Icon(Icons.info),
-                onPressed: () {},
+        child: Stack(
+          children: [
+            Scaffold(
+              appBar: AppBar(
+                elevation: 0,
+                title: Text("Quiver"),
+                actions: <Widget>[
+                  // action button
+                  IconButton(
+                    icon: Icon(Icons.help),
+                    onPressed: () {
+                      showHelpOverlay = true;
+                      setState(() {});
+                    },
+                  ),
+                ],
               ),
-            ],
-          ),
-          bottomNavigationBar: _bottomBar(),
-          body: SafeArea(
-            child: createTabScreen(),
-          ),
+              bottomNavigationBar: _bottomBar(),
+              body: SafeArea(
+                child: createTabScreen(),
+              ),
+            ),
+            _helpOverlay(),
+          ],
         ),
       ),
       onWillPop: onLeave,

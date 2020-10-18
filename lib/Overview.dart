@@ -31,6 +31,7 @@ class _MyHomePageState extends State<MyHomePage> {
   List<TrainingInstance> _trainings = [];
   DatabaseService dbService;
   bool startRoutineFinished = false;
+  bool showHelpOverlay = false;
 
   @override
   void initState() {
@@ -148,15 +149,6 @@ class _MyHomePageState extends State<MyHomePage> {
                           stops: [0.0, 0.15, 0.34, 0.48, 0.66, 0.78, 1.0], // [0.0, 0.63, 0.7, 0.76, 0.8, 0.90, 0.94, 1.0],
                         ),
                       ),
-                      /*decoration: BoxDecoration(
-                    color: _trainings[index].competitionType == CompetitionType.training ? Colors.yellow[200] : Colors.red[200],
-                    boxShadow: [new BoxShadow(color: Colors.grey, offset: new Offset(3.0, 4.0), blurRadius: 3.0, spreadRadius: 0.1)],
-                    //border: Border.all(width: 0.0, color: Colors.blue[400]),
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(15),
-                      bottomLeft: Radius.circular(15),
-                    ),
-                  ),*/
                       child: Row(
                         children: [
                           Expanded(
@@ -257,23 +249,57 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
+  Widget _helpOverlay() {
+    if (showHelpOverlay) {
+      return GestureDetector(
+        child: Container(
+          color: Colors.black,
+          child: SizedBox(
+            height: double.infinity,
+            width: double.infinity,
+            child: Container(
+              padding: EdgeInsets.all(20),
+              child: Image.asset(
+                "assets/images/help/overview.jpg",
+                fit: BoxFit.scaleDown,
+              ),
+            ),
+          ),
+        ),
+        onTap: () {
+          showHelpOverlay = false;
+          setState(() {});
+        },
+      );
+    }
+    return Container();
+  }
+
   Widget showContent() {
     return SafeArea(
-      child: Scaffold(
-        appBar: AppBar(
-          // Here we take the value from the MyHomePage object that was created by
-          // the App.build method, and use it to set our appbar title.
-          title: Text(widget.title),
-          actions: <Widget>[
-            // action button
-            IconButton(
-              icon: Icon(Icons.info),
-              onPressed: () {},
+      child: Stack(
+        children: [
+          Scaffold(
+            appBar: AppBar(
+              // Here we take the value from the MyHomePage object that was created by
+              // the App.build method, and use it to set our appbar title.
+              title: Text(widget.title),
+              actions: <Widget>[
+                // action button
+                IconButton(
+                  icon: Icon(Icons.help),
+                  onPressed: () {
+                    showHelpOverlay = true;
+                    setState(() {});
+                  },
+                ),
+              ],
             ),
-          ],
-        ),
-        body: overviewScreen(),
-        floatingActionButton: buildSpeedDial(), // This trailing comma makes auto-formatting nicer for build methods.
+            body: overviewScreen(),
+            floatingActionButton: buildSpeedDial(), // This trailing comma makes auto-formatting nicer for build methods.
+          ),
+          _helpOverlay(),
+        ],
       ),
     );
   }

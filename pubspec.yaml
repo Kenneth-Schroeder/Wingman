@@ -62,6 +62,12 @@ flutter:
     - assets/images/female.png
     - assets/images/qualification.jpg
     - assets/images/finals.jpg
+    - assets/images/help/overview.jpg
+    - assets/images/help/competition.jpg
+    - assets/images/help/quiver.jpg
+    - assets/images/help/summary.jpg
+    - assets/images/help/target.jpg
+    - assets/images/help/training.jpg
 
   fonts:
     - family:  MyFlutterApp

@@ -21,6 +21,7 @@ class _TrainingCreationState extends State<TrainingCreation> {
   final numArrowsController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool startRoutineFinished = false;
+  bool showHelpOverlay = false;
 
   @override
   void initState() {
@@ -368,39 +369,73 @@ class _TrainingCreationState extends State<TrainingCreation> {
     );
   }
 
-  Widget showContent() {
-    return SafeArea(
-      child: Scaffold(
-        appBar: AppBar(
-          title: widget.editInstance == null ? Text("Create new Training") : Text("Edit Training"),
-          actions: <Widget>[
-            // action button
-            IconButton(
-              icon: Icon(Icons.info),
-              onPressed: () {},
-            ),
-          ],
-        ),
-        body: Container(
-            decoration: BoxDecoration(
-              gradient: RadialGradient(
-                radius: 1.7,
-                center: Alignment.bottomRight,
-                colors: [
-                  Colors.grey[100],
-                  Colors.grey[200],
-                  Colors.grey[400],
-                  //Colors.black45,
-                  //Colors.black54,
-                ], //, Colors.black, Colors.white],
-                stops: [0.0, 0.5, 1.0], //[0.0, 0.25, 0.5, 0.75, 1.0],
+  Widget _helpOverlay() {
+    if (showHelpOverlay) {
+      return GestureDetector(
+        child: Container(
+          color: Colors.black,
+          child: SizedBox(
+            height: double.infinity,
+            width: double.infinity,
+            child: Container(
+              padding: EdgeInsets.all(20),
+              child: Image.asset(
+                "assets/images/help/training.jpg",
+                fit: BoxFit.scaleDown,
               ),
             ),
-            child: SizedBox(
-              height: double.infinity,
-              width: double.infinity,
-              child: newTrainingForm(),
-            )),
+          ),
+        ),
+        onTap: () {
+          showHelpOverlay = false;
+          setState(() {});
+        },
+      );
+    }
+    return Container();
+  }
+
+  Widget showContent() {
+    return SafeArea(
+      child: Stack(
+        children: [
+          Scaffold(
+            appBar: AppBar(
+              title: widget.editInstance == null ? Text("Create new Training") : Text("Edit Training"),
+              actions: <Widget>[
+                // action button
+                IconButton(
+                  icon: Icon(Icons.help),
+                  onPressed: () {
+                    showHelpOverlay = true;
+                    setState(() {});
+                  },
+                ),
+              ],
+            ),
+            body: Container(
+                decoration: BoxDecoration(
+                  gradient: RadialGradient(
+                    radius: 1.7,
+                    center: Alignment.bottomRight,
+                    colors: [
+                      Colors.grey[100],
+                      Colors.grey[200],
+                      Colors.grey[400],
+                      //Colors.black45,
+                      //Colors.black54,
+                    ], //, Colors.black, Colors.white],
+                    stops: [0.0, 0.5, 1.0], //[0.0, 0.25, 0.5, 0.75, 1.0],
+                  ),
+                ),
+                child: SizedBox(
+                  height: double.infinity,
+                  width: double.infinity,
+                  child: newTrainingForm(),
+                )),
+          ),
+          _helpOverlay(),
+        ],
       ),
     );
   }

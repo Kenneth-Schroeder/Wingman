@@ -72,6 +72,7 @@ class _TargetPageState extends State<TargetPage> {
   int numOpponents = 10;
   List<int> currentMatchPoints = [0, 0];
   bool startRoutineFinished = false;
+  bool showHelpOverlay = false;
 
   @override
   void initState() {
@@ -296,7 +297,6 @@ class _TargetPageState extends State<TargetPage> {
     if (widget.training.competitionType == CompetitionType.finals) {
       w = Container(
         height: _screenHeight() * 0.12,
-        color: Colors.red[300],
         child: Center(
           child: Column(
             children: [
@@ -408,10 +408,19 @@ class _TargetPageState extends State<TargetPage> {
   }
 
   Widget _opponentStats() {
-    if (widget.training.competitionType == CompetitionType.training ||
-        opponents[0].endScores.length <= endIndex ||
-        opponents[0].arrowScores[endIndex].length == 0) {
+    if (widget.training.competitionType == CompetitionType.training) {
       return Container();
+    }
+
+    if (opponents[0].endScores.length <= endIndex || opponents[0].arrowScores[endIndex].length == 0) {
+      return Container(
+        color: Colors.white,
+        padding: EdgeInsets.all(10),
+        child: Text(
+          "< Opponent scores will be displayed here after you record your results >",
+          style: TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
+        ),
+      );
     }
 
     List<Archer> archers = getArchers();
@@ -743,6 +752,7 @@ class _TargetPageState extends State<TargetPage> {
 
   Widget _quickStats() {
     return Container(
+      height: 70,
       color: Colors.white,
       child: Column(
         children: [
@@ -825,14 +835,15 @@ class _TargetPageState extends State<TargetPage> {
     );
   }
 
-  Widget _dragScrollSheetExtension() {
-    return Container(
-      height: _screenHeight() * 0.0,
-      color: Colors.white,
-    );
+  double _dragScrollSheetMaxSize() {
+    if (widget.training.competitionType == CompetitionType.training) {
+      return (70 + 40 + _screenHeight() * 0.045) / _screenHeight();
+    }
+
+    return 0.5;
   }
 
-  Widget sheetItemWrapper(Widget child, bool enabled) {
+  Widget sheetItemWrapper(Widget child, bool enabled, Color backgroundColor) {
     if (!enabled) {
       return Container();
     }
@@ -841,6 +852,7 @@ class _TargetPageState extends State<TargetPage> {
       //padding: EdgeInsets.only(bottom: 10.0, left: 10.0, right: 10.0),
       margin: EdgeInsets.only(bottom: 10.0, left: 10.0, right: 10.0),
       decoration: BoxDecoration(
+        color: backgroundColor,
         border: Border.all(
           width: 10.0,
           color: Colors.white,
@@ -852,17 +864,16 @@ class _TargetPageState extends State<TargetPage> {
   }
 
   Widget _dragScrollSheet() {
-    double maxChildSize = 0.4;
     return DraggableScrollableSheet(
         initialChildSize: 0.04,
-        maxChildSize: maxChildSize,
+        maxChildSize: _dragScrollSheetMaxSize(),
         minChildSize: 0.04,
         builder: (context, scrollController) {
           return SingleChildScrollView(
             controller: scrollController,
             child: Container(
               color: Colors.blue[800],
-              height: _screenHeight() * maxChildSize,
+              height: _screenHeight() * _dragScrollSheetMaxSize(),
               child: Column(
                 children: [
                   Container(
@@ -876,13 +887,14 @@ class _TargetPageState extends State<TargetPage> {
                     ),
                   ),
                   Container(
-                    height: _screenHeight() * (maxChildSize - 0.045 * 1.5), // 1.5 creates bottom border
+                    height: _screenHeight() * (_dragScrollSheetMaxSize() - 0.045 * 1.5), // 1.5 creates bottom border
                     child: SingleChildScrollView(
                       child: Column(
                         children: [
-                          sheetItemWrapper(_quickStats(), true),
-                          sheetItemWrapper(matchPointsDisplay(), widget.training.competitionType == CompetitionType.finals),
-                          sheetItemWrapper(_opponentStats(), widget.training.competitionType != CompetitionType.training),
+                          sheetItemWrapper(_quickStats(), true, Colors.white),
+                          sheetItemWrapper(
+                              matchPointsDisplay(), widget.training.competitionType == CompetitionType.finals, Colors.red[300]),
+                          sheetItemWrapper(_opponentStats(), widget.training.competitionType != CompetitionType.training, Colors.white),
                         ],
                       ),
                     ),
@@ -892,6 +904,32 @@ class _TargetPageState extends State<TargetPage> {
             ),
           );
         });
+  }
+
+  Widget _helpOverlay() {
+    if (showHelpOverlay) {
+      return GestureDetector(
+        child: Container(
+          color: Colors.black,
+          child: SizedBox(
+            height: double.infinity,
+            width: double.infinity,
+            child: Container(
+              padding: EdgeInsets.all(20),
+              child: Image.asset(
+                "assets/images/help/target.jpg",
+                fit: BoxFit.scaleDown,
+              ),
+            ),
+          ),
+        ),
+        onTap: () {
+          showHelpOverlay = false;
+          setState(() {});
+        },
+      );
+    }
+    return Container();
   }
 
   Widget emptyScreen() {
@@ -906,33 +944,41 @@ class _TargetPageState extends State<TargetPage> {
   Widget showContent() {
     return WillPopScope(
       child: SafeArea(
-        child: Scaffold(
-          appBar: AppBar(
-            title: Text("Score Recording"),
-            actions: <Widget>[
-              // action button
-              IconButton(
-                icon: Icon(Icons.info),
-                onPressed: () {},
+        child: Stack(
+          children: [
+            Scaffold(
+              appBar: AppBar(
+                title: Text("Score Recording"),
+                actions: <Widget>[
+                  // action button
+                  IconButton(
+                    icon: Icon(Icons.help),
+                    onPressed: () {
+                      showHelpOverlay = true;
+                      setState(() {});
+                    },
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.undo),
+                    onPressed: resetArrows,
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.delete),
+                    onPressed: deleteEnd,
+                  ),
+                ],
               ),
-              IconButton(
-                icon: Icon(Icons.undo),
-                onPressed: resetArrows,
+              body: Builder(
+                builder: (context) => Stack(
+                  children: [createTarget(), loadArrows(context), _dragScrollSheet()],
+                ),
               ),
-              IconButton(
-                icon: Icon(Icons.delete),
-                onPressed: deleteEnd,
+              bottomNavigationBar: Builder(
+                builder: (context) => _bottomBar(context),
               ),
-            ],
-          ),
-          body: Builder(
-            builder: (context) => Stack(
-              children: [createTarget(), loadArrows(context), _dragScrollSheet()],
             ),
-          ),
-          bottomNavigationBar: Builder(
-            builder: (context) => _bottomBar(context),
-          ),
+            _helpOverlay(),
+          ],
         ),
       ),
       onWillPop: onLeave,
