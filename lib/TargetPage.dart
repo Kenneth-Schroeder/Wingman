@@ -55,6 +55,7 @@ class _TargetPageState extends State<TargetPage> {
   List<int> currentMatchPoints = [0, 0];
   bool startRoutineFinished = false;
   bool showHelpOverlay = false;
+  bool dragScrollIsExpanded = false;
 
   @override
   void initState() {
@@ -737,6 +738,14 @@ class _TargetPageState extends State<TargetPage> {
     return 0.5;
   }
 
+  double _dragScrollSheetInitialSize() {
+    if (dragScrollIsExpanded) {
+      return 0.5;
+    }
+
+    return 0.04;
+  }
+
   Widget sheetItemWrapper(Widget child, bool enabled, Color backgroundColor) {
     if (!enabled) {
       return Container();
@@ -759,7 +768,8 @@ class _TargetPageState extends State<TargetPage> {
 
   Widget _dragScrollSheet() {
     return DraggableScrollableSheet(
-        initialChildSize: 0.04,
+        key: Key(dragScrollIsExpanded.toString()),
+        initialChildSize: _dragScrollSheetInitialSize(),
         maxChildSize: _dragScrollSheetMaxSize(),
         minChildSize: 0.04,
         builder: (context, scrollController) {
@@ -770,15 +780,21 @@ class _TargetPageState extends State<TargetPage> {
               height: screenHeight() * _dragScrollSheetMaxSize(),
               child: Column(
                 children: [
-                  Container(
-                    height: screenHeight() * 0.045,
-                    color: Colors.blue[800],
-                    child: Center(
-                      child: Icon(
-                        Icons.arrow_drop_up,
-                        color: Colors.white,
+                  GestureDetector(
+                    child: Container(
+                      height: screenHeight() * 0.045,
+                      color: Colors.blue[800],
+                      child: Center(
+                        child: Icon(
+                          Icons.arrow_drop_up,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
+                    onTap: () {
+                      dragScrollIsExpanded = !dragScrollIsExpanded;
+                      setState(() {});
+                    },
                   ),
                   Container(
                     height: screenHeight() * (_dragScrollSheetMaxSize() - 0.045 * 1.5), // 1.5 creates bottom border
