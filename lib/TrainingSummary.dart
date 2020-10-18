@@ -7,6 +7,7 @@ import 'TrainingInstance.dart';
 import 'TargetPage.dart';
 import 'package:Wingman/TargetPainter.dart';
 import 'ArrowPainter.dart';
+import 'utilities.dart';
 
 class TrainingSummary extends StatefulWidget {
   TrainingSummary(this.training, {Key key}) : super(key: key);
@@ -155,7 +156,7 @@ class _TrainingSummaryState extends State<TrainingSummary> {
 
     double scaledRadius = radius * scaleFactor;
 
-    double xCenter = SizeConfig.screenWidth / 2;
+    double xCenter = screenWidth() / 2;
     return Stack(
       children: [
         CustomPaint(
@@ -311,12 +312,12 @@ class _TrainingSummaryState extends State<TrainingSummary> {
   }
 
   Widget emptyScreen() {
-    return SafeArea(
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(widget.training.title),
-        ),
-        body: Text("loading..."),
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(widget.training.title),
+      ),
+      body: SafeArea(
+        child: Text("loading..."),
       ),
     );
   }
@@ -433,24 +434,24 @@ class _TrainingSummaryState extends State<TrainingSummary> {
   }
 
   Widget showContent() {
-    return SafeArea(
-      child: Stack(
-        children: [
-          Scaffold(
-            appBar: AppBar(
-              title: Text(widget.training.title),
-              actions: <Widget>[
-                // action button
-                IconButton(
-                  icon: Icon(Icons.help),
-                  onPressed: () {
-                    showHelpOverlay = true;
-                    setState(() {});
-                  },
-                ),
-              ],
-            ),
-            body: Container(
+    return Stack(
+      children: [
+        Scaffold(
+          appBar: AppBar(
+            title: Text(widget.training.title),
+            actions: <Widget>[
+              // action button
+              IconButton(
+                icon: Icon(Icons.help),
+                onPressed: () {
+                  showHelpOverlay = true;
+                  setState(() {});
+                },
+              ),
+            ],
+          ),
+          body: SafeArea(
+            child: Container(
               decoration: BoxDecoration(
                 gradient: RadialGradient(
                   radius: 1.7,
@@ -485,15 +486,15 @@ class _TrainingSummaryState extends State<TrainingSummary> {
                 ),
               ),
             ),
-            floatingActionButton: FloatingActionButton(
-              onPressed: _changeScores,
-              tooltip: 'Change Scores',
-              child: Icon(Icons.assignment),
-            ),
           ),
-          _helpOverlay(),
-        ],
-      ),
+          floatingActionButton: FloatingActionButton(
+            onPressed: _changeScores,
+            tooltip: 'Change Scores',
+            child: Icon(Icons.assignment),
+          ),
+        ),
+        _helpOverlay(),
+      ],
     );
   }
 

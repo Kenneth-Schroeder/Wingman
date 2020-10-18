@@ -200,24 +200,24 @@ class _CompetitionMenuState extends State<CompetitionMenu> {
   // images from https://svgsilh.com/image/2025609.html and https://svgsilh.com/image/156849.html
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Stack(
-        children: [
-          Scaffold(
-            appBar: AppBar(
-              title: Text("Competition Simulation"),
-              actions: <Widget>[
-                // action button
-                IconButton(
-                  icon: Icon(Icons.help),
-                  onPressed: () {
-                    showHelpOverlay = true;
-                    setState(() {});
-                  },
-                ),
-              ],
-            ),
-            body: Container(
+    return Stack(
+      children: [
+        Scaffold(
+          appBar: AppBar(
+            title: Text("Competition Simulation"),
+            actions: <Widget>[
+              // action button
+              IconButton(
+                icon: Icon(Icons.help),
+                onPressed: () {
+                  showHelpOverlay = true;
+                  setState(() {});
+                },
+              ),
+            ],
+          ),
+          body: SafeArea(
+            child: Container(
               decoration: BoxDecoration(
                 gradient: RadialGradient(
                   radius: 1.7,
@@ -322,9 +322,9 @@ class _CompetitionMenuState extends State<CompetitionMenu> {
               ),
             ),
           ),
-          _helpOverlay(),
-        ],
-      ),
+        ),
+        _helpOverlay(),
+      ],
     );
   }
 }

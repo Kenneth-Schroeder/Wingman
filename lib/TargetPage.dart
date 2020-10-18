@@ -11,25 +11,7 @@ import 'SizeConfig.dart';
 import 'dart:math';
 import 'CompetitionSimulator.dart';
 import 'ArrowInformation.dart';
-
-class Archer {
-  List<int> endScores = [0];
-  List<List<int>> arrowScores = [[]];
-  String name;
-  Archer(this.name);
-
-  void addToEnd(int endIndex, int number) {
-    endScores[endIndex] += number;
-  }
-
-  int scoreOfEnd(int endIndex) {
-    return endScores[endIndex];
-  }
-
-  int totalScoreUpToEnd(int endIndex) {
-    return endScores.sublist(0, endIndex + 1).reduce((a, b) => a + b);
-  }
-}
+import 'utilities.dart';
 
 class TargetPage extends StatefulWidget {
   TargetPage(this.training, this.arrows, {Key key}) : super(key: key);
@@ -86,8 +68,8 @@ class _TargetPageState extends State<TargetPage> {
     dbService = await DatabaseService.create();
     SizeConfig().init(context);
 
-    arrowTopPosition = Offset(SizeConfig.screenWidth / 10, SizeConfig.screenHeight * 4 / 12);
-    arrowBotPosition = Offset(SizeConfig.screenWidth / 10, SizeConfig.screenHeight * 8 / 12);
+    arrowTopPosition = Offset(screenWidth() / 10, screenHeight() * 4 / 12);
+    arrowBotPosition = Offset(screenWidth() / 10, screenHeight() * 8 / 12);
 
     arrowInformation = await dbService.getArrowInformationToTraining(widget.training.id);
 
@@ -149,7 +131,7 @@ class _TargetPageState extends State<TargetPage> {
   }
 
   Offset arrowDropOffset() {
-    return Offset(0, -_screenHeight() / 5);
+    return Offset(0, -screenHeight() / 5);
   }
 
   int countNumberOfUntouchedArrows([int index]) {
@@ -177,38 +159,10 @@ class _TargetPageState extends State<TargetPage> {
     return CustomPaint(painter: TargetPainter(draggedTargetCenter(), scaledTargetRadius(), widget.training.targetType));
   }
 
-  double polarDistance(double r1, double a1, double r2, double a2) {
-    return sqrt(r1 * r1 + r2 * r2 - 2 * r1 * r2 * cos(a1 - a2));
-  }
-
-  List argMin(List<double> numbers) {
-    double minValue = double.maxFinite;
-    int minIndex = 0;
-
-    for (var i = 0; i < numbers.length; i++) {
-      if (numbers[i] < minValue) {
-        minValue = numbers[i];
-        minIndex = i;
-      }
-    }
-
-    return [minValue, minIndex];
-  }
-
-  List localCartesianToRelativePolar(double x, double y) {
-    double rX = x - draggedTargetCenter().dx; // x coordinate relative to target center
-    double rY = y - draggedTargetCenter().dy; // y coordinate relative to target center
-
-    double pRadius = sqrt(rX * rX + rY * rY);
-    double pAngle = atan2(rY, rX);
-
-    return [pRadius, pAngle];
-  }
-
   int _touchedArrowIndex(double x, double y) {
     // determine distance to all arrows and return arrow with lowest dist IF within radius
-    double touchPRadius = localCartesianToRelativePolar(x, y)[0];
-    double touchPAngle = localCartesianToRelativePolar(x, y)[1];
+    double touchPRadius = localCartesianToRelativePolar(draggedTargetCenter(), x, y)[0];
+    double touchPAngle = localCartesianToRelativePolar(draggedTargetCenter(), x, y)[1];
 
     List<double> distances = [];
 
@@ -296,7 +250,7 @@ class _TargetPageState extends State<TargetPage> {
 
     if (widget.training.competitionType == CompetitionType.finals) {
       w = Container(
-        height: _screenHeight() * 0.12,
+        height: screenHeight() * 0.12,
         child: Center(
           child: Column(
             children: [
@@ -672,57 +626,6 @@ class _TargetPageState extends State<TargetPage> {
     return totalScore / numEnds;
   }
 
-  double dist(Offset pointA, Offset pointB) {
-    return (pointA - pointB).distance;
-  }
-
-  double chPerimeter(List<Offset> points) {
-    double p = 0;
-    for (int i = 1; i < points.length; i++) {
-      p += dist(points[i - 1], points[i]);
-    }
-    p += dist(points.first, points.last);
-
-    return p;
-  }
-
-  double crossProduct(Offset O, Offset A, Offset B) {
-    return (A.dx - O.dx) * (B.dy - O.dy) - (A.dy - O.dy) * (B.dx - O.dx);
-  }
-
-  List<Offset> convexHull(List<Offset> points) {
-    int n = points.length;
-    int k = 0;
-
-    if (n <= 3) return points;
-
-    List<Offset> ans = new List(n * 2);
-
-    // Sort points lexicographically
-    points.sort((a, b) {
-      if (a == b) return 0;
-      if (a.dx < b.dx || (a.dx == b.dx && a.dy < b.dy)) {
-        return 1;
-      }
-      return -1;
-    });
-
-    // Build lower hull
-    for (int i = 0; i < n; ++i) {
-      while (k >= 2 && crossProduct(ans[k - 2], ans[k - 1], points[i]) <= 0) k--;
-      ans[k++] = points[i];
-    }
-
-    // Build upper hull
-    for (int i = n - 1, t = k + 1; i > 0; --i) {
-      while (k >= t && crossProduct(ans[k - 2], ans[k - 1], points[i - 1]) <= 0) k--;
-      ans[k++] = points[i - 1];
-    }
-
-    // Resize the array to desired size
-    return ans.getRange(0, k - 1).toList();
-  }
-
   // todo fix error when clicking next round too fast
   double getGroupPerimeter(double physicalTargetRadius) {
     // all arrows to Offsets
@@ -741,15 +644,6 @@ class _TargetPageState extends State<TargetPage> {
     return widget.training.numberOfEnds;
   }
 
-  double _screenWidth() {
-    // todo make sure to use these
-    return SizeConfig.screenWidth == null ? 1 : SizeConfig.screenWidth;
-  }
-
-  double _screenHeight() {
-    return SizeConfig.screenHeight == null ? 1 : SizeConfig.screenHeight;
-  }
-
   Widget _quickStats() {
     return Container(
       height: 70,
@@ -764,7 +658,7 @@ class _TargetPageState extends State<TargetPage> {
             padding: EdgeInsets.all(2.0),
             child: Container(
               height: 1.0,
-              width: _screenWidth(),
+              width: screenWidth(),
               //color: Colors.black,
             ),
           ),
@@ -837,7 +731,7 @@ class _TargetPageState extends State<TargetPage> {
 
   double _dragScrollSheetMaxSize() {
     if (widget.training.competitionType == CompetitionType.training) {
-      return (70 + 40 + _screenHeight() * 0.045) / _screenHeight();
+      return (70 + 40 + screenHeight() * 0.045) / screenHeight();
     }
 
     return 0.5;
@@ -873,11 +767,11 @@ class _TargetPageState extends State<TargetPage> {
             controller: scrollController,
             child: Container(
               color: Colors.blue[800],
-              height: _screenHeight() * _dragScrollSheetMaxSize(),
+              height: screenHeight() * _dragScrollSheetMaxSize(),
               child: Column(
                 children: [
                   Container(
-                    height: _screenHeight() * 0.045,
+                    height: screenHeight() * 0.045,
                     color: Colors.blue[800],
                     child: Center(
                       child: Icon(
@@ -887,7 +781,7 @@ class _TargetPageState extends State<TargetPage> {
                     ),
                   ),
                   Container(
-                    height: _screenHeight() * (_dragScrollSheetMaxSize() - 0.045 * 1.5), // 1.5 creates bottom border
+                    height: screenHeight() * (_dragScrollSheetMaxSize() - 0.045 * 1.5), // 1.5 creates bottom border
                     child: SingleChildScrollView(
                       child: Column(
                         children: [
@@ -906,80 +800,62 @@ class _TargetPageState extends State<TargetPage> {
         });
   }
 
-  Widget _helpOverlay() {
-    if (showHelpOverlay) {
-      return GestureDetector(
-        child: Container(
-          color: Colors.black,
-          child: SizedBox(
-            height: double.infinity,
-            width: double.infinity,
-            child: Container(
-              padding: EdgeInsets.all(20),
-              child: Image.asset(
-                "assets/images/help/target.jpg",
-                fit: BoxFit.scaleDown,
-              ),
-            ),
-          ),
-        ),
-        onTap: () {
-          showHelpOverlay = false;
-          setState(() {});
-        },
-      );
-    }
-    return Container();
-  }
-
   Widget emptyScreen() {
-    return SafeArea(
-      child: Scaffold(
-        appBar: AppBar(title: Text("Score Recording")),
-        body: Text("loading..."),
+    return Scaffold(
+      appBar: AppBar(title: Text("Score Recording")),
+      body: SafeArea(
+        child: Text("loading..."),
       ),
     );
   }
 
   Widget showContent() {
     return WillPopScope(
-      child: SafeArea(
-        child: Stack(
-          children: [
-            Scaffold(
-              appBar: AppBar(
-                title: Text("Score Recording"),
-                actions: <Widget>[
-                  // action button
-                  IconButton(
-                    icon: Icon(Icons.help),
-                    onPressed: () {
-                      showHelpOverlay = true;
-                      setState(() {});
-                    },
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.undo),
-                    onPressed: resetArrows,
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.delete),
-                    onPressed: deleteEnd,
-                  ),
-                ],
-              ),
-              body: Builder(
+      child: Stack(
+        children: [
+          Scaffold(
+            appBar: AppBar(
+              title: Text("Score Recording"),
+              actions: <Widget>[
+                // action button
+                IconButton(
+                  icon: Icon(Icons.help),
+                  onPressed: () {
+                    showHelpOverlay = true;
+                    setState(() {});
+                  },
+                ),
+                IconButton(
+                  icon: Icon(Icons.undo),
+                  onPressed: resetArrows,
+                ),
+                IconButton(
+                  icon: Icon(Icons.delete),
+                  onPressed: deleteEnd,
+                ),
+              ],
+            ),
+            body: SafeArea(
+              bottom: false,
+              child: Builder(
                 builder: (context) => Stack(
                   children: [createTarget(), loadArrows(context), _dragScrollSheet()],
                 ),
               ),
-              bottomNavigationBar: Builder(
-                builder: (context) => _bottomBar(context),
-              ),
             ),
-            _helpOverlay(),
-          ],
-        ),
+            bottomNavigationBar: Builder(
+              builder: (context) => _bottomBar(context),
+            ),
+          ),
+          helpOverlay(
+            "assets/images/help/target.jpg",
+            showHelpOverlay,
+            () {
+              showHelpOverlay = false;
+              setState(() {});
+            },
+          ),
+        ],
       ),
       onWillPop: onLeave,
     );
@@ -989,8 +865,8 @@ class _TargetPageState extends State<TargetPage> {
   Widget build(BuildContext context) {
     if (startRoutineFinished) {
       SizeConfig().init(context);
-      arrowTopPosition = Offset(SizeConfig.screenWidth / 10, SizeConfig.screenHeight * 4 / 12);
-      arrowBotPosition = Offset(SizeConfig.screenWidth / 10, SizeConfig.screenHeight * 8 / 12);
+      arrowTopPosition = Offset(screenWidth() / 10, screenHeight() * 4 / 12);
+      arrowBotPosition = Offset(screenWidth() / 10, screenHeight() * 8 / 12);
       targetRadius = SizeConfig().minDim() / 2.2;
       setUntouchedArrowsPosition();
       return showContent();

@@ -3,6 +3,7 @@ import 'database_service.dart';
 import 'SizeConfig.dart';
 import 'ArrowInformation.dart';
 import 'package:flutter/services.dart';
+import 'utilities.dart';
 
 class QuiverOrganizer extends StatefulWidget {
   QuiverOrganizer(this.numArrowsToSelect, this.selectedArrowInformationIDs, {Key key}) : super(key: key);
@@ -46,11 +47,6 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> {
 
     startRoutineFinished = true;
     setState(() {});
-  }
-
-  double _screenWidth() {
-    // todo make sure to use these
-    return SizeConfig.screenWidth == null ? 1 : SizeConfig.screenWidth;
   }
 
   DataColumn tableColumn(String text, bool numeric) {
@@ -184,7 +180,7 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> {
                 ),
               ),
               onPressed: () {
-                arrowSets[index].addArrow(arrowSets[index].arrowInfos.length.toString());
+                arrowSets[index].addArrow((arrowSets[index].arrowInfos.length + 1).toString());
                 setState(() {});
                 return;
               },
@@ -240,7 +236,7 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Container(
-                        width: _screenWidth() * 0.3,
+                        width: screenWidth() * 0.3,
                         child: TextFormField(
                           key: Key(arrowSets[index].label),
                           initialValue: arrowSets[index].label,
@@ -291,7 +287,7 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> {
   Widget tabHeaderGenerator(int index, int length) {
     if (index == length) {
       return Container(
-        width: _screenWidth() / 7,
+        width: screenWidth() / 7,
         child: SizedBox(
           width: double.infinity, // match_parent
           height: double.infinity,
@@ -424,44 +420,43 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> {
   }
 
   Widget emptyScreen() {
-    return SafeArea(
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text("Quiver"),
-        ),
-        body: Text("loading..."),
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("Quiver"),
+      ),
+      body: SafeArea(
+        child: Text("loading..."),
       ),
     );
   }
 
   Widget showContent() {
     return WillPopScope(
-      child: SafeArea(
-        child: Stack(
-          children: [
-            Scaffold(
-              appBar: AppBar(
-                elevation: 0,
-                title: Text("Quiver"),
-                actions: <Widget>[
-                  // action button
-                  IconButton(
-                    icon: Icon(Icons.help),
-                    onPressed: () {
-                      showHelpOverlay = true;
-                      setState(() {});
-                    },
-                  ),
-                ],
-              ),
-              bottomNavigationBar: _bottomBar(),
-              body: SafeArea(
-                child: createTabScreen(),
-              ),
+      child: Stack(
+        children: [
+          Scaffold(
+            appBar: AppBar(
+              elevation: 0,
+              title: Text("Quiver"),
+              actions: <Widget>[
+                // action button
+                IconButton(
+                  icon: Icon(Icons.help),
+                  onPressed: () {
+                    showHelpOverlay = true;
+                    setState(() {});
+                  },
+                ),
+              ],
             ),
-            _helpOverlay(),
-          ],
-        ),
+            bottomNavigationBar: _bottomBar(),
+            body: SafeArea(
+              bottom: false,
+              child: createTabScreen(),
+            ),
+          ),
+          _helpOverlay(),
+        ],
       ),
       onWillPop: onLeave,
     );

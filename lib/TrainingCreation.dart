@@ -359,12 +359,12 @@ class _TrainingCreationState extends State<TrainingCreation> {
   }
 
   Widget emptyScreen() {
-    return SafeArea(
-      child: Scaffold(
-        appBar: AppBar(
-          title: widget.editInstance == null ? Text("Create new Training") : Text("Edit Training"),
-        ),
-        body: Text("loading..."),
+    return Scaffold(
+      appBar: AppBar(
+        title: widget.editInstance == null ? Text("Create new Training") : Text("Edit Training"),
+      ),
+      body: SafeArea(
+        child: Text("loading..."),
       ),
     );
   }
@@ -396,24 +396,24 @@ class _TrainingCreationState extends State<TrainingCreation> {
   }
 
   Widget showContent() {
-    return SafeArea(
-      child: Stack(
-        children: [
-          Scaffold(
-            appBar: AppBar(
-              title: widget.editInstance == null ? Text("Create new Training") : Text("Edit Training"),
-              actions: <Widget>[
-                // action button
-                IconButton(
-                  icon: Icon(Icons.help),
-                  onPressed: () {
-                    showHelpOverlay = true;
-                    setState(() {});
-                  },
-                ),
-              ],
-            ),
-            body: Container(
+    return Stack(
+      children: [
+        Scaffold(
+          appBar: AppBar(
+            title: widget.editInstance == null ? Text("Create new Training") : Text("Edit Training"),
+            actions: <Widget>[
+              // action button
+              IconButton(
+                icon: Icon(Icons.help),
+                onPressed: () {
+                  showHelpOverlay = true;
+                  setState(() {});
+                },
+              ),
+            ],
+          ),
+          body: SafeArea(
+            child: Container(
                 decoration: BoxDecoration(
                   gradient: RadialGradient(
                     radius: 1.7,
@@ -434,9 +434,9 @@ class _TrainingCreationState extends State<TrainingCreation> {
                   child: newTrainingForm(),
                 )),
           ),
-          _helpOverlay(),
-        ],
-      ),
+        ),
+        _helpOverlay(),
+      ],
     );
   }
 

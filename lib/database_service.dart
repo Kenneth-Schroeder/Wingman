@@ -3,7 +3,7 @@ import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'TrainingInstance.dart';
 import 'ScoreInstance.dart';
-import 'TargetPage.dart'; // todo move Archer definition
+import 'utilities.dart';
 import 'ArrowInformation.dart';
 
 final tableTrainings = "trainings";

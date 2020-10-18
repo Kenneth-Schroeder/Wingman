@@ -8,18 +8,10 @@ import 'CompetitionMenu.dart';
 import 'package:Wingman/icons/my_flutter_app_icons.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'SizeConfig.dart';
+import 'utilities.dart';
 
 class MyHomePage extends StatefulWidget {
   MyHomePage({Key key, this.title}) : super(key: key);
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
 
   final String title;
 
@@ -75,7 +67,7 @@ class _MyHomePageState extends State<MyHomePage> {
   double getGradientRadius(int height) {
     // todo do this with the other SizeConfigs too // todo make sure to use _screenWidth OR always wait for startRoutineFinished
     SizeConfig().init(context);
-    return SizeConfig.screenWidth / height;
+    return screenWidth() / height;
   }
 
   Widget overviewScreen() {
@@ -203,12 +195,12 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget emptyScreen() {
-    return SafeArea(
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(widget.title),
-        ),
-        body: Text("loading..."),
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(widget.title),
+      ),
+      body: SafeArea(
+        child: Text("loading..."),
       ),
     );
   }
@@ -276,31 +268,31 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget showContent() {
-    return SafeArea(
-      child: Stack(
-        children: [
-          Scaffold(
-            appBar: AppBar(
-              // Here we take the value from the MyHomePage object that was created by
-              // the App.build method, and use it to set our appbar title.
-              title: Text(widget.title),
-              actions: <Widget>[
-                // action button
-                IconButton(
-                  icon: Icon(Icons.help),
-                  onPressed: () {
-                    showHelpOverlay = true;
-                    setState(() {});
-                  },
-                ),
-              ],
-            ),
-            body: overviewScreen(),
-            floatingActionButton: buildSpeedDial(), // This trailing comma makes auto-formatting nicer for build methods.
+    return Stack(
+      children: [
+        Scaffold(
+          appBar: AppBar(
+            // Here we take the value from the MyHomePage object that was created by
+            // the App.build method, and use it to set our appbar title.
+            title: Text(widget.title),
+            actions: <Widget>[
+              // action button
+              IconButton(
+                icon: Icon(Icons.help),
+                onPressed: () {
+                  showHelpOverlay = true;
+                  setState(() {});
+                },
+              ),
+            ],
           ),
-          _helpOverlay(),
-        ],
-      ),
+          body: SafeArea(
+            child: overviewScreen(),
+          ),
+          floatingActionButton: buildSpeedDial(), // This trailing comma makes auto-formatting nicer for build methods.
+        ),
+        _helpOverlay(),
+      ],
     );
   }
 
