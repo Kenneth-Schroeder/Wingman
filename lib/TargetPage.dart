@@ -479,20 +479,22 @@ class _TargetPageState extends State<TargetPage> {
         }
       },
       onScaleStart: (initialFocusPoint) {
-        // todo if arrow is untouched, move it in sync with scale
         _initialScaleCenter = initialFocusPoint;
         _initialScaleFactor = _scaleFactor;
       },
       onScaleUpdate: (changedFocusPoint, scale, rotation) {
         _previousScaleFactor = _scaleFactor;
         _scaleFactor = scale * _initialScaleFactor;
-        double scaleDelta = _scaleFactor / _previousScaleFactor;
         Offset newScaleCenterOffset = _initialScaleCenter - changedFocusPoint;
         _scaleCenterDelta = _scaleCenterOffset - newScaleCenterOffset;
         _scaleCenterOffset = newScaleCenterOffset;
-        _targetCenterOffset *= scaleDelta;
+
+        double scaleDelta = _scaleFactor / _previousScaleFactor;
+        Offset scaleCenterTargetCenterVector = draggedTargetCenter() - changedFocusPoint;
+        Offset scaleCenterTargetCenterVectorDelta = scaleCenterTargetCenterVector * (scaleDelta - 1);
+
+        _targetCenterOffset += scaleCenterTargetCenterVectorDelta;
         _targetCenterOffset += _scaleCenterDelta;
-        //setUntouchedArrowsPosition();
         setState(() {});
       },
       onScaleEnd: () {

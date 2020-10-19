@@ -116,11 +116,16 @@ class DatabaseService {
             PRIMARY KEY (trainingID, arrowID)
             ) 
           ''',
-        ); // ,
+        );
+      },
+      onUpgrade: (Database db, int oldVersion, int newVersion) {
+        if (oldVersion == 1) {
+          db.execute("ALTER TABLE $tableTrainings ADD COLUMN sightSetting REAL DEFAULT 0");
+        }
       },
       // Set the version. This executes the onCreate function and provides a
       // path to perform database upgrades and downgrades.
-      version: 1,
+      version: 2,
     );
   }
 

@@ -238,7 +238,7 @@ class _TrainingCreationState extends State<TrainingCreation> {
                   helperMaxLines: 8,
                   errorMaxLines: 3,
                   helperText:
-                      'Note: This value will determine the size of the draggable arrows when recording the scores, which may become very hard to see on smaller screens. If readability is more important to you, choose a larger value. ',
+                      'Note: This value will determine the size of the draggable arrows when recording the scores, which may become tiny on smaller screens. If readability is more important to you, choose a larger value. ',
                   fillColor: Colors.white,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.all(
@@ -252,25 +252,97 @@ class _TrainingCreationState extends State<TrainingCreation> {
                   if (value.isEmpty) {
                     return 'Please enter the diameter of your arrows in millimeters.';
                   }
-                  if (double.parse(value) <= 0) {
-                    return 'Please enter a value greater than 0';
+                  if (double.parse(value) <= 0 && double.parse(value) > 20) {
+                    return 'Please enter a value greater than 0 and smaller than 20.'; // todo
                   }
                   return null;
                 },
                 onSaved: (String value) {
                   newTraining.arrowDiameterMM = double.parse(value);
                 },
-                inputFormatters: [WhitelistingTextInputFormatter.digitsOnly], // TODO fix this
               ),
+            ),
+            Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    margin: EdgeInsets.only(top: 10.0, bottom: 10.0, left: 20.0, right: 10),
+                    child: DropdownButtonFormField<String>(
+                      value: widget.editInstance == null ? null : getLabelToTargetType(widget.editInstance.targetType),
+                      disabledHint: widget.editInstance == null ? null : Text(getLabelToTargetType(widget.editInstance.targetType)),
+                      decoration: const InputDecoration(
+                        errorMaxLines: 2,
+                        labelText: 'Target Face Type',
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.all(
+                            Radius.circular(25.0),
+                          ),
+                          borderSide: BorderSide(),
+                        ),
+                      ),
+                      items: targetTypeOptions,
+                      validator: (value) {
+                        if (value == null) {
+                          return 'Please select a target face type.';
+                        }
+                        return null;
+                      },
+                      onChanged: widget.editInstance == null
+                          ? (String text) {
+                              onChangedTargetType(text);
+                            }
+                          : null,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Container(
+                    margin: EdgeInsets.only(top: 10.0, bottom: 10.0, right: 20.0, left: 10),
+                    child: DropdownButtonFormField(
+                      value: widget.editInstance == null ? "122cm" : newTraining.targetDiameterCM.toStringAsFixed(0) + "cm",
+                      disabledHint: widget.editInstance == null ? null : Text(newTraining.targetDiameterCM.toStringAsFixed(0) + "cm"),
+                      decoration: const InputDecoration(
+                        errorMaxLines: 2,
+                        labelText: 'Target Face Size',
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.all(
+                            Radius.circular(25.0),
+                          ),
+                          borderSide: BorderSide(),
+                        ),
+                      ),
+                      items: ["40cm", "60cm", "80cm", "122cm"]
+                          .map((label) => DropdownMenuItem(
+                                child: Text(label.toString()),
+                                value: label,
+                              ))
+                          .toList(),
+                      hint: Text('Target Diameter'),
+                      validator: (value) {
+                        if (value == null) {
+                          return 'Please select a target face diameter.';
+                        }
+                        return null;
+                      },
+                      onChanged: widget.editInstance == null
+                          ? (String text) {
+                              onChangedTargetDiameter(text);
+                            }
+                          : null,
+                    ),
+                  ),
+                ),
+              ],
             ),
             Container(
               margin: EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
-              child: DropdownButtonFormField<String>(
-                value: widget.editInstance == null ? null : getLabelToTargetType(widget.editInstance.targetType),
-                disabledHint: widget.editInstance == null ? null : Text(getLabelToTargetType(widget.editInstance.targetType)),
+              child: TextFormField(
+                initialValue: widget.editInstance == null ? null : newTraining.sightSetting.toStringAsFixed(2),
                 decoration: const InputDecoration(
-                  errorMaxLines: 2,
-                  labelText: 'Target Type',
+                  labelText: 'Sight Setting',
+                  errorMaxLines: 3,
                   fillColor: Colors.white,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.all(
@@ -279,55 +351,10 @@ class _TrainingCreationState extends State<TrainingCreation> {
                     borderSide: BorderSide(),
                   ),
                 ),
-                items: targetTypeOptions,
-                validator: (value) {
-                  if (value == null) {
-                    return 'Please select a target type.';
-                  }
-                  return null;
+                keyboardType: TextInputType.number,
+                onSaved: (String value) {
+                  newTraining.sightSetting = double.parse(value);
                 },
-                onChanged: widget.editInstance == null
-                    ? (String text) {
-                        onChangedTargetType(text);
-                      }
-                    : null,
-              ),
-            ),
-            Container(
-              margin: EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
-              child: DropdownButtonFormField(
-                // todo disable in edit mode
-                value: widget.editInstance == null ? "122cm" : newTraining.targetDiameterCM.toStringAsFixed(0) + "cm",
-                disabledHint: widget.editInstance == null ? null : Text(newTraining.targetDiameterCM.toStringAsFixed(0) + "cm"),
-                decoration: const InputDecoration(
-                  errorMaxLines: 2,
-                  labelText: 'Target Size',
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(
-                      Radius.circular(25.0),
-                    ),
-                    borderSide: BorderSide(),
-                  ),
-                ),
-                items: ["40cm", "60cm", "80cm", "122cm"]
-                    .map((label) => DropdownMenuItem(
-                          child: Text(label.toString()),
-                          value: label,
-                        ))
-                    .toList(),
-                hint: Text('Target Diameter'),
-                validator: (value) {
-                  if (value == null) {
-                    return 'Please select a target diameter.';
-                  }
-                  return null;
-                },
-                onChanged: widget.editInstance == null
-                    ? (String text) {
-                        onChangedTargetDiameter(text);
-                      }
-                    : null,
               ),
             ),
             Container(
