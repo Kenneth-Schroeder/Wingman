@@ -439,16 +439,16 @@ class _TargetPageState extends State<TargetPage> {
   Widget loadArrows(BuildContext context) {
     List<CustomPaint> arrowPainters = [];
     int counter = 0;
-    arrows[endIndex].forEach((element) {
+    for (int i = 0; i < arrows[endIndex].length; i++) {
       arrowPainters.add(
         CustomPaint(
-          painter:
-              ArrowPainter.fromInstance(element, draggedTargetCenter(), scaledTargetRadius(), arrowDropOffset(), counter == _draggedArrow),
+          painter: ArrowPainter.fromInstance(arrows[endIndex][i], draggedTargetCenter(), scaledTargetRadius(), arrowDropOffset(),
+              counter == _draggedArrow, _draggedArrow != -1 && i != _draggedArrow && arrows[endIndex][i].isUntouched == 0),
           child: Container(),
         ),
       );
       counter++;
-    });
+    }
 
     return XGestureDetector(
       doubleTapTimeConsider: 300,

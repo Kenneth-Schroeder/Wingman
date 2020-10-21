@@ -173,6 +173,7 @@ class ScoreInstance {
     return score;
   }
 
+  // cartesian relative to center spot if tripleSpot used
   Offset getRelativeCartesianCoordinates(double targetRadius, TargetType targetType) {
     double radius = pRadius * targetRadius;
     double angle = pAngle;

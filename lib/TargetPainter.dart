@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'TrainingInstance.dart';
+import 'dart:math';
 
 class TargetPainter extends CustomPainter {
   TargetPainter(this._offset, this._radius, this._targetType);
-  TargetPainter.forSummary(this._offset, this._radius, this._targetType) {
+  TargetPainter.forSummary(this._targetType) {
     if (this._targetType == TargetType.TripleSpot) {
       this._targetType = TargetType.SingleSpot;
     }
@@ -92,7 +93,19 @@ class TargetPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // TODO make sure we don't exceed size?
+    if (size.height != 0) {
+      _offset = Offset(size.width / 2, size.height / 2);
+      _radius = min(size.height, size.width) / 2.0;
+
+      switch (_targetType) {
+        case TargetType.Full:
+          break;
+        case TargetType.SingleSpot:
+        case TargetType.TripleSpot:
+          _radius *= 2;
+          break;
+      }
+    }
 
     switch (_targetType) {
       case TargetType.Full:

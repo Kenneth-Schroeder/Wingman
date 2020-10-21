@@ -353,7 +353,9 @@ class _TrainingCreationState extends State<TrainingCreation> {
                 ),
                 keyboardType: TextInputType.number,
                 onSaved: (String value) {
-                  newTraining.sightSetting = double.parse(value);
+                  if (value != null && value != "") {
+                    newTraining.sightSetting = double.parse(value);
+                  }
                 },
               ),
             ),

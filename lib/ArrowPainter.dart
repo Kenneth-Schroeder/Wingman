@@ -3,51 +3,64 @@ import 'ScoreInstance.dart';
 import 'dart:math';
 
 class ArrowPainter extends CustomPainter {
-  ArrowPainter.fromInstance(ScoreInstance instance, Offset targetCenter, double targetRadius, this._dropOffset, this._isDragged)
-      : this._offset = instance.getCartesianCoordinates(targetRadius) + targetCenter,
-        this._radius = instance.relativeArrowRadius * targetRadius {
-    this._text = instance.getLabel();
-    this._isLocked = instance.isLocked == 1;
+  ArrowPainter.fromInstance(this.arrowInstance, this.targetCenter, this.targetRadius, this._dropOffset, this._isDragged, this.holeOnly) {
+    this._radius = arrowInstance.relativeArrowRadius * targetRadius;
+    this._text = arrowInstance.getLabel();
+    this._isLocked = arrowInstance.isLocked == 1;
   }
 
-  ArrowPainter.fromInstanceForSummary(
-      ScoreInstance instance, Offset targetCenter, double targetRadius, double screenMaxDim, bool tripleSpot)
-      : this._radius = instance.relativeArrowRadius * targetRadius {
-    if (tripleSpot) {
-      this._offset = instance.tripleSpotLocalRelativeCoordinates(targetRadius) + targetCenter;
-    } else {
-      this._offset = instance.getCartesianCoordinates(targetRadius) + targetCenter;
-    }
-    this._text = instance.getLabel();
-    this._dropOffset = Offset(0, screenMaxDim / 10);
-    this._isLocked = instance.isLocked == 1;
+  ArrowPainter.fromInstanceForSummary(this.arrowInstance, this.isTripleSpot, this.targetRadiusScaleFactor, this.mainColor) {
+    this._text = arrowInstance.getLabel();
+
+    this._isLocked = true;
     this._isDragged = false;
     this.displayLabels = false;
+    useCanvasSize = true;
   }
 
+  ScoreInstance arrowInstance;
+  Offset targetCenter;
+  double targetRadius;
   bool displayLabels = true;
+  bool isTripleSpot;
   Offset _offset;
   double _radius;
   String _text;
   bool _isDragged;
   bool _isLocked;
-  Offset _dropOffset;
+  Offset _dropOffset; // providing a negative dropoffset will create a circle around the arrows
+  bool holeOnly = false;
+  bool useCanvasSize = false;
+  double targetRadiusScaleFactor = 1.0;
+  Color mainColor = Colors.purple;
 
   @override
   void paint(Canvas canvas, Size size) {
-    // TODO make sure we don't exceed size?
+    if (size.width != 0 && useCanvasSize) {
+      this._dropOffset = Offset(0, min(size.height, size.width) / 4);
+      targetCenter = Offset(size.width / 2, size.height / 2);
+      targetRadius = min(size.height, size.width) / 2.0 * targetRadiusScaleFactor;
+      this._radius = arrowInstance.relativeArrowRadius * targetRadius;
+    }
+
+    if (isTripleSpot != null && isTripleSpot) {
+      this._offset = arrowInstance.tripleSpotLocalRelativeCoordinates(targetRadius) + targetCenter;
+    } else {
+      this._offset = arrowInstance.getCartesianCoordinates(targetRadius) + targetCenter;
+    }
+
     Paint paint = Paint()
-      ..color = Colors.purple
+      ..color = mainColor
       ..strokeWidth = 2.0
       ..style = PaintingStyle.stroke;
 
     Paint innerPaint = Paint()
-      ..color = Colors.purple
+      ..color = mainColor
       ..strokeWidth = 1.0
       ..style = PaintingStyle.fill;
 
     Paint paint3 = Paint()
-      ..color = Colors.purple
+      ..color = mainColor
       ..strokeWidth = _radius / 2
       ..style = PaintingStyle.stroke;
 
@@ -60,6 +73,14 @@ class ArrowPainter extends CustomPainter {
     }
 
     canvas.drawCircle(_offset, _radius, innerPaint);
+
+    Color textColor = Colors.black;
+    if (holeOnly) {
+      textColor = Colors.black26;
+      innerPaint.color = Colors.black26;
+      paint.color = Colors.black26;
+      //return;
+    }
 
     //canvas.drawLine(_offset, _offset + Offset(_radius, 0), paint3);
 
@@ -115,7 +136,7 @@ class ArrowPainter extends CustomPainter {
 
       TextStyle textStyle = TextStyle(
         fontSize: 18,
-        color: Colors.black,
+        color: textColor,
         fontWeight: FontWeight.bold,
       );
 
@@ -149,14 +170,17 @@ class ArrowPainter extends CustomPainter {
       maxWidth: double.maxFinite,
     );
 
-    final double d = textPainter.width * 0.8;
-    final double alpha = 2 * asin(d / (2 * radius));
+    final double pretendWidth = textPainter.width * 0.6;
+    final double alpha = 2 * asin(pretendWidth / (2 * radius));
 
     final newAngle = _calculateRotationAngle(prevAngle, alpha);
     canvas.rotate(newAngle);
 
+    double correction = (textPainter.width - pretendWidth) / 2.0;
+    canvas.translate(-correction, 0);
     textPainter.paint(canvas, Offset(0, -textPainter.height));
-    canvas.translate(d, 0);
+    canvas.translate(correction, 0);
+    canvas.translate(pretendWidth, 0);
 
     return alpha;
   }
