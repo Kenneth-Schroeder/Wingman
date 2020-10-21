@@ -15,7 +15,9 @@ class ArrowPainter extends CustomPainter {
     this._isLocked = true;
     this._isDragged = false;
     this.displayLabels = false;
+    flightScale = 0.0;
     useCanvasSize = true;
+    fixedHoleSize = true;
   }
 
   ScoreInstance arrowInstance;
@@ -33,6 +35,8 @@ class ArrowPainter extends CustomPainter {
   bool useCanvasSize = false;
   double targetRadiusScaleFactor = 1.0;
   Color mainColor = Colors.purple;
+  double flightScale = 1.0;
+  bool fixedHoleSize = false;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -41,6 +45,10 @@ class ArrowPainter extends CustomPainter {
       targetCenter = Offset(size.width / 2, size.height / 2);
       targetRadius = min(size.height, size.width) / 2.0 * targetRadiusScaleFactor;
       this._radius = arrowInstance.relativeArrowRadius * targetRadius;
+    }
+
+    if (fixedHoleSize) {
+      this._radius = _dropOffset.dy / 20;
     }
 
     if (isTripleSpot != null && isTripleSpot) {
@@ -65,7 +73,7 @@ class ArrowPainter extends CustomPainter {
       ..style = PaintingStyle.stroke;
 
     double factor = 3.3;
-    double wingRadius = -_dropOffset.dy / 7; //_radius * 10;
+    double wingRadius = -_dropOffset.dy / 7 * flightScale; //_radius * 10;
 
     if (_isDragged && !_isLocked) {
       canvas.drawLine(_offset, _offset + _dropOffset, paint3);

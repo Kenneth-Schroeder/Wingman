@@ -14,6 +14,10 @@ class StatsPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    if (normRestCenter == Offset(0, 0)) {
+      return;
+    }
+
     if (size.width != 0 && useCanvasSize) {
       targetCenter = Offset(size.width / 2, size.height / 2);
       targetRadius = min(size.height, size.width) / 2.0 * targetRadiusScaleFactor;
@@ -21,16 +25,16 @@ class StatsPainter extends CustomPainter {
 
     Offset groupCenter = targetCenter + normGroupCenter * targetRadius;
     Offset restCenter = targetCenter + normRestCenter * targetRadius;
-    double dotRadius = targetRadius / 50;
+    double dotRadius = targetRadius / 20;
 
     Paint paintFill = Paint()
       ..color = Colors.purpleAccent
-      ..strokeWidth = targetRadius / 70
+      ..strokeWidth = 1.0
       ..style = PaintingStyle.fill;
 
     Paint paint = Paint()
       ..color = Colors.teal
-      ..strokeWidth = targetRadius / 70
+      ..strokeWidth = targetRadius / 30
       ..style = PaintingStyle.stroke;
 
     canvas.drawLine(groupCenter, restCenter, paint);
