@@ -23,7 +23,7 @@ class TargetPage extends StatefulWidget {
   _TargetPageState createState() => _TargetPageState();
 }
 
-class _TargetPageState extends State<TargetPage> {
+class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
   List<List<ScoreInstance>> arrows;
   Offset arrowTopPosition;
   Offset arrowBotPosition;
@@ -57,10 +57,24 @@ class _TargetPageState extends State<TargetPage> {
   bool showHelpOverlay = false;
   bool dragScrollIsExpanded = false;
 
+  AnimationController _animationController;
+  Animation<double> _animation;
+  bool animationOn = false;
+
   @override
   void initState() {
     super.initState();
     arrows = widget.arrows;
+
+    _animationController = AnimationController(duration: const Duration(milliseconds: 2000), vsync: this, value: 0.1);
+    _animation = CurvedAnimation(parent: _animationController, curve: Curves.decelerate);
+    _animationController.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        animationOn = false;
+        _animationController.reset();
+        setState(() {});
+      }
+    });
 
     onStart();
   }
@@ -186,6 +200,14 @@ class _TargetPageState extends State<TargetPage> {
     return widget.training.arrowsPerEnd;
   }
 
+  int getEndScore(int endIdx) {
+    int score = 0;
+    arrows[endIdx].forEach((arrow) {
+      score += arrow.score;
+    });
+    return score;
+  }
+
   List<int> getMatchPoints() {
     List<int> points = [0, 0];
 
@@ -233,21 +255,27 @@ class _TargetPageState extends State<TargetPage> {
     return false;
   }
 
-  Widget matchPointsDisplay() {
-    Widget w = Container();
-
-    Widget winDisplay = Container();
+  Widget winDisplay() {
     if (gameOver()) {
       String text = "DEFEAT";
       if (currentMatchPoints[0] > currentMatchPoints[1]) {
         text = "VICTORY";
       }
 
-      winDisplay = Text(
+      return Text(
         text,
         style: TextStyle(fontSize: 20, color: Colors.white, fontWeight: FontWeight.bold),
       );
     }
+
+    return SizedBox(
+      height: 0,
+      width: 0,
+    );
+  }
+
+  Widget matchPointsDisplay() {
+    Widget w = Container();
 
     if (widget.training.competitionType == CompetitionType.finals) {
       w = Container(
@@ -256,10 +284,10 @@ class _TargetPageState extends State<TargetPage> {
           child: Column(
             children: [
               Text(
-                currentMatchPoints[0].toString() + " VS " + currentMatchPoints[1].toString(),
+                currentMatchPoints[0].toString() + " vs " + currentMatchPoints[1].toString(),
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
               ),
-              winDisplay,
+              winDisplay(),
             ],
           ),
         ),
@@ -267,6 +295,36 @@ class _TargetPageState extends State<TargetPage> {
     }
 
     return w;
+  }
+
+  Widget _scoreOverlayAnimation() {
+    if (!animationOn || widget.training.competitionType != CompetitionType.finals) {
+      return Container();
+    }
+
+    return Container(
+      color: Colors.black87,
+      child: SizedBox(
+        width: double.infinity,
+        height: double.infinity,
+        child: Center(
+          child: ScaleTransition(
+            scale: _animation,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  currentMatchPoints[0].toString() + " vs " + currentMatchPoints[1].toString(),
+                  textScaleFactor: 5.0,
+                  style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                ),
+                winDisplay(),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   void arrowReleasedAction() {
@@ -285,6 +343,9 @@ class _TargetPageState extends State<TargetPage> {
     if (newUntouchedArrows == 0) {
       // all arrows placed
       currentMatchPoints = getMatchPoints();
+      animationOn = true;
+      _animationController.forward();
+      setState(() {});
     }
 
     numberOfUntouchedArrows = newUntouchedArrows;
@@ -595,14 +656,6 @@ class _TargetPageState extends State<TargetPage> {
     return await dbService.updateAllEndsOfTraining(widget.training.id, arrows);
   }
 
-  int getEndScore(int endIdx) {
-    int score = 0;
-    arrows[endIdx].forEach((arrow) {
-      score += arrow.score;
-    });
-    return score;
-  }
-
   int getTotalScore() {
     int totalScore = 0;
 
@@ -742,7 +795,7 @@ class _TargetPageState extends State<TargetPage> {
 
   double _dragScrollSheetInitialSize() {
     if (dragScrollIsExpanded) {
-      return 0.5;
+      return _dragScrollSheetMaxSize();
     }
 
     return 0.04;
@@ -857,7 +910,7 @@ class _TargetPageState extends State<TargetPage> {
               bottom: false,
               child: Builder(
                 builder: (context) => Stack(
-                  children: [createTarget(), loadArrows(context), _dragScrollSheet()],
+                  children: [createTarget(), loadArrows(context), _dragScrollSheet(), _scoreOverlayAnimation()],
                 ),
               ),
             ),

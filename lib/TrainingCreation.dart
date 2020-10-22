@@ -17,12 +17,15 @@ class TrainingCreation extends StatefulWidget {
 
 class _TrainingCreationState extends State<TrainingCreation> {
   DatabaseService dbService;
-  TrainingInstance newTraining = TrainingInstance.fromMap({"title": "Training", "creationTime": DateTime.now(), "arrowsPerEnd": -1});
+  TrainingInstance newTraining =
+      TrainingInstance.forCreation(); //TrainingInstance.fromMap({"title": "Training", "creationTime": DateTime.now(), "arrowsPerEnd": -1});
   List<int> _arrowInformationIDs = [];
   final numArrowsController = TextEditingController();
+  final trainingTitleController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool startRoutineFinished = false;
   bool showHelpOverlay = false;
+  final FocusNode _targetFocus = FocusNode();
 
   @override
   void initState() {
@@ -36,9 +39,13 @@ class _TrainingCreationState extends State<TrainingCreation> {
       setState(() {});
     });
 
+    trainingTitleController.text = "Training";
+    numArrowsController.text = "6";
+
     if (widget.editInstance != null) {
       newTraining = widget.editInstance;
       numArrowsController.text = newTraining.arrowsPerEnd.toString();
+      trainingTitleController.text = newTraining.title;
     }
     startRoutineFinished = true;
     setState(() {});
@@ -143,8 +150,9 @@ class _TrainingCreationState extends State<TrainingCreation> {
             Container(
               margin: EdgeInsets.only(top: 20.0, left: 20.0, right: 20.0, bottom: 10.0),
               child: TextFormField(
+                textInputAction: TextInputAction.next,
                 enabled: true, //widget.editInstance == null,
-                initialValue: widget.editInstance == null ? null : newTraining.title,
+                controller: trainingTitleController,
                 decoration: const InputDecoration(
                   errorMaxLines: 2,
                   labelText: 'Training Title',
@@ -158,13 +166,18 @@ class _TrainingCreationState extends State<TrainingCreation> {
                 ),
                 keyboardType: TextInputType.name,
                 validator: (value) {
-                  if (value.isEmpty) {
-                    return 'Please enter a title';
-                  }
                   return null;
                 },
                 onSaved: (String value) {
-                  newTraining.title = value;
+                  if (value == null || value == "") {
+                    newTraining.title = "Training";
+                  } else {
+                    newTraining.title = value;
+                  }
+                },
+                onTap: () {
+                  trainingTitleController.text = "";
+                  // numArrowsController.text = "";
                 },
               ),
             ),
@@ -175,6 +188,7 @@ class _TrainingCreationState extends State<TrainingCreation> {
                   Expanded(
                     child: TextFormField(
                       // todo needs controller for setupArrows() to get current value, when we dont need onFieldSubmitted anymore
+                      textInputAction: TextInputAction.next,
                       enabled: widget.editInstance == null,
                       controller: numArrowsController,
                       decoration: const InputDecoration(
@@ -199,12 +213,16 @@ class _TrainingCreationState extends State<TrainingCreation> {
                         return null;
                       },
                       onFieldSubmitted: (String text) {
+                        FocusScope.of(context).requestFocus(_targetFocus);
                         setState(() {});
                       },
                       onSaved: (String value) {
                         newTraining.arrowsPerEnd = getNumArrows();
                       },
-                      inputFormatters: [WhitelistingTextInputFormatter.digitsOnly],
+                      onTap: () {
+                        numArrowsController.text = "";
+                      },
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     ),
                   ),
                   Expanded(
@@ -215,7 +233,6 @@ class _TrainingCreationState extends State<TrainingCreation> {
                           height: 50.0,
                           child: RaisedButton(
                             // todo disable button if in edit mode
-
                             color: arrowSelectionValid() ? Colors.green : Colors.redAccent,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18.0)),
                             child: Icon(MyFlutterApp.arrow_flights),
@@ -228,47 +245,14 @@ class _TrainingCreationState extends State<TrainingCreation> {
                 ],
               ),
             ),
-            Container(
-              margin: EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
-              child: TextFormField(
-                initialValue: widget.editInstance == null ? null : newTraining.arrowDiameterMM.toStringAsFixed(0),
-                enabled: widget.editInstance == null,
-                decoration: const InputDecoration(
-                  labelText: 'Arrow Diameter in Millimeters',
-                  helperMaxLines: 8,
-                  errorMaxLines: 3,
-                  helperText:
-                      'Note: This value will determine the size of the draggable arrows when recording the scores, which may become tiny on smaller screens. If readability is more important to you, choose a larger value. ',
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(
-                      Radius.circular(25.0),
-                    ),
-                    borderSide: BorderSide(),
-                  ),
-                ),
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value.isEmpty) {
-                    return 'Please enter the diameter of your arrows in millimeters.';
-                  }
-                  if (double.parse(value) <= 0 && double.parse(value) > 20) {
-                    return 'Please enter a value greater than 0 and smaller than 20.'; // todo
-                  }
-                  return null;
-                },
-                onSaved: (String value) {
-                  newTraining.arrowDiameterMM = double.parse(value);
-                },
-              ),
-            ),
             Row(
               children: [
                 Expanded(
                   child: Container(
                     margin: EdgeInsets.only(top: 10.0, bottom: 10.0, left: 20.0, right: 10),
                     child: DropdownButtonFormField<String>(
-                      value: widget.editInstance == null ? null : getLabelToTargetType(widget.editInstance.targetType),
+                      isExpanded: true,
+                      value: getLabelToTargetType(newTraining.targetType),
                       disabledHint: widget.editInstance == null ? null : Text(getLabelToTargetType(widget.editInstance.targetType)),
                       decoration: const InputDecoration(
                         errorMaxLines: 2,
@@ -300,7 +284,8 @@ class _TrainingCreationState extends State<TrainingCreation> {
                   child: Container(
                     margin: EdgeInsets.only(top: 10.0, bottom: 10.0, right: 20.0, left: 10),
                     child: DropdownButtonFormField(
-                      value: widget.editInstance == null ? "122cm" : newTraining.targetDiameterCM.toStringAsFixed(0) + "cm",
+                      isExpanded: true,
+                      value: newTraining.targetDiameterCM.toStringAsFixed(0) + "cm",
                       disabledHint: widget.editInstance == null ? null : Text(newTraining.targetDiameterCM.toStringAsFixed(0) + "cm"),
                       decoration: const InputDecoration(
                         errorMaxLines: 2,
@@ -336,13 +321,74 @@ class _TrainingCreationState extends State<TrainingCreation> {
                 ),
               ],
             ),
+            Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    margin: EdgeInsets.only(top: 10.0, bottom: 10.0, left: 20.0, right: 10),
+                    child: TextFormField(
+                      textInputAction: TextInputAction.next,
+                      focusNode: _targetFocus,
+                      initialValue: newTraining.targetDistance == null ? null : newTraining.targetDistance.toStringAsFixed(0),
+                      decoration: const InputDecoration(
+                        labelText: 'Target Distance',
+                        errorMaxLines: 3,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.all(
+                            Radius.circular(25.0),
+                          ),
+                          borderSide: BorderSide(),
+                        ),
+                      ),
+                      keyboardType: TextInputType.number,
+                      onSaved: (String value) {
+                        if (value != null && value != "") {
+                          newTraining.targetDistance = double.parse(value);
+                        }
+                      },
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Container(
+                    margin: EdgeInsets.only(top: 10.0, bottom: 10.0, right: 20.0, left: 10),
+                    child: TextFormField(
+                      textInputAction: TextInputAction.next,
+                      initialValue: newTraining.sightSetting == null ? null : newTraining.sightSetting.toStringAsFixed(2),
+                      decoration: const InputDecoration(
+                        labelText: 'Sight Setting',
+                        errorMaxLines: 3,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.all(
+                            Radius.circular(25.0),
+                          ),
+                          borderSide: BorderSide(),
+                        ),
+                      ),
+                      keyboardType: TextInputType.number,
+                      onSaved: (String value) {
+                        if (value != null && value != "") {
+                          newTraining.sightSetting = double.parse(value);
+                        }
+                      },
+                    ),
+                  ),
+                ),
+              ],
+            ),
             Container(
               margin: EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
               child: TextFormField(
-                initialValue: widget.editInstance == null ? null : newTraining.sightSetting.toStringAsFixed(2),
+                initialValue: newTraining.arrowDiameterMM.toStringAsFixed(0),
+                enabled: widget.editInstance == null,
                 decoration: const InputDecoration(
-                  labelText: 'Sight Setting',
+                  labelText: 'Arrow Diameter in Millimeters',
+                  helperMaxLines: 8,
                   errorMaxLines: 3,
+                  helperText:
+                      'Note: This value will determine the size of the draggable arrows when recording the scores, which may become tiny on smaller screens. If readability is more important to you, choose a larger value. ',
                   fillColor: Colors.white,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.all(
@@ -352,10 +398,18 @@ class _TrainingCreationState extends State<TrainingCreation> {
                   ),
                 ),
                 keyboardType: TextInputType.number,
-                onSaved: (String value) {
-                  if (value != null && value != "") {
-                    newTraining.sightSetting = double.parse(value);
+                textInputAction: TextInputAction.done,
+                validator: (value) {
+                  if (value.isEmpty) {
+                    return 'Please enter the diameter of your arrows in millimeters.';
                   }
+                  if (double.parse(value) <= 0 || double.parse(value) > 20) {
+                    return 'Please enter a value greater than 0 and smaller than 20.';
+                  }
+                  return null;
+                },
+                onSaved: (String value) {
+                  newTraining.arrowDiameterMM = double.parse(value);
                 },
               ),
             ),
@@ -417,7 +471,8 @@ class _TrainingCreationState extends State<TrainingCreation> {
             ],
           ),
           body: SafeArea(
-            child: Container(
+            child: GestureDetector(
+              child: Container(
                 decoration: BoxDecoration(
                   gradient: RadialGradient(
                     radius: 1.7,
@@ -436,7 +491,12 @@ class _TrainingCreationState extends State<TrainingCreation> {
                   height: double.infinity,
                   width: double.infinity,
                   child: newTrainingForm(),
-                )),
+                ),
+              ),
+              onTap: () {
+                FocusScope.of(context).requestFocus(new FocusNode());
+              },
+            ),
           ),
         ),
         helpOverlay(

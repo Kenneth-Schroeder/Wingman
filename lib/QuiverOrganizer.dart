@@ -49,6 +49,61 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> {
     setState(() {});
   }
 
+  showAreYouSureDialog(BuildContext context, int arrowSetIndex, [int arrowIndex]) {
+    Widget deleteButton;
+    if (arrowIndex != null) {
+      deleteButton = FlatButton(
+        child: Text(
+          "DELETE",
+          style: TextStyle(color: Colors.red),
+        ),
+        onPressed: () {
+          deleteArrowInformation(arrowSetIndex, arrowIndex);
+          Navigator.of(context, rootNavigator: true).pop('dialog');
+        },
+      );
+    } else {
+      deleteButton = FlatButton(
+        child: Text(
+          "DELETE",
+          style: TextStyle(color: Colors.red),
+        ),
+        onPressed: () {
+          deleteArrowSetAtIndex(arrowSetIndex);
+          Navigator.of(context, rootNavigator: true).pop('dialog');
+        },
+      );
+    }
+
+    Widget cancelButton = FlatButton(
+      child: Text(
+        "Cancel",
+        style: TextStyle(color: Colors.grey),
+      ),
+      onPressed: () {
+        Navigator.of(context, rootNavigator: true).pop('dialog');
+      },
+    );
+
+    // set up the AlertDialog
+    AlertDialog alert = AlertDialog(
+      title: Text("Are you sure?"),
+      content: Text("Deleting arrows from your quiver will also remove them from all training sessions. Consider renaming them instead."),
+      actions: [
+        cancelButton,
+        deleteButton,
+      ],
+    );
+
+    // show the dialog
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return alert;
+      },
+    );
+  }
+
   DataColumn tableColumn(String text, bool numeric) {
     return DataColumn(
       label: Expanded(
@@ -133,7 +188,7 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> {
             child: IconButton(
               icon: Icon(Icons.remove_circle_outline),
               onPressed: () {
-                deleteArrowInformation(index, i);
+                showAreYouSureDialog(context, index, i);
               },
             ),
           ),
@@ -267,7 +322,7 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> {
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18.0), side: BorderSide(color: Colors.red)),
                             child: Icon(Icons.delete),
                             onPressed: () {
-                              deleteArrowSetAtIndex(index);
+                              showAreYouSureDialog(context, index);
                             },
                           ),
                         ),

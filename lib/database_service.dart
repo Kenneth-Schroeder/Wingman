@@ -49,6 +49,8 @@ class DatabaseService {
             numberOfEnds INTEGER,
             targetDiameterCM REAL,
             arrowDiameterMM REAL,
+            sightSetting REAL DEFAULT 0,
+            targetDistance REAL DEFAULT 0,
             creationTime DATETIME
             )
           ''',
@@ -119,13 +121,16 @@ class DatabaseService {
         );
       },
       onUpgrade: (Database db, int oldVersion, int newVersion) {
-        if (oldVersion == 1) {
+        if (oldVersion <= 1) {
           db.execute("ALTER TABLE $tableTrainings ADD COLUMN sightSetting REAL DEFAULT 0");
+        }
+        if (oldVersion <= 2) {
+          db.execute("ALTER TABLE $tableTrainings ADD COLUMN targetDistance REAL DEFAULT 0");
         }
       },
       // Set the version. This executes the onCreate function and provides a
       // path to perform database upgrades and downgrades.
-      version: 2,
+      version: 3,
     );
   }
 
@@ -509,7 +514,6 @@ class DatabaseService {
 
   Future<int> updateTraining(TrainingInstance instance) async {
     Database db = await database;
-    print(instance.id);
     int trainingID = await db.update(tableTrainings, instance.toMap(), where: 'id = ?', whereArgs: [instance.id]);
     return trainingID;
   }

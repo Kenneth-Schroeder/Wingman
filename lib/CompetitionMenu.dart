@@ -179,7 +179,7 @@ class _CompetitionMenuState extends State<CompetitionMenu> {
       children: [
         Scaffold(
           appBar: AppBar(
-            title: Text("Competition Simulation"),
+            title: Text("Virtual Opponent"),
             actions: <Widget>[
               // action button
               IconButton(

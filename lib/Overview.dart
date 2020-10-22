@@ -147,6 +147,9 @@ class _MyHomePageState extends State<MyHomePage> {
                             child: Center(
                               child: Text(
                                 _trainings[index].title,
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                                softWrap: false,
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 20,
@@ -225,7 +228,7 @@ class _MyHomePageState extends State<MyHomePage> {
             context,
             MaterialPageRoute(builder: (context) => CompetitionMenu()),
           ).then((value) => onStart()),
-          label: 'Competition Simulation',
+          label: 'Virtual Opponent',
           labelStyle: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
           labelBackgroundColor: Colors.red[800],
         ),

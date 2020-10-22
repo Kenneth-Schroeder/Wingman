@@ -18,18 +18,22 @@ class TrainingInstance {
   int id = -1;
   String title;
   DateTime creationTime;
-  int arrowsPerEnd = 6;
+  int arrowsPerEnd = -1;
   int numberOfEnds = 0; // 0 means open
   TargetType targetType = TargetType.Full;
   double targetDiameterCM = 122; // 40, 60, 80 oder 122
-  double arrowDiameterMM = 5;
+  double arrowDiameterMM = 6;
   CompetitionType competitionType = CompetitionType.training;
   Gender referencedGender = Gender.none;
   int competitionLevel = 1;
   bool indoor = false;
-  double sightSetting = 0;
+  double sightSetting;
+  double targetDistance;
 
   TrainingInstance(this.title, this.creationTime);
+  TrainingInstance.forCreation() {
+    creationTime = DateTime.now();
+  }
 
   TrainingInstance.fromMap(Map<String, dynamic> map)
       : assert(map["title"] != null),
@@ -45,7 +49,8 @@ class TrainingInstance {
         indoor = map["indoor"] == 1 ? true : false,
         arrowsPerEnd = map["arrowsPerEnd"],
         competitionLevel = map["competitionLevel"],
-        sightSetting = map["sightSetting"],
+        sightSetting = map["sightSetting"], // == null ? 0 : map["sightSetting"],
+        targetDistance = map["targetDistance"], // == null ? 0 : map["targetDistance"],
         creationTime = map["creationTime"] is String // if it is passed as string, we can convert it to DateTime object
             ? DateTime.parse(map["creationTime"])
             : map["creationTime"];
@@ -63,6 +68,7 @@ class TrainingInstance {
       "numberOfEnds": this.numberOfEnds,
       "competitionLevel": this.competitionLevel,
       "sightSetting": this.sightSetting,
+      "targetDistance": this.targetDistance,
       "indoor": this.indoor ? 1 : 0,
     };
   }
