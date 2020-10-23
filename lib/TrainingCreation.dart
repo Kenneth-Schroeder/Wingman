@@ -5,6 +5,7 @@ import 'TrainingInstance.dart';
 import 'package:Wingman/icons/my_flutter_app_icons.dart';
 import 'package:Wingman/QuiverOrganizer.dart';
 import 'utilities.dart';
+import 'package:highlighter_coachmark/highlighter_coachmark.dart';
 
 class TrainingCreation extends StatefulWidget {
   TrainingCreation([this.editInstance]);
@@ -17,15 +18,14 @@ class TrainingCreation extends StatefulWidget {
 
 class _TrainingCreationState extends State<TrainingCreation> {
   DatabaseService dbService;
-  TrainingInstance newTraining =
-      TrainingInstance.forCreation(); //TrainingInstance.fromMap({"title": "Training", "creationTime": DateTime.now(), "arrowsPerEnd": -1});
+  TrainingInstance newTraining = TrainingInstance.forCreation();
   List<int> _arrowInformationIDs = [];
   final numArrowsController = TextEditingController();
   final trainingTitleController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool startRoutineFinished = false;
-  bool showHelpOverlay = false;
   final FocusNode _targetFocus = FocusNode();
+  GlobalKey _quiverKey = GlobalObjectKey("quiver");
 
   @override
   void initState() {
@@ -49,6 +49,42 @@ class _TrainingCreationState extends State<TrainingCreation> {
     }
     startRoutineFinished = true;
     setState(() {});
+  }
+
+  void showCoachMarkQuiver() {
+    CoachMark coachMarkFAB = CoachMark();
+
+    if (_quiverKey.currentContext == null) {
+      return;
+    }
+
+    RenderBox target = _quiverKey.currentContext.findRenderObject();
+    Rect markRect = target.localToGlobal(Offset.zero) & target.size;
+    markRect = markRect.inflate(10.0);
+
+    coachMarkFAB.show(
+      targetContext: _quiverKey.currentContext,
+      markRect: markRect,
+      markShape: BoxShape.rectangle,
+      children: [
+        positionWhereSpace(
+          markRect,
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
+            child: Text(
+              "Tap here to select labeled arrows from your quiver.",
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 26.0,
+                fontStyle: FontStyle.italic,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ),
+      ],
+      duration: null,
+    );
   }
 
   int getNumArrows() {
@@ -232,6 +268,7 @@ class _TrainingCreationState extends State<TrainingCreation> {
                           minWidth: 100.0,
                           height: 50.0,
                           child: RaisedButton(
+                            key: _quiverKey,
                             // todo disable button if in edit mode
                             color: arrowSelectionValid() ? Colors.green : Colors.redAccent,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18.0)),
@@ -464,8 +501,7 @@ class _TrainingCreationState extends State<TrainingCreation> {
               IconButton(
                 icon: Icon(Icons.help),
                 onPressed: () {
-                  showHelpOverlay = true;
-                  setState(() {});
+                  showCoachMarkQuiver();
                 },
               ),
             ],
@@ -498,14 +534,6 @@ class _TrainingCreationState extends State<TrainingCreation> {
               },
             ),
           ),
-        ),
-        helpOverlay(
-          "assets/images/help/training.jpg",
-          showHelpOverlay,
-          () {
-            showHelpOverlay = false;
-            setState(() {});
-          },
         ),
       ],
     );

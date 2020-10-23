@@ -10,6 +10,7 @@ import 'ArrowPainter.dart';
 import 'utilities.dart';
 import 'StatsPainter.dart';
 import 'dart:math';
+import 'package:highlighter_coachmark/highlighter_coachmark.dart';
 
 class TrainingSummary extends StatefulWidget {
   TrainingSummary(this.training, {Key key}) : super(key: key);
@@ -24,7 +25,7 @@ class _TrainingSummaryState extends State<TrainingSummary> {
   DatabaseService dbService; // = DatabaseService.old();
   List<List<ScoreInstance>> arrows;
   bool startRoutineFinished = false;
-  bool showHelpOverlay = false;
+  GlobalKey _changeScoresKey = GlobalObjectKey("changeScores");
 
   @override
   void initState() {
@@ -38,6 +39,41 @@ class _TrainingSummaryState extends State<TrainingSummary> {
     arrows = await dbService.getFullEndsOfTraining(widget.training.id);
     startRoutineFinished = true;
     setState(() {});
+  }
+
+  void showCoachMarkFAB() {
+    CoachMark coachMarkFAB = CoachMark();
+
+    if (_changeScoresKey.currentContext == null) {
+      return;
+    }
+
+    RenderBox target = _changeScoresKey.currentContext.findRenderObject();
+    Rect markRect = target.localToGlobal(Offset.zero) & target.size;
+    markRect = Rect.fromCircle(center: markRect.center, radius: markRect.longestSide * 0.8);
+
+    coachMarkFAB.show(
+      targetContext: _changeScoresKey.currentContext,
+      markRect: markRect,
+      children: [
+        positionWhereSpace(
+          markRect,
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
+            child: Text(
+              "Tap here to edit your scores.",
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 26.0,
+                fontStyle: FontStyle.italic,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ),
+      ],
+      duration: null,
+    );
   }
 
   DataCell defaultDataCell(String text, [Color c]) {
@@ -572,8 +608,7 @@ class _TrainingSummaryState extends State<TrainingSummary> {
               IconButton(
                 icon: Icon(Icons.help),
                 onPressed: () {
-                  showHelpOverlay = true;
-                  setState(() {});
+                  showCoachMarkFAB();
                 },
               ),
             ],
@@ -614,18 +649,11 @@ class _TrainingSummaryState extends State<TrainingSummary> {
             ),
           ),
           floatingActionButton: FloatingActionButton(
+            key: _changeScoresKey,
             onPressed: _changeScores,
             tooltip: 'Change Scores',
             child: Icon(Icons.assignment),
           ),
-        ),
-        helpOverlay(
-          "assets/images/help/summary.jpg",
-          showHelpOverlay,
-          () {
-            showHelpOverlay = false;
-            setState(() {});
-          },
         ),
       ],
     );

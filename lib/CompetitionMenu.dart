@@ -2,6 +2,7 @@ import 'package:Wingman/TrainingInstance.dart';
 import 'package:flutter/material.dart';
 import 'database_service.dart';
 import 'utilities.dart';
+import 'package:highlighter_coachmark/highlighter_coachmark.dart';
 
 class CompetitionMenu extends StatefulWidget {
   CompetitionMenu({Key key}) : super(key: key);
@@ -15,7 +16,8 @@ class _CompetitionMenuState extends State<CompetitionMenu> {
   double sliderValue = 10;
   List<int> selected = [-1, -1, -1]; // outdoor, indoor / female, male / qualifying, finals
   bool showError = false;
-  bool showHelpOverlay = false;
+  GlobalKey _outdoorIndoorKey = GlobalObjectKey("outdoorIndoor");
+  GlobalKey _difficultyKey = GlobalObjectKey("difficulty");
 
   @override
   void initState() {
@@ -25,6 +27,82 @@ class _CompetitionMenuState extends State<CompetitionMenu> {
 
   void onStart() async {
     dbService = await DatabaseService.create();
+  }
+
+  void showCoachMarkOutdoorIndoor() {
+    CoachMark coachMarkFAB = CoachMark();
+
+    if (_outdoorIndoorKey.currentContext == null) {
+      showCoachMarkDifficulty();
+      return;
+    }
+
+    RenderBox target = _outdoorIndoorKey.currentContext.findRenderObject();
+    Rect markRect = target.localToGlobal(Offset.zero) & target.size;
+    markRect = Rect.fromCenter(center: markRect.center, width: markRect.width * 10, height: markRect.height * 1.2);
+
+    coachMarkFAB.show(
+      targetContext: _outdoorIndoorKey.currentContext,
+      markRect: markRect,
+      markShape: BoxShape.rectangle,
+      children: [
+        positionWhereSpace(
+          markRect,
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
+            child: Text(
+              "Select which type of competition you want to train. Your choice will determine the target types, reference difficulties and the competition format.",
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 26.0,
+                fontStyle: FontStyle.italic,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ),
+      ],
+      duration: null,
+      onClose: () {
+        showCoachMarkDifficulty();
+      },
+    );
+  }
+
+  void showCoachMarkDifficulty() {
+    CoachMark coachMarkFAB = CoachMark();
+
+    if (_difficultyKey.currentContext == null) {
+      return;
+    }
+
+    RenderBox target = _difficultyKey.currentContext.findRenderObject();
+    Rect markRect = target.localToGlobal(Offset.zero) & target.size;
+    markRect = Rect.fromCenter(center: markRect.center, width: markRect.width * 10, height: markRect.height * 1.2);
+
+    coachMarkFAB.show(
+      targetContext: _difficultyKey.currentContext,
+      markRect: markRect,
+      markShape: BoxShape.rectangle,
+      children: [
+        positionWhereSpace(
+          markRect,
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
+            child: Text(
+              "Select a difficulty using the slider. Level 20 is statistically equivalent to recent world champion performances.",
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 26.0,
+                fontStyle: FontStyle.italic,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ),
+      ],
+      duration: null,
+    );
   }
 
   void _saveNewTraining(TrainingInstance training) async {
@@ -185,8 +263,7 @@ class _CompetitionMenuState extends State<CompetitionMenu> {
               IconButton(
                 icon: Icon(Icons.help),
                 onPressed: () {
-                  showHelpOverlay = true;
-                  setState(() {});
+                  showCoachMarkOutdoorIndoor();
                 },
               ),
             ],
@@ -211,6 +288,7 @@ class _CompetitionMenuState extends State<CompetitionMenu> {
                 padding: const EdgeInsets.all(20),
                 children: [
                   Row(
+                    key: _outdoorIndoorKey,
                     children: [
                       floatingBoxWrapper("outdoor.jpg", "Outdoor", Colors.white, Alignment.bottomLeft, 0, 0),
                       SizedBox(width: 20),
@@ -235,6 +313,7 @@ class _CompetitionMenuState extends State<CompetitionMenu> {
                   ),
                   SizedBox(height: 20),
                   Container(
+                    key: _difficultyKey,
                     padding: EdgeInsets.symmetric(vertical: 15),
                     child: Column(
                       children: [
@@ -297,14 +376,6 @@ class _CompetitionMenuState extends State<CompetitionMenu> {
               ),
             ),
           ),
-        ),
-        helpOverlay(
-          "assets/images/help/competition.jpg",
-          showHelpOverlay,
-          () {
-            showHelpOverlay = false;
-            setState(() {});
-          },
         ),
       ],
     );

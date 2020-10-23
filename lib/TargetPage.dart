@@ -12,6 +12,7 @@ import 'dart:math';
 import 'CompetitionSimulator.dart';
 import 'ArrowInformation.dart';
 import 'utilities.dart';
+import 'package:highlighter_coachmark/highlighter_coachmark.dart';
 
 class TargetPage extends StatefulWidget {
   TargetPage(this.training, this.arrows, {Key key}) : super(key: key);
@@ -54,12 +55,16 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
   int numOpponents = 10;
   List<int> currentMatchPoints = [0, 0];
   bool startRoutineFinished = false;
-  bool showHelpOverlay = false;
   bool dragScrollIsExpanded = false;
 
   AnimationController _animationController;
   Animation<double> _animation;
   bool animationOn = false;
+
+  GlobalKey _targetKey = GlobalObjectKey("target");
+  GlobalKey _draggableSheetKey = GlobalObjectKey("draggableSheet");
+  GlobalKey _resetArrowsKey = GlobalObjectKey("resetArrows");
+  GlobalKey _deleteEndKey = GlobalObjectKey("deleteEnd");
 
   @override
   void initState() {
@@ -145,6 +150,167 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
     setState(() {});
   }
 
+  void showCoachMarkArrowInstance() {
+    if (arrows[endIndex][0].isUntouched == 0 || _targetKey.currentContext == null) {
+      showCoachMarkTarget();
+      return;
+    }
+
+    CoachMark coachMarkFAB = CoachMark();
+
+    Rect markRect = Rect.fromCircle(
+      center: arrowTopPosition + SizeConfig().appBarHeight(),
+      radius: -arrowDropOffset().dy / 5,
+    );
+
+    coachMarkFAB.show(
+      targetContext: _targetKey.currentContext,
+      markRect: markRect,
+      children: [
+        positionWhereSpace(
+          markRect,
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
+            child: Text(
+              "Drag arrows to place them onto the target.",
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 26.0,
+                fontStyle: FontStyle.italic,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ),
+      ],
+      duration: null,
+      onClose: () {
+        showCoachMarkTarget();
+      },
+    );
+  }
+
+  void showCoachMarkTarget() {
+    CoachMark coachMarkFAB = CoachMark();
+
+    if (_targetKey.currentContext == null) {
+      showCoachMarkTopControls();
+      return;
+    }
+
+    Rect markRect = Rect.fromCircle(
+      center: draggedTargetCenter() + SizeConfig().appBarHeight(),
+      radius: scaledTargetRadius(),
+    );
+
+    coachMarkFAB.show(
+      targetContext: _targetKey.currentContext,
+      markRect: markRect,
+      children: [
+        positionWhereSpace(
+          markRect,
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
+            child: Text(
+              "Pinch with two fingers to zoom onto the target.",
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 26.0,
+                fontStyle: FontStyle.italic,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ),
+      ],
+      duration: null,
+      onClose: () {
+        showCoachMarkTopControls();
+      },
+    );
+  }
+
+  void showCoachMarkDraggableSheet() {
+    CoachMark coachMarkFAB = CoachMark();
+
+    if (_draggableSheetKey.currentContext == null) {
+      return;
+    }
+
+    RenderBox target = _draggableSheetKey.currentContext.findRenderObject();
+    Rect markRect = target.localToGlobal(Offset.zero) & target.size;
+    markRect = Rect.fromCenter(center: markRect.center, width: markRect.width * 10, height: markRect.height * 1.3);
+
+    coachMarkFAB.show(
+      targetContext: _draggableSheetKey.currentContext,
+      markRect: markRect,
+      markShape: BoxShape.rectangle,
+      children: [
+        positionWhereSpace(
+          markRect,
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
+            child: Text(
+              "Drag up or tap this handle to reveal additional information.",
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 26.0,
+                fontStyle: FontStyle.italic,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ),
+      ],
+      duration: null,
+    );
+  }
+
+  void showCoachMarkTopControls() {
+    CoachMark coachMarkFAB = CoachMark();
+
+    if (_resetArrowsKey.currentContext == null || _deleteEndKey.currentContext == null) {
+      showCoachMarkDraggableSheet();
+      return;
+    }
+
+    RenderBox resetButton = _resetArrowsKey.currentContext.findRenderObject();
+    RenderBox deleteButton = _deleteEndKey.currentContext.findRenderObject();
+
+    Rect markRectResetButton = resetButton.localToGlobal(Offset.zero) & resetButton.size;
+    Rect markRectDeleteButton = deleteButton.localToGlobal(Offset.zero) & resetButton.size;
+    double radius = markRectResetButton.longestSide * 0.6;
+    Rect result = Rect.fromPoints(
+        markRectResetButton.center - Offset(radius, radius * 0.8), markRectDeleteButton.center + Offset(radius, radius * 0.8));
+
+    coachMarkFAB.show(
+      targetContext: _resetArrowsKey.currentContext,
+      markRect: result,
+      markShape: BoxShape.rectangle,
+      children: [
+        positionWhereSpace(
+          result,
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
+            child: Text(
+              "Use these buttons to reset or delete all arrows of the current end.",
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 26.0,
+                fontStyle: FontStyle.italic,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ),
+      ],
+      duration: null,
+      onClose: () {
+        showCoachMarkDraggableSheet();
+      },
+    );
+  }
+
   Offset arrowDropOffset() {
     return Offset(0, -screenHeight() / 5);
   }
@@ -171,7 +337,7 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
   }
 
   Widget createTarget() {
-    return CustomPaint(painter: TargetPainter(draggedTargetCenter(), scaledTargetRadius(), widget.training.targetType));
+    return CustomPaint(key: _targetKey, painter: TargetPainter(draggedTargetCenter(), scaledTargetRadius(), widget.training.targetType));
   }
 
   int _touchedArrowIndex(double x, double y) {
@@ -211,7 +377,9 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
   List<int> getMatchPoints() {
     List<int> points = [0, 0];
 
-    if (opponents == null || countNumberOfUntouchedArrows(endIndex) == arrows[endIndex].length) {
+    if (opponents == null ||
+        countNumberOfUntouchedArrows(endIndex) == arrows[endIndex].length ||
+        widget.training.competitionType != CompetitionType.finals) {
       // second condition probably unnecessary
       return points;
     }
@@ -249,7 +417,7 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
   }
 
   bool gameOver() {
-    if (widget.training.competitionType == CompetitionType.finals && currentMatchPoints[0] >= 6 || currentMatchPoints[1] >= 6) {
+    if (widget.training.competitionType == CompetitionType.finals && (currentMatchPoints[0] >= 6 || currentMatchPoints[1] >= 6)) {
       return true;
     }
     return false;
@@ -837,6 +1005,7 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
                 children: [
                   GestureDetector(
                     child: Container(
+                      key: _draggableSheetKey,
                       height: screenHeight() * 0.045,
                       color: Colors.blue[800],
                       child: Center(
@@ -892,15 +1061,16 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
                 IconButton(
                   icon: Icon(Icons.help),
                   onPressed: () {
-                    showHelpOverlay = true;
-                    setState(() {});
+                    showCoachMarkArrowInstance();
                   },
                 ),
                 IconButton(
+                  key: _resetArrowsKey,
                   icon: Icon(Icons.undo),
                   onPressed: resetArrows,
                 ),
                 IconButton(
+                  key: _deleteEndKey,
                   icon: Icon(Icons.delete),
                   onPressed: deleteEnd,
                 ),
@@ -917,14 +1087,6 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
             bottomNavigationBar: Builder(
               builder: (context) => _bottomBar(context),
             ),
-          ),
-          helpOverlay(
-            "assets/images/help/target.jpg",
-            showHelpOverlay,
-            () {
-              showHelpOverlay = false;
-              setState(() {});
-            },
           ),
         ],
       ),

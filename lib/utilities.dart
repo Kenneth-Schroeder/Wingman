@@ -29,6 +29,10 @@ double screenHeight() {
   return SizeConfig.screenHeight == null ? 1 : SizeConfig.screenHeight;
 }
 
+double fullScreenHeight() {
+  return SizeConfig.fullScreenHeight == null ? 1 : SizeConfig.fullScreenHeight;
+}
+
 double polarDistance(double r1, double a1, double r2, double a2) {
   return sqrt(r1 * r1 + r2 * r2 - 2 * r1 * r2 * cos(a1 - a2));
 }
@@ -108,25 +112,21 @@ List<Offset> convexHull(List<Offset> points) {
   return ans.getRange(0, k - 1).toList();
 }
 
-Widget helpOverlay(String image, bool showOverlay, Function onTap) {
-  if (showOverlay) {
-    return GestureDetector(
-      child: Container(
-        color: Colors.black,
-        child: SizedBox(
-          height: double.infinity,
-          width: double.infinity,
-          child: Container(
-            padding: EdgeInsets.all(20),
-            child: Image.asset(
-              image,
-              fit: BoxFit.scaleDown,
-            ),
-          ),
-        ),
-      ),
-      onTap: onTap,
+Widget positionWhereSpace(Rect rectangle, Widget child) {
+  bool moreSpaceAbove = rectangle.top > fullScreenHeight() - rectangle.bottom;
+  double bottomSpacing = fullScreenHeight() - rectangle.top + 15.0;
+
+  if (moreSpaceAbove) {
+    return Positioned(
+      bottom: bottomSpacing,
+      width: screenWidth(),
+      child: child,
     );
   }
-  return Container();
+
+  return Positioned(
+    top: rectangle.bottom + 15.0,
+    width: screenWidth(),
+    child: child,
+  );
 }

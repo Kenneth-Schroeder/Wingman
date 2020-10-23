@@ -4,6 +4,7 @@ import 'SizeConfig.dart';
 import 'ArrowInformation.dart';
 import 'package:flutter/services.dart';
 import 'utilities.dart';
+import 'package:highlighter_coachmark/highlighter_coachmark.dart';
 
 class QuiverOrganizer extends StatefulWidget {
   QuiverOrganizer(this.numArrowsToSelect, this.selectedArrowInformationIDs, {Key key}) : super(key: key);
@@ -20,9 +21,12 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> {
   bool startRoutineFinished = false;
   int selectedArrows = 0;
   List<ArrowSet> arrowSets;
+  GlobalKey _addSetKey = GlobalObjectKey("addSet");
+  GlobalKey _editSetKey = GlobalObjectKey("editSet");
+  GlobalKey _arrowRowKey = GlobalObjectKey("arrowRow");
+  GlobalKey _arrowCountKey = GlobalObjectKey("arrowCount");
 
   int initPosition = 0;
-  bool showHelpOverlay = false;
 
   @override
   void initState() {
@@ -47,6 +51,165 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> {
 
     startRoutineFinished = true;
     setState(() {});
+  }
+
+  void showCoachMarkAddSet() {
+    CoachMark coachMarkFAB = CoachMark();
+
+    if (_addSetKey.currentContext == null) {
+      return;
+    }
+
+    RenderBox target = _addSetKey.currentContext.findRenderObject();
+    Rect markRect = target.localToGlobal(Offset.zero) & target.size;
+    markRect = markRect.inflate(20.0);
+
+    coachMarkFAB.show(
+      targetContext: _addSetKey.currentContext,
+      markRect: markRect,
+      markShape: BoxShape.rectangle,
+      children: [
+        positionWhereSpace(
+          markRect,
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
+            child: Text(
+              "",
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 26.0,
+                fontStyle: FontStyle.italic,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ),
+      ],
+      duration: null,
+    );
+  }
+
+  void showCoachMarkEditSet() {
+    CoachMark coachMarkFAB = CoachMark();
+
+    if (_editSetKey.currentContext == null) {
+      int setIndex = initPosition;
+      if (arrowSets.length > setIndex && arrowSets[setIndex].arrowInfos != null && arrowSets[setIndex].arrowInfos.isNotEmpty) {
+        showCoachMarkArrowRow();
+      }
+      return;
+    }
+
+    RenderBox target = _editSetKey.currentContext.findRenderObject();
+    Rect markRect = target.localToGlobal(Offset.zero) & target.size;
+    markRect = Rect.fromCenter(center: markRect.center, width: markRect.width * 1.3, height: markRect.height * 1.1);
+
+    coachMarkFAB.show(
+      targetContext: _editSetKey.currentContext,
+      markRect: markRect,
+      markShape: BoxShape.rectangle,
+      children: [
+        positionWhereSpace(
+          markRect,
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
+            child: Text(
+              "Use these controls to edit the label of the current set or delete it completely.",
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 26.0,
+                fontStyle: FontStyle.italic,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ),
+      ],
+      duration: null,
+      onClose: () {
+        int setIndex = initPosition;
+        if (arrowSets.length > setIndex && arrowSets[setIndex].arrowInfos != null && arrowSets[setIndex].arrowInfos.isNotEmpty) {
+          showCoachMarkArrowRow();
+        }
+      },
+    );
+  }
+
+  void showCoachMarkArrowCount() {
+    CoachMark coachMarkFAB = CoachMark();
+
+    if (_arrowCountKey.currentContext == null) {
+      return;
+    }
+
+    RenderBox target = _arrowCountKey.currentContext.findRenderObject();
+    Rect markRect = target.localToGlobal(Offset.zero) & target.size;
+    markRect = Rect.fromCenter(center: markRect.center, width: markRect.width * 1.3, height: markRect.height * 1.1);
+
+    coachMarkFAB.show(
+      targetContext: _arrowCountKey.currentContext,
+      markRect: markRect,
+      markShape: BoxShape.rectangle,
+      children: [
+        positionWhereSpace(
+          markRect,
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
+            child: Text(
+              "When as many arrows are selected as specified on the previous form, a save button will appear.",
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 26.0,
+                fontStyle: FontStyle.italic,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ),
+      ],
+      duration: null,
+    );
+  }
+
+  void showCoachMarkArrowRow() {
+    CoachMark coachMarkFAB = CoachMark();
+
+    if (_arrowRowKey.currentContext == null) {
+      showCoachMarkArrowCount();
+      return;
+    }
+
+    RenderBox target = _arrowRowKey.currentContext.findRenderObject();
+    Rect markRect = target.localToGlobal(Offset.zero) & target.size;
+    Offset center = Offset(screenWidth() / 2, markRect.center.dy);
+    markRect = Rect.fromCenter(center: center, width: markRect.width * 7, height: markRect.height * 1.4);
+
+    coachMarkFAB.show(
+      targetContext: _arrowRowKey.currentContext,
+      markRect: markRect,
+      markShape: BoxShape.rectangle,
+      children: [
+        positionWhereSpace(
+          markRect,
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
+            child: Text(
+              "Here you can edit the label of your arrow, select it for the current training session or delete it completely.",
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 26.0,
+                fontStyle: FontStyle.italic,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ),
+      ],
+      duration: null,
+      onClose: () {
+        showCoachMarkArrowCount();
+      },
+    );
   }
 
   showAreYouSureDialog(BuildContext context, int arrowSetIndex, [int arrowIndex]) {
@@ -165,6 +328,7 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> {
         DataCell(
           Center(
             child: Checkbox(
+              key: i == 0 && index == initPosition ? _arrowRowKey : null,
               value: arrowSets[index].arrowInfos[i].selected,
               onChanged: (bool value) {
                 setState(() {
@@ -242,6 +406,7 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> {
             ),
           ),
           Container(
+            key: index == initPosition ? _arrowCountKey : null,
             padding: EdgeInsets.all(10),
             child: Text(
               "selected " + selectedArrows.toString() + "/" + widget.numArrowsToSelect.toString() + " arrows",
@@ -268,9 +433,12 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> {
   Widget tabBodyGenerator(BuildContext context, int index, int length) {
     if (index == length) {
       return Center(
-        child: Text(
-          "Press the green button on top\nto create a new set of arrows.",
-          textScaleFactor: 1.3,
+        child: Container(
+          key: _addSetKey,
+          child: Text(
+            "Press press the green button on\ntop to create a new set of arrows.",
+            textScaleFactor: 1.3,
+          ),
         ),
       );
     }
@@ -288,6 +456,8 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> {
                 padding: EdgeInsets.only(top: 20), //.all(50),
                 child: Center(
                   child: Row(
+                    key: index == initPosition ? _editSetKey : null,
+                    mainAxisSize: MainAxisSize.min,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Container(
@@ -365,6 +535,7 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> {
             ),
             onPressed: () {
               arrowSets.add(ArrowSet("Set " + arrowSets.length.toString()));
+              arrowSets.last.addArrow((arrowSets.last.arrowInfos.length + 1).toString());
               setState(() {});
             },
           ),
@@ -472,8 +643,11 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> {
                 IconButton(
                   icon: Icon(Icons.help),
                   onPressed: () {
-                    showHelpOverlay = true;
-                    setState(() {});
+                    if (arrowSets == null || arrowSets.isEmpty) {
+                      showCoachMarkAddSet();
+                    } else {
+                      showCoachMarkEditSet();
+                    }
                   },
                 ),
               ],
@@ -483,14 +657,6 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> {
               bottom: false,
               child: createTabScreen(),
             ),
-          ),
-          helpOverlay(
-            "assets/images/help/quiver.jpg",
-            showHelpOverlay,
-            () {
-              showHelpOverlay = false;
-              setState(() {});
-            },
           ),
         ],
       ),

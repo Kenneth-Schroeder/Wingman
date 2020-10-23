@@ -5,6 +5,7 @@ class SizeConfig {
   static MediaQueryData _mediaQueryData;
   static double screenWidth;
   static double screenHeight;
+  static double fullScreenHeight;
   static double blockSizeHorizontal;
   static double blockSizeVertical;
 
@@ -12,9 +13,17 @@ class SizeConfig {
     // todo also get orientation of screen etc
     _mediaQueryData = MediaQuery.of(context);
     screenWidth = _mediaQueryData.size.width;
-    screenHeight = _mediaQueryData.size.height - kToolbarHeight - kBottomNavigationBarHeight - kTextTabBarHeight;
+    fullScreenHeight = _mediaQueryData.size.height + _mediaQueryData.viewInsets.bottom;
+    screenHeight = _mediaQueryData.size.height -
+        kToolbarHeight -
+        kBottomNavigationBarHeight -
+        kTextTabBarHeight; //- _mediaQueryData.padding.top  - _mediaQueryData.padding.bottom
     blockSizeHorizontal = screenWidth / 100;
     blockSizeVertical = screenHeight / 100;
+  }
+
+  Offset appBarHeight() {
+    return Offset(0, kToolbarHeight + _mediaQueryData.padding.top);
   }
 
   Offset threeSideCenter() {
