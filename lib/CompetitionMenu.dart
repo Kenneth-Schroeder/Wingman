@@ -36,7 +36,7 @@ class _CompetitionMenuState extends State<CompetitionMenu> {
     if (_outdoorIndoorKey.currentContext == null) {
       _scrollController
           .animateTo(
-            _scrollController.position.maxScrollExtent,
+            _scrollController.position.minScrollExtent,
             duration: Duration(seconds: 1),
             curve: Curves.fastOutSlowIn,
           )
@@ -71,6 +71,7 @@ class _CompetitionMenuState extends State<CompetitionMenu> {
       ],
       duration: null,
       onClose: () {
+        print(_scrollController.position.maxScrollExtent);
         _scrollController
             .animateTo(
               _scrollController.position.maxScrollExtent,
@@ -303,96 +304,100 @@ class _CompetitionMenuState extends State<CompetitionMenu> {
                   stops: [0.0, 0.5, 1.0], //[0.0, 0.25, 0.5, 0.75, 1.0],
                 ),
               ),
-              child: ListView(
+              child: SingleChildScrollView(
                 controller: _scrollController,
-                padding: const EdgeInsets.all(20),
-                children: [
-                  Row(
-                    key: _outdoorIndoorKey,
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
                     children: [
-                      floatingBoxWrapper("outdoor.jpg", "Outdoor", Colors.white, Alignment.bottomLeft, 0, 0),
-                      SizedBox(width: 20),
-                      floatingBoxWrapper("indoor.jpg", "Indoor", Colors.white, Alignment.topRight, 0, 1),
-                    ],
-                  ),
-                  SizedBox(height: 20),
-                  Row(
-                    children: [
-                      floatingBoxWrapper("female.png", "Female", Colors.white, Alignment.bottomLeft, 1, 0),
-                      SizedBox(width: 20),
-                      floatingBoxWrapper("male.png", "Male", Colors.white, Alignment.topRight, 1, 1),
-                    ],
-                  ),
-                  SizedBox(height: 20),
-                  Row(
-                    children: [
-                      floatingBoxWrapper("qualification.jpg", "Qualifying", Colors.white, Alignment.bottomLeft, 2, 0),
-                      SizedBox(width: 20),
-                      floatingBoxWrapper("finals.jpg", "Finals", Colors.white, Alignment.topRight, 2, 1),
-                    ],
-                  ),
-                  SizedBox(height: 20),
-                  Container(
-                    key: _difficultyKey,
-                    padding: EdgeInsets.symmetric(vertical: 15),
-                    child: Column(
-                      children: [
-                        Text(
-                          "Difficulty",
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        SizedBox(height: 5),
-                        Slider(
-                          value: sliderValue,
-                          onChanged: (newVal) {
-                            sliderValue = newVal;
-                            setState(() {});
-                          },
-                          min: 1,
-                          max: 20,
-                          divisions: 19,
-                          label: sliderValue.toInt().toString(),
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      Row(
+                        key: _outdoorIndoorKey,
+                        children: [
+                          floatingBoxWrapper("outdoor.jpg", "Outdoor", Colors.white, Alignment.bottomLeft, 0, 0),
+                          SizedBox(width: 20),
+                          floatingBoxWrapper("indoor.jpg", "Indoor", Colors.white, Alignment.topRight, 0, 1),
+                        ],
+                      ),
+                      SizedBox(height: 20),
+                      Row(
+                        children: [
+                          floatingBoxWrapper("female.png", "Female", Colors.white, Alignment.bottomLeft, 1, 0),
+                          SizedBox(width: 20),
+                          floatingBoxWrapper("male.png", "Male", Colors.white, Alignment.topRight, 1, 1),
+                        ],
+                      ),
+                      SizedBox(height: 20),
+                      Row(
+                        children: [
+                          floatingBoxWrapper("qualification.jpg", "Qualifying", Colors.white, Alignment.bottomLeft, 2, 0),
+                          SizedBox(width: 20),
+                          floatingBoxWrapper("finals.jpg", "Finals", Colors.white, Alignment.topRight, 2, 1),
+                        ],
+                      ),
+                      SizedBox(height: 20),
+                      Container(
+                        key: _difficultyKey,
+                        padding: EdgeInsets.symmetric(vertical: 15),
+                        child: Column(
                           children: [
-                            Padding(
-                              padding: EdgeInsets.only(left: 22),
-                              child: Text("Beginner", style: TextStyle(fontSize: 16)),
+                            Text(
+                              "Difficulty",
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                            Padding(
-                              padding: EdgeInsets.only(right: 22),
-                              child: Text("World Champion", style: TextStyle(fontSize: 16)),
+                            SizedBox(height: 5),
+                            Slider(
+                              value: sliderValue,
+                              onChanged: (newVal) {
+                                sliderValue = newVal;
+                                setState(() {});
+                              },
+                              min: 1,
+                              max: 20,
+                              divisions: 19,
+                              label: sliderValue.toInt().toString(),
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Padding(
+                                  padding: EdgeInsets.only(left: 22),
+                                  child: Text("Beginner", style: TextStyle(fontSize: 16)),
+                                ),
+                                Padding(
+                                  padding: EdgeInsets.only(right: 22),
+                                  child: Text("World Champion", style: TextStyle(fontSize: 16)),
+                                ),
+                              ],
                             ),
                           ],
                         ),
-                      ],
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(10.0),
-                      boxShadow: customBoxShadow(),
-                    ),
-                  ),
-                  SizedBox(height: 20),
-                  InkWell(
-                    child: Container(
-                      padding: EdgeInsets.all(8),
-                      child: Center(
-                        child: Text("Let's go", style: TextStyle(fontSize: 20, color: Colors.white, fontWeight: FontWeight.bold)),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10.0),
+                          boxShadow: customBoxShadow(),
+                        ),
                       ),
-                      decoration: BoxDecoration(
-                        color: selected.contains(-1) ? Colors.grey : Colors.blue[800],
-                        borderRadius: BorderRadius.circular(10.0),
-                        boxShadow: customBoxShadow(),
+                      SizedBox(height: 20),
+                      InkWell(
+                        child: Container(
+                          padding: EdgeInsets.all(8),
+                          child: Center(
+                            child: Text("Let's go", style: TextStyle(fontSize: 20, color: Colors.white, fontWeight: FontWeight.bold)),
+                          ),
+                          decoration: BoxDecoration(
+                            color: selected.contains(-1) ? Colors.grey : Colors.blue[800],
+                            borderRadius: BorderRadius.circular(10.0),
+                            boxShadow: customBoxShadow(),
+                          ),
+                        ),
+                        onTap: submitSelection,
                       ),
-                    ),
-                    onTap: submitSelection,
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
