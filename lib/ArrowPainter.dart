@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'ScoreInstance.dart';
 import 'dart:math';
+import 'utilities.dart';
 
 class ArrowPainter extends CustomPainter {
   ArrowPainter.fromInstance(this.arrowInstance, this.targetCenter, this.targetRadius, this._dropOffset, this._isDragged, this.holeOnly) {
@@ -73,7 +74,7 @@ class ArrowPainter extends CustomPainter {
       ..style = PaintingStyle.stroke;
 
     double factor = 3.3;
-    double wingRadius = -_dropOffset.dy / 7 * flightScale; //_radius * 10;
+    double wingRadius = minScreenDimension() / 27.0; //-_dropOffset.dy / 7 * flightScale; //_radius * 10;
 
     if (_isDragged && !_isLocked) {
       canvas.drawLine(_offset, _offset + _dropOffset, paint3);

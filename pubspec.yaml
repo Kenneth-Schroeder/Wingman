@@ -28,6 +28,7 @@ dependencies:
   flutter_slidable:
   gesture_x_detector:
   highlighter_coachmark: ^0.0.3
+  flutter_spinkit: ^4.1.2
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.

@@ -5,6 +5,7 @@ import 'ArrowInformation.dart';
 import 'package:flutter/services.dart';
 import 'utilities.dart';
 import 'package:highlighter_coachmark/highlighter_coachmark.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 
 class QuiverOrganizer extends StatefulWidget {
   QuiverOrganizer(this.numArrowsToSelect, this.selectedArrowInformationIDs, {Key key}) : super(key: key);
@@ -16,7 +17,7 @@ class QuiverOrganizer extends StatefulWidget {
   _QuiverOrganizerState createState() => _QuiverOrganizerState();
 }
 
-class _QuiverOrganizerState extends State<QuiverOrganizer> {
+class _QuiverOrganizerState extends State<QuiverOrganizer> with TickerProviderStateMixin {
   DatabaseService dbService;
   bool startRoutineFinished = false;
   int selectedArrows = 0;
@@ -55,7 +56,7 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> {
   }
 
   void showCoachMarkAddSet() {
-    CoachMark coachMarkFAB = CoachMark();
+    CoachMark coachMark = CoachMark();
 
     if (_addSetKey.currentContext == null) {
       return;
@@ -65,7 +66,7 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> {
     Rect markRect = target.localToGlobal(Offset.zero) & target.size;
     markRect = markRect.inflate(20.0);
 
-    coachMarkFAB.show(
+    coachMark.show(
       targetContext: _addSetKey.currentContext,
       markRect: markRect,
       markShape: BoxShape.rectangle,
@@ -91,7 +92,7 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> {
   }
 
   void showCoachMarkEditSet() {
-    CoachMark coachMarkFAB = CoachMark();
+    CoachMark coachMark = CoachMark();
 
     if (_editSetKey.currentContext == null) {
       int setIndex = initPosition;
@@ -111,7 +112,7 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> {
     Rect markRect = target.localToGlobal(Offset.zero) & target.size;
     markRect = Rect.fromCenter(center: markRect.center, width: markRect.width * 1.3, height: markRect.height * 1.1);
 
-    coachMarkFAB.show(
+    coachMark.show(
       targetContext: _editSetKey.currentContext,
       markRect: markRect,
       markShape: BoxShape.rectangle,
@@ -149,7 +150,7 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> {
   }
 
   void showCoachMarkArrowCount() {
-    CoachMark coachMarkFAB = CoachMark();
+    CoachMark coachMark = CoachMark();
 
     if (_arrowCountKey.currentContext == null) {
       return;
@@ -159,7 +160,7 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> {
     Rect markRect = target.localToGlobal(Offset.zero) & target.size;
     markRect = Rect.fromCenter(center: markRect.center, width: markRect.width * 1.3, height: markRect.height * 1.1);
 
-    coachMarkFAB.show(
+    coachMark.show(
       targetContext: _arrowCountKey.currentContext,
       markRect: markRect,
       markShape: BoxShape.rectangle,
@@ -185,7 +186,7 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> {
   }
 
   void showCoachMarkArrowRow() {
-    CoachMark coachMarkFAB = CoachMark();
+    CoachMark coachMark = CoachMark();
 
     if (_arrowRowKey.currentContext == null) {
       _scrollController
@@ -203,7 +204,7 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> {
     Offset center = Offset(screenWidth() / 2, markRect.center.dy);
     markRect = Rect.fromCenter(center: center, width: markRect.width * 7, height: markRect.height * 1.4);
 
-    coachMarkFAB.show(
+    coachMark.show(
       targetContext: _arrowRowKey.currentContext,
       markRect: markRect,
       markShape: BoxShape.rectangle,
@@ -641,17 +642,23 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> {
   }
 
   Future<bool> onLeave() async {
+    startRoutineFinished = false;
+    setState(() {});
     await dbService.updateAllArrowSets(arrowSets);
     return true;
   }
 
-  Widget emptyScreen() {
+  Widget emptyScreen(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text("Quiver"),
       ),
       body: SafeArea(
-        child: Text("loading..."),
+        child: SpinKitCircle(
+          color: Theme.of(context).primaryColor,
+          size: 100.0,
+          controller: AnimationController(vsync: this, duration: const Duration(milliseconds: 1000)),
+        ),
       ),
     );
   }
@@ -702,7 +709,7 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> {
       return showContent();
     }
 
-    return emptyScreen();
+    return emptyScreen(context);
   }
 }
 

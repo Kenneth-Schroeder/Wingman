@@ -6,6 +6,7 @@ import 'package:Wingman/icons/my_flutter_app_icons.dart';
 import 'package:Wingman/QuiverOrganizer.dart';
 import 'utilities.dart';
 import 'package:highlighter_coachmark/highlighter_coachmark.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 
 class TrainingCreation extends StatefulWidget {
   TrainingCreation([this.editInstance]);
@@ -16,7 +17,7 @@ class TrainingCreation extends StatefulWidget {
   _TrainingCreationState createState() => _TrainingCreationState();
 }
 
-class _TrainingCreationState extends State<TrainingCreation> {
+class _TrainingCreationState extends State<TrainingCreation> with TickerProviderStateMixin {
   DatabaseService dbService;
   TrainingInstance newTraining = TrainingInstance.forCreation();
   List<int> _arrowInformationIDs = [];
@@ -52,7 +53,7 @@ class _TrainingCreationState extends State<TrainingCreation> {
   }
 
   void showCoachMarkQuiver() {
-    CoachMark coachMarkFAB = CoachMark();
+    CoachMark coachMark = CoachMark();
 
     if (_quiverKey.currentContext == null) {
       return;
@@ -62,7 +63,7 @@ class _TrainingCreationState extends State<TrainingCreation> {
     Rect markRect = target.localToGlobal(Offset.zero) & target.size;
     markRect = markRect.inflate(10.0);
 
-    coachMarkFAB.show(
+    coachMark.show(
       targetContext: _quiverKey.currentContext,
       markRect: markRect,
       markShape: BoxShape.rectangle,
@@ -479,13 +480,17 @@ class _TrainingCreationState extends State<TrainingCreation> {
     );
   }
 
-  Widget emptyScreen() {
+  Widget emptyScreen(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: widget.editInstance == null ? Text("Create new Training") : Text("Edit Training"),
       ),
       body: SafeArea(
-        child: Text("loading..."),
+        child: SpinKitCircle(
+          color: Theme.of(context).primaryColor,
+          size: 100.0,
+          controller: AnimationController(vsync: this, duration: const Duration(milliseconds: 1000)),
+        ),
       ),
     );
   }
@@ -545,6 +550,6 @@ class _TrainingCreationState extends State<TrainingCreation> {
       return showContent();
     }
 
-    return emptyScreen();
+    return emptyScreen(context);
   }
 }

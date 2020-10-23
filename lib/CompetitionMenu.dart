@@ -31,7 +31,7 @@ class _CompetitionMenuState extends State<CompetitionMenu> {
   }
 
   void showCoachMarkOutdoorIndoor() {
-    CoachMark coachMarkFAB = CoachMark();
+    CoachMark coachMark = CoachMark();
 
     if (_outdoorIndoorKey.currentContext == null) {
       _scrollController
@@ -48,7 +48,7 @@ class _CompetitionMenuState extends State<CompetitionMenu> {
     Rect markRect = target.localToGlobal(Offset.zero) & target.size;
     markRect = Rect.fromCenter(center: markRect.center, width: markRect.width * 10, height: markRect.height * 1.2);
 
-    coachMarkFAB.show(
+    coachMark.show(
       targetContext: _outdoorIndoorKey.currentContext,
       markRect: markRect,
       markShape: BoxShape.rectangle,
@@ -84,7 +84,7 @@ class _CompetitionMenuState extends State<CompetitionMenu> {
   }
 
   void showCoachMarkDifficulty() {
-    CoachMark coachMarkFAB = CoachMark();
+    CoachMark coachMark = CoachMark();
 
     if (_difficultyKey.currentContext == null) {
       return;
@@ -94,7 +94,7 @@ class _CompetitionMenuState extends State<CompetitionMenu> {
     Rect markRect = target.localToGlobal(Offset.zero) & target.size;
     markRect = Rect.fromCenter(center: markRect.center, width: markRect.width * 10, height: markRect.height * 1.2);
 
-    coachMarkFAB.show(
+    coachMark.show(
       targetContext: _difficultyKey.currentContext,
       markRect: markRect,
       markShape: BoxShape.rectangle,

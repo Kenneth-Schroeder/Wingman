@@ -11,6 +11,8 @@ import 'utilities.dart';
 import 'StatsPainter.dart';
 import 'dart:math';
 import 'package:highlighter_coachmark/highlighter_coachmark.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 
 class TrainingSummary extends StatefulWidget {
   TrainingSummary(this.training, {Key key}) : super(key: key);
@@ -21,7 +23,7 @@ class TrainingSummary extends StatefulWidget {
   _TrainingSummaryState createState() => _TrainingSummaryState();
 }
 
-class _TrainingSummaryState extends State<TrainingSummary> {
+class _TrainingSummaryState extends State<TrainingSummary> with TickerProviderStateMixin {
   DatabaseService dbService; // = DatabaseService.old();
   List<List<ScoreInstance>> arrows;
   bool startRoutineFinished = false;
@@ -42,7 +44,7 @@ class _TrainingSummaryState extends State<TrainingSummary> {
   }
 
   void showCoachMarkFAB() {
-    CoachMark coachMarkFAB = CoachMark();
+    CoachMark coachMark = CoachMark();
 
     if (_changeScoresKey.currentContext == null) {
       return;
@@ -50,9 +52,9 @@ class _TrainingSummaryState extends State<TrainingSummary> {
 
     RenderBox target = _changeScoresKey.currentContext.findRenderObject();
     Rect markRect = target.localToGlobal(Offset.zero) & target.size;
-    markRect = Rect.fromCircle(center: markRect.center, radius: markRect.longestSide * 0.8);
+    markRect = Rect.fromCircle(center: markRect.center, radius: markRect.longestSide * 0.7);
 
-    coachMarkFAB.show(
+    coachMark.show(
       targetContext: _changeScoresKey.currentContext,
       markRect: markRect,
       children: [
@@ -390,16 +392,23 @@ class _TrainingSummaryState extends State<TrainingSummary> {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => TargetPage(widget.training, arrows)),
-    ).then((value) => onStart());
+    ).then((value) {
+      startRoutineFinished = false;
+      onStart();
+    });
   }
 
-  Widget emptyScreen() {
+  Widget emptyScreen(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.training.title),
       ),
       body: SafeArea(
-        child: Text("loading..."),
+        child: SpinKitCircle(
+          color: Theme.of(context).primaryColor,
+          size: 100.0,
+          controller: AnimationController(vsync: this, duration: const Duration(milliseconds: 1000)),
+        ),
       ),
     );
   }
@@ -665,6 +674,6 @@ class _TrainingSummaryState extends State<TrainingSummary> {
       return showContent();
     }
 
-    return emptyScreen();
+    return emptyScreen(context);
   }
 }

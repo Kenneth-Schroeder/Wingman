@@ -13,6 +13,7 @@ import 'CompetitionSimulator.dart';
 import 'ArrowInformation.dart';
 import 'utilities.dart';
 import 'package:highlighter_coachmark/highlighter_coachmark.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 
 class TargetPage extends StatefulWidget {
   TargetPage(this.training, this.arrows, {Key key}) : super(key: key);
@@ -108,7 +109,7 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
         break;
     }
 
-    targetRadius = SizeConfig().minDim() / 2.2;
+    targetRadius = minScreenDimension() / 2.2;
 
     numberOfUntouchedArrows = countNumberOfUntouchedArrows(); // has to be called before first getMatchPoints()
 
@@ -156,14 +157,14 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
       return;
     }
 
-    CoachMark coachMarkFAB = CoachMark();
+    CoachMark coachMark = CoachMark();
 
     Rect markRect = Rect.fromCircle(
       center: arrowTopPosition + SizeConfig().appBarHeight(),
-      radius: -arrowDropOffset().dy / 5,
+      radius: minScreenDimension() / 22.0,
     );
 
-    coachMarkFAB.show(
+    coachMark.show(
       targetContext: _targetKey.currentContext,
       markRect: markRect,
       children: [
@@ -191,7 +192,7 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
   }
 
   void showCoachMarkTarget() {
-    CoachMark coachMarkFAB = CoachMark();
+    CoachMark coachMark = CoachMark();
 
     if (_targetKey.currentContext == null) {
       showCoachMarkTopControls();
@@ -203,7 +204,7 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
       radius: scaledTargetRadius(),
     );
 
-    coachMarkFAB.show(
+    coachMark.show(
       targetContext: _targetKey.currentContext,
       markRect: markRect,
       children: [
@@ -231,7 +232,7 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
   }
 
   void showCoachMarkDraggableSheet() {
-    CoachMark coachMarkFAB = CoachMark();
+    CoachMark coachMark = CoachMark();
 
     if (_draggableSheetKey.currentContext == null) {
       return;
@@ -241,7 +242,7 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
     Rect markRect = target.localToGlobal(Offset.zero) & target.size;
     markRect = Rect.fromCenter(center: markRect.center, width: markRect.width * 10, height: markRect.height * 1.3);
 
-    coachMarkFAB.show(
+    coachMark.show(
       targetContext: _draggableSheetKey.currentContext,
       markRect: markRect,
       markShape: BoxShape.rectangle,
@@ -267,7 +268,7 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
   }
 
   void showCoachMarkTopControls() {
-    CoachMark coachMarkFAB = CoachMark();
+    CoachMark coachMark = CoachMark();
 
     if (_resetArrowsKey.currentContext == null || _deleteEndKey.currentContext == null) {
       showCoachMarkDraggableSheet();
@@ -283,7 +284,7 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
     Rect result = Rect.fromPoints(
         markRectResetButton.center - Offset(radius, radius * 0.8), markRectDeleteButton.center + Offset(radius, radius * 0.8));
 
-    coachMarkFAB.show(
+    coachMark.show(
       targetContext: _resetArrowsKey.currentContext,
       markRect: result,
       markShape: BoxShape.rectangle,
@@ -818,6 +819,8 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
   }
 
   Future<bool> onLeave() async {
+    startRoutineFinished = false;
+    setState(() {});
     if (opponents != null) {
       await dbService.updateAllOpponents(widget.training.id, opponents);
     }
@@ -1040,11 +1043,15 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
         });
   }
 
-  Widget emptyScreen() {
+  Widget emptyScreen(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text("Score Recording")),
       body: SafeArea(
-        child: Text("loading..."),
+        child: SpinKitCircle(
+          color: Theme.of(context).primaryColor,
+          size: 100.0,
+          controller: AnimationController(vsync: this, duration: const Duration(milliseconds: 1000)),
+        ),
       ),
     );
   }
@@ -1100,11 +1107,11 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
       SizeConfig().init(context);
       arrowTopPosition = Offset(screenWidth() / 10, screenHeight() * 4 / 12);
       arrowBotPosition = Offset(screenWidth() / 10, screenHeight() * 8 / 12);
-      targetRadius = SizeConfig().minDim() / 2.2;
+      targetRadius = minScreenDimension() / 2.2;
       setUntouchedArrowsPosition();
       return showContent();
     }
 
-    return emptyScreen();
+    return emptyScreen(context);
   }
 }

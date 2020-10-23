@@ -29,6 +29,10 @@ double screenHeight() {
   return SizeConfig.screenHeight == null ? 1 : SizeConfig.screenHeight;
 }
 
+double minScreenDimension() {
+  return SizeConfig.minDim == null ? 1 : SizeConfig.minDim;
+}
+
 double fullScreenHeight() {
   return SizeConfig.fullScreenHeight == null ? 1 : SizeConfig.fullScreenHeight;
 }

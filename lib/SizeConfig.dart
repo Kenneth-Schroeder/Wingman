@@ -8,6 +8,7 @@ class SizeConfig {
   static double fullScreenHeight;
   static double blockSizeHorizontal;
   static double blockSizeVertical;
+  static double minDim;
 
   void init(BuildContext context) {
     // todo also get orientation of screen etc
@@ -20,6 +21,7 @@ class SizeConfig {
         kTextTabBarHeight; //- _mediaQueryData.padding.top  - _mediaQueryData.padding.bottom
     blockSizeHorizontal = screenWidth / 100;
     blockSizeVertical = screenHeight / 100;
+    minDim = min(screenWidth, screenHeight);
   }
 
   Offset appBarHeight() {
@@ -35,10 +37,6 @@ class SizeConfig {
   Offset center() {
     // TODO this is not working for horizontal Screen?
     return Offset(screenWidth / 2, screenHeight / 2);
-  }
-
-  double minDim() {
-    return min(screenWidth, screenHeight);
   }
 
   double maxDim() {
