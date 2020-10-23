@@ -27,6 +27,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   GlobalKey _addTrainingKey = GlobalObjectKey("addTraining");
   GlobalKey _trainingTileKey = GlobalObjectKey("trainingTile");
   AnimationController _dialController;
+  ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -54,7 +55,13 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
 
     if (_addTrainingKey.currentContext == null) {
       if (_trainings != null && _trainings.isNotEmpty) {
-        showCoachMarkFirstTraining();
+        _scrollController
+            .animateTo(
+              _scrollController.position.minScrollExtent,
+              duration: Duration(seconds: 1),
+              curve: Curves.fastOutSlowIn,
+            )
+            .then((value) => showCoachMarkFirstTraining());
       }
       return;
     }
@@ -86,7 +93,13 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
       duration: null,
       onClose: () {
         if (_trainings != null && _trainings.isNotEmpty) {
-          showCoachMarkFirstTraining();
+          _scrollController
+              .animateTo(
+                _scrollController.position.minScrollExtent,
+                duration: Duration(seconds: 1),
+                curve: Curves.fastOutSlowIn,
+              )
+              .then((value) => showCoachMarkFirstTraining());
         }
       },
     );
@@ -184,6 +197,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         child: SizedBox.expand(
           child: Scrollbar(
             child: ListView.separated(
+                controller: _scrollController,
                 padding: EdgeInsets.only(top: 10, bottom: 12, left: 12), //EdgeInsets.all(8),
                 itemBuilder: (BuildContext ctxt, int index) {
                   return GestureDetector(

@@ -25,6 +25,7 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> {
   GlobalKey _editSetKey = GlobalObjectKey("editSet");
   GlobalKey _arrowRowKey = GlobalObjectKey("arrowRow");
   GlobalKey _arrowCountKey = GlobalObjectKey("arrowCount");
+  ScrollController _scrollController = ScrollController();
 
   int initPosition = 0;
 
@@ -95,7 +96,13 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> {
     if (_editSetKey.currentContext == null) {
       int setIndex = initPosition;
       if (arrowSets.length > setIndex && arrowSets[setIndex].arrowInfos != null && arrowSets[setIndex].arrowInfos.isNotEmpty) {
-        showCoachMarkArrowRow();
+        _scrollController
+            .animateTo(
+              _scrollController.position.minScrollExtent,
+              duration: Duration(seconds: 1),
+              curve: Curves.fastOutSlowIn,
+            )
+            .then((value) => showCoachMarkArrowRow());
       }
       return;
     }
@@ -129,7 +136,13 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> {
       onClose: () {
         int setIndex = initPosition;
         if (arrowSets.length > setIndex && arrowSets[setIndex].arrowInfos != null && arrowSets[setIndex].arrowInfos.isNotEmpty) {
-          showCoachMarkArrowRow();
+          _scrollController
+              .animateTo(
+                _scrollController.position.minScrollExtent,
+                duration: Duration(seconds: 1),
+                curve: Curves.fastOutSlowIn,
+              )
+              .then((value) => showCoachMarkArrowRow());
         }
       },
     );
@@ -175,7 +188,13 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> {
     CoachMark coachMarkFAB = CoachMark();
 
     if (_arrowRowKey.currentContext == null) {
-      showCoachMarkArrowCount();
+      _scrollController
+          .animateTo(
+            _scrollController.position.maxScrollExtent,
+            duration: Duration(seconds: 1),
+            curve: Curves.fastOutSlowIn,
+          )
+          .then((value) => showCoachMarkArrowCount());
       return;
     }
 
@@ -207,7 +226,13 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> {
       ],
       duration: null,
       onClose: () {
-        showCoachMarkArrowCount();
+        _scrollController
+            .animateTo(
+              _scrollController.position.maxScrollExtent,
+              duration: Duration(seconds: 1),
+              curve: Curves.fastOutSlowIn,
+            )
+            .then((value) => showCoachMarkArrowCount());
       },
     );
   }
@@ -449,6 +474,7 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> {
         width: double.infinity,
         height: double.infinity,
         child: SingleChildScrollView(
+          controller: _scrollController,
           child: Column(
             children: [
               Container(
@@ -646,7 +672,13 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> {
                     if (arrowSets == null || arrowSets.isEmpty) {
                       showCoachMarkAddSet();
                     } else {
-                      showCoachMarkEditSet();
+                      _scrollController
+                          .animateTo(
+                            _scrollController.position.minScrollExtent,
+                            duration: Duration(seconds: 1),
+                            curve: Curves.fastOutSlowIn,
+                          )
+                          .then((value) => showCoachMarkEditSet());
                     }
                   },
                 ),

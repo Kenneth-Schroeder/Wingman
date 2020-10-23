@@ -18,6 +18,7 @@ class _CompetitionMenuState extends State<CompetitionMenu> {
   bool showError = false;
   GlobalKey _outdoorIndoorKey = GlobalObjectKey("outdoorIndoor");
   GlobalKey _difficultyKey = GlobalObjectKey("difficulty");
+  ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -33,7 +34,13 @@ class _CompetitionMenuState extends State<CompetitionMenu> {
     CoachMark coachMarkFAB = CoachMark();
 
     if (_outdoorIndoorKey.currentContext == null) {
-      showCoachMarkDifficulty();
+      _scrollController
+          .animateTo(
+            _scrollController.position.maxScrollExtent,
+            duration: Duration(seconds: 1),
+            curve: Curves.fastOutSlowIn,
+          )
+          .then((value) => showCoachMarkDifficulty());
       return;
     }
 
@@ -64,7 +71,13 @@ class _CompetitionMenuState extends State<CompetitionMenu> {
       ],
       duration: null,
       onClose: () {
-        showCoachMarkDifficulty();
+        _scrollController
+            .animateTo(
+              _scrollController.position.maxScrollExtent,
+              duration: Duration(seconds: 1),
+              curve: Curves.fastOutSlowIn,
+            )
+            .then((value) => showCoachMarkDifficulty());
       },
     );
   }
@@ -263,7 +276,13 @@ class _CompetitionMenuState extends State<CompetitionMenu> {
               IconButton(
                 icon: Icon(Icons.help),
                 onPressed: () {
-                  showCoachMarkOutdoorIndoor();
+                  _scrollController
+                      .animateTo(
+                        _scrollController.position.minScrollExtent,
+                        duration: Duration(seconds: 1),
+                        curve: Curves.fastOutSlowIn,
+                      )
+                      .then((value) => showCoachMarkOutdoorIndoor());
                 },
               ),
             ],
@@ -285,6 +304,7 @@ class _CompetitionMenuState extends State<CompetitionMenu> {
                 ),
               ),
               child: ListView(
+                controller: _scrollController,
                 padding: const EdgeInsets.all(20),
                 children: [
                   Row(
