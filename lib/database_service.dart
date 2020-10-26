@@ -91,7 +91,7 @@ class DatabaseService {
             ) 
           ''',
         );
-        // TODO check all on delete cascades if correct
+        // TODO check all on delete cascades if they are correct
         db.execute(
           '''CREATE TABLE $tableScores(
             shotID INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -194,8 +194,7 @@ class DatabaseService {
 
   Future<int> updateArrowInformation(ArrowInformation arrowInformation, int setID) async {
     Database db = await database;
-    int updateCount =
-        await db.update(tableArrowInfo, arrowInformation.toMapWithSetID(setID), where: 'id = ?', whereArgs: [arrowInformation.id]);
+    int updateCount = await db.update(tableArrowInfo, arrowInformation.toMapWithSetID(setID), where: 'id = ?', whereArgs: [arrowInformation.id]);
     return updateCount;
   }
 
@@ -489,8 +488,8 @@ class DatabaseService {
 
   Future<List<ScoreInstance>> getAllScoresOfEnd(int endID) async {
     Database db = await database;
-    List<Map> scoresMap = await db.rawQuery(
-        "SELECT * FROM $tableScores INNER JOIN $tableEnds ON $tableScores.endID = $tableEnds.endID WHERE $tableScores.endID == $endID");
+    List<Map> scoresMap =
+        await db.rawQuery("SELECT * FROM $tableScores INNER JOIN $tableEnds ON $tableScores.endID = $tableEnds.endID WHERE $tableScores.endID == $endID");
 
     List<ScoreInstance> scores = [];
     for (var row in scoresMap) {

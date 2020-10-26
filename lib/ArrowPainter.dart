@@ -18,7 +18,7 @@ class ArrowPainter extends CustomPainter {
     this.displayLabels = false;
     flightScale = 0.0;
     useCanvasSize = true;
-    fixedHoleSize = true;
+    minHoleSize = true;
   }
 
   ScoreInstance arrowInstance;
@@ -37,7 +37,7 @@ class ArrowPainter extends CustomPainter {
   double targetRadiusScaleFactor = 1.0;
   Color mainColor = Colors.purple;
   double flightScale = 1.0;
-  bool fixedHoleSize = false;
+  bool minHoleSize = false;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -48,8 +48,12 @@ class ArrowPainter extends CustomPainter {
       this._radius = arrowInstance.relativeArrowRadius * targetRadius;
     }
 
-    if (fixedHoleSize) {
-      this._radius = _dropOffset.dy / 20;
+    double factor = 3.3;
+    double wingRadius = minScreenDimension() / 27.0; //-_dropOffset.dy / 7 * flightScale; //_radius * 10;
+
+    if (minHoleSize) {
+      this._radius = max(this._radius, minScreenDimension() / 120);
+      wingRadius = 0;
     }
 
     if (isTripleSpot != null && isTripleSpot) {
@@ -73,9 +77,6 @@ class ArrowPainter extends CustomPainter {
       ..strokeWidth = _radius / 2
       ..style = PaintingStyle.stroke;
 
-    double factor = 3.3;
-    double wingRadius = minScreenDimension() / 27.0; //-_dropOffset.dy / 7 * flightScale; //_radius * 10;
-
     if (_isDragged && !_isLocked) {
       canvas.drawLine(_offset, _offset + _dropOffset, paint3);
       canvas.drawCircle(_offset + _dropOffset, _radius, innerPaint);
@@ -91,51 +92,11 @@ class ArrowPainter extends CustomPainter {
       //return;
     }
 
-    //canvas.drawLine(_offset, _offset + Offset(_radius, 0), paint3);
-
-    /*
-    canvas.drawLine(_offset, _offset + Offset(-1, 0) * wingRadius, paint3);
-    canvas.drawLine(_offset, _offset + Offset(0.5, 0.866) * wingRadius, paint3);
-    canvas.drawLine(_offset, _offset + Offset(0.5, -0.866) * wingRadius, paint3);
-
-    canvas.drawArc(
-        _offset - Offset(wingRadius, wingRadius) & Size(wingRadius * 2, wingRadius * 2),
-        pi, //radians
-        1.8, //radians
-        false,
-        paint3);
-    canvas.drawArc(
-        _offset - Offset(wingRadius, wingRadius) & Size(wingRadius * 2, wingRadius * 2),
-        5 / 3 * pi, //radians
-        1.8, //radians
-        false,
-        paint3);
-    canvas.drawArc(
-        _offset - Offset(wingRadius, wingRadius) & Size(wingRadius * 2, wingRadius * 2),
-        7 / 3 * pi, //radians
-        1.8, //radians
-        false,
-        paint3);
-        */
-    //canvas.drawArc(rect, startAngle, sweepAngle, useCenter, paint)
-
-    //canvas.drawOval(
-    //    Rect.fromPoints(_offset + Offset(-1, 0) * wingRadius + Offset(0, _radius / 5), _offset - Offset(0, _radius / 5)), innerPaint);
-
-    //canvas.drawOval(
-    //    Rect.fromLTWH(_offset.dx - wingRadius / (factor * 2), _offset.dy - wingRadius, wingRadius / factor, wingRadius), innerPaint);
-
-    //canvas.drawOval(Rect.fromLTWH(_offset.dx, _offset.dy - wingRadius / (factor * 2), wingRadius, wingRadius / factor), innerPaint);
-    //canvas.drawOval(
-    //    Rect.fromLTWH(_offset.dx - wingRadius, _offset.dy - wingRadius / (factor * 2), wingRadius, wingRadius / factor), innerPaint);
-
     canvas.drawOval(Rect.fromLTWH(_offset.dx - wingRadius / (factor * 2), _offset.dy, wingRadius / factor, wingRadius), innerPaint);
-    canvas.drawOval(
-        Rect.fromLTWH(_offset.dx - wingRadius / (factor * 2), _offset.dy - wingRadius, wingRadius / factor, wingRadius), innerPaint);
+    canvas.drawOval(Rect.fromLTWH(_offset.dx - wingRadius / (factor * 2), _offset.dy - wingRadius, wingRadius / factor, wingRadius), innerPaint);
 
     canvas.drawOval(Rect.fromLTWH(_offset.dx, _offset.dy - wingRadius / (factor * 2), wingRadius, wingRadius / factor), innerPaint);
-    canvas.drawOval(
-        Rect.fromLTWH(_offset.dx - wingRadius, _offset.dy - wingRadius / (factor * 2), wingRadius, wingRadius / factor), innerPaint);
+    canvas.drawOval(Rect.fromLTWH(_offset.dx - wingRadius, _offset.dy - wingRadius / (factor * 2), wingRadius, wingRadius / factor), innerPaint);
 
     canvas.drawCircle(_offset, wingRadius, paint);
 

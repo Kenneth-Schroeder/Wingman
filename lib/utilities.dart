@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
 import 'SizeConfig.dart';
+import 'ScoreInstance.dart';
+import 'ArrowInformation.dart';
+import 'TrainingInstance.dart';
+import 'package:vector_math/vector_math.dart' as vecMath;
 
 class Archer {
   List<int> endScores = [0];
@@ -33,8 +37,24 @@ double minScreenDimension() {
   return SizeConfig.minDim == null ? 1 : SizeConfig.minDim;
 }
 
+double maxScreenDimension() {
+  return SizeConfig.maxDim == null ? 1 : SizeConfig.maxDim;
+}
+
 double fullScreenHeight() {
   return SizeConfig.fullScreenHeight == null ? 1 : SizeConfig.fullScreenHeight;
+}
+
+Offset screenThreeSideCenter() {
+  return SizeConfig.threeSideCenter == null ? Offset(0, 0) : SizeConfig.threeSideCenter;
+}
+
+Offset screenAppBarHeight() {
+  return SizeConfig.appBarHeight == null ? Offset(0, 0) : SizeConfig.appBarHeight;
+}
+
+Offset screenCenter() {
+  return SizeConfig.center == null ? Offset(0, 0) : SizeConfig.center;
 }
 
 double polarDistance(double r1, double a1, double r2, double a2) {
@@ -133,4 +153,94 @@ Widget positionWhereSpace(Rect rectangle, Widget child) {
     width: screenWidth(),
     child: child,
   );
+}
+
+double rootMeanSquareDist(List<Offset> positions) {
+  if (positions == null || positions.isEmpty) {
+    return 0;
+  }
+
+  double meanX = positions.map((e) => e.dx).reduce((a, b) => a + b) / positions.length;
+  double meanY = positions.map((e) => e.dy).reduce((a, b) => a + b) / positions.length;
+  double sum = 0;
+
+  for (Offset o in positions) {
+    sum += pow(o.dx - meanX, 2) + pow(o.dy - meanY, 2);
+  }
+  sum = sqrt(sum / positions.length);
+  return sum;
+}
+
+List<ScoreInstance> allArrows(List<List<ScoreInstance>> arrows, [int id]) {
+  if (id != null) {
+    return arrows
+        .expand((element) => element)
+        .toList()
+        .where((element) => element.isUntouched == 0)
+        .toList()
+        .where((element) => element.arrowInformation.id == id)
+        .toList();
+  }
+  return arrows.expand((element) => element).toList().where((element) => element.isUntouched == 0).toList();
+}
+
+List<ScoreInstance> allArrowsExcept(List<List<ScoreInstance>> arrows, [int id]) {
+  if (id != null) {
+    return arrows
+        .expand((element) => element)
+        .toList()
+        .where((element) => element.isUntouched == 0)
+        .toList()
+        .where((element) => element.arrowInformation.id != id)
+        .toList();
+  }
+  return [];
+}
+
+Offset normGroupCenter(List<ScoreInstance> arrows, double targetDiameterCM, TargetType targetType) {
+  if (arrows == null || arrows.isEmpty) {
+    return Offset(0, 0);
+  }
+
+  return arrows.map((e) => e.getRelativeCartesianCoordinates(targetDiameterCM, targetType)).reduce((a, b) => a + b) / arrows.length.toDouble() / targetDiameterCM;
+}
+
+List<ArrowInformation> allArrowInformation(List<List<ScoreInstance>> arrows) {
+  return allArrows(arrows).map((e) => e.arrowInformation).toSet().toList();
+}
+
+//https://sites.math.northwestern.edu/~mlerma/papers/princcomp2d.pdf
+List<Offset> calculateConfidenceEllipse(List<ScoreInstance> arrows, double targetRadius, TargetType targetType) {
+  List<double> xCoordinates = allArrows([arrows]).map((e) => e.getRelativeCartesianCoordinates(targetRadius, targetType).dx).toList();
+  List<double> yCoordinates = allArrows([arrows]).map((e) => e.getRelativeCartesianCoordinates(targetRadius, targetType).dy).toList();
+
+  if (xCoordinates == null || xCoordinates.isEmpty || xCoordinates.length != yCoordinates.length) {
+    return [];
+  }
+
+  int n = xCoordinates.length;
+  double xMean = xCoordinates.reduce((a, b) => a + b) / n;
+  double yMean = yCoordinates.reduce((a, b) => a + b) / n;
+
+  List<double> xCoordinatesNorm = xCoordinates.map((e) => e - xMean).toList();
+  List<double> yCoordinatesNorm = yCoordinates.map((e) => e - yMean).toList();
+
+  // means are 0 now
+  double sigmaX_squared = xCoordinatesNorm.map((e) => e * e).reduce((a, b) => a + b) / n;
+  double sigmaY_squared = yCoordinatesNorm.map((e) => e * e).reduce((a, b) => a + b) / n;
+  double sigmaXY = 0;
+
+  for (int i = 0; i < n; i++) {
+    sigmaXY += xCoordinatesNorm[i] * yCoordinatesNorm[i];
+  }
+  sigmaXY /= n;
+
+  double rootResult = sqrt(pow(sigmaX_squared - sigmaY_squared, 2) + 4 * sigmaXY * sigmaXY);
+  double lambdaPlus = (sigmaX_squared + sigmaY_squared + rootResult) / 2;
+  double lambdaMinus = (sigmaX_squared + sigmaY_squared - rootResult) / 2;
+
+  vecMath.Vector2 vPlus = vecMath.Vector2(sigmaX_squared + sigmaXY - lambdaMinus, sigmaY_squared + sigmaXY - lambdaMinus).normalized();
+  vecMath.Vector2 vMinus = vecMath.Vector2(sigmaX_squared + sigmaXY - lambdaPlus, sigmaY_squared + sigmaXY - lambdaPlus).normalized();
+
+  return [Offset(vPlus.x, vPlus.y) * sqrt(lambdaPlus) * 2, Offset(vMinus.x, vMinus.y) * sqrt(lambdaMinus) * 2];
 }

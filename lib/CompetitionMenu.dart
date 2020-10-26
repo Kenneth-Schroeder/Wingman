@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'database_service.dart';
 import 'utilities.dart';
 import 'package:highlighter_coachmark/highlighter_coachmark.dart';
+import 'package:Wingman/icons/my_flutter_app_icons.dart';
+import 'QuiverOrganizer.dart';
 
 class CompetitionMenu extends StatefulWidget {
   CompetitionMenu({Key key}) : super(key: key);
@@ -19,6 +21,9 @@ class _CompetitionMenuState extends State<CompetitionMenu> {
   GlobalKey _outdoorIndoorKey = GlobalObjectKey("outdoorIndoor");
   GlobalKey _difficultyKey = GlobalObjectKey("difficulty");
   ScrollController _scrollController = ScrollController();
+  TrainingInstance training;
+  List<int> _arrowInformationIDs = [];
+  GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
@@ -27,6 +32,7 @@ class _CompetitionMenuState extends State<CompetitionMenu> {
   }
 
   void onStart() async {
+    training = TrainingInstance("", DateTime.now());
     dbService = await DatabaseService.create();
   }
 
@@ -71,7 +77,6 @@ class _CompetitionMenuState extends State<CompetitionMenu> {
       ],
       duration: null,
       onClose: () {
-        print(_scrollController.position.maxScrollExtent);
         _scrollController
             .animateTo(
               _scrollController.position.maxScrollExtent,
@@ -120,7 +125,7 @@ class _CompetitionMenuState extends State<CompetitionMenu> {
   }
 
   void _saveNewTraining(TrainingInstance training) async {
-    await dbService.addTraining(training, []);
+    await dbService.addTraining(training, _arrowInformationIDs);
   }
 
   Widget floatingBoxWrapper(String image, String title, Color textColor, Alignment titleAlign, int category, int option) {
@@ -202,10 +207,14 @@ class _CompetitionMenuState extends State<CompetitionMenu> {
     ];
   }
 
-  void submitSelection() {
-    if (!selected.contains(-1)) {
-      TrainingInstance training = TrainingInstance("", DateTime.now());
+  void submitSelection() async {
+    if (!_formKey.currentState.validate()) {
+      return;
+    }
 
+    _formKey.currentState.save();
+
+    if (!selected.contains(-1)) {
       training.competitionLevel = sliderValue.toInt();
 
       if (selected[0] == 0) {
@@ -259,12 +268,44 @@ class _CompetitionMenuState extends State<CompetitionMenu> {
         training.title += "Final";
       }
 
-      _saveNewTraining(training);
+      await _saveNewTraining(training);
       Navigator.pop(context);
     }
   }
 
-  // images from https://svgsilh.com/image/2025609.html and https://svgsilh.com/image/156849.html
+  int getNumArrows() {
+    if (selected[0] == 0 && selected[2] == 0) {
+      return 6;
+    }
+
+    return 3;
+  }
+
+  bool arrowSelectionValid() {
+    if (_arrowInformationIDs.length != 0 && _arrowInformationIDs.length == getNumArrows()) {
+      return true;
+    }
+    return false;
+  }
+
+  void setupArrows(BuildContext context) {
+    if (getNumArrows() > 0) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => QuiverOrganizer(getNumArrows(), _arrowInformationIDs)),
+      ).then(
+        (arrowInformationIDs) {
+          if (arrowInformationIDs != null) {
+            // can be null if back button is hit
+            setState(() {
+              _arrowInformationIDs = arrowInformationIDs;
+            });
+          }
+        },
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Stack(
@@ -306,96 +347,163 @@ class _CompetitionMenuState extends State<CompetitionMenu> {
               ),
               child: SingleChildScrollView(
                 controller: _scrollController,
-                child: Container(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    children: [
-                      Row(
-                        key: _outdoorIndoorKey,
-                        children: [
-                          floatingBoxWrapper("outdoor.jpg", "Outdoor", Colors.white, Alignment.bottomLeft, 0, 0),
-                          SizedBox(width: 20),
-                          floatingBoxWrapper("indoor.jpg", "Indoor", Colors.white, Alignment.topRight, 0, 1),
-                        ],
-                      ),
-                      SizedBox(height: 20),
-                      Row(
-                        children: [
-                          floatingBoxWrapper("female.png", "Female", Colors.white, Alignment.bottomLeft, 1, 0),
-                          SizedBox(width: 20),
-                          floatingBoxWrapper("male.png", "Male", Colors.white, Alignment.topRight, 1, 1),
-                        ],
-                      ),
-                      SizedBox(height: 20),
-                      Row(
-                        children: [
-                          floatingBoxWrapper("qualification.jpg", "Qualifying", Colors.white, Alignment.bottomLeft, 2, 0),
-                          SizedBox(width: 20),
-                          floatingBoxWrapper("finals.jpg", "Finals", Colors.white, Alignment.topRight, 2, 1),
-                        ],
-                      ),
-                      SizedBox(height: 20),
-                      Container(
-                        key: _difficultyKey,
-                        padding: EdgeInsets.symmetric(vertical: 15),
-                        child: Column(
+                child: Form(
+                  key: _formKey,
+                  child: Container(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      children: [
+                        Row(
+                          key: _outdoorIndoorKey,
                           children: [
-                            Text(
-                              "Difficulty",
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            SizedBox(height: 5),
-                            Slider(
-                              value: sliderValue,
-                              onChanged: (newVal) {
-                                sliderValue = newVal;
-                                setState(() {});
-                              },
-                              min: 1,
-                              max: 20,
-                              divisions: 19,
-                              label: sliderValue.toInt().toString(),
-                            ),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Padding(
-                                  padding: EdgeInsets.only(left: 22),
-                                  child: Text("Beginner", style: TextStyle(fontSize: 16)),
-                                ),
-                                Padding(
-                                  padding: EdgeInsets.only(right: 22),
-                                  child: Text("World Champion", style: TextStyle(fontSize: 16)),
-                                ),
-                              ],
-                            ),
+                            floatingBoxWrapper("outdoor.jpg", "Outdoor", Colors.white, Alignment.bottomLeft, 0, 0),
+                            SizedBox(width: 20),
+                            floatingBoxWrapper("indoor.jpg", "Indoor", Colors.white, Alignment.topRight, 0, 1),
                           ],
                         ),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(10.0),
-                          boxShadow: customBoxShadow(),
+                        SizedBox(height: 20),
+                        Row(
+                          children: [
+                            floatingBoxWrapper("female.png", "Female", Colors.white, Alignment.bottomLeft, 1, 0),
+                            SizedBox(width: 20),
+                            floatingBoxWrapper("male.png", "Male", Colors.white, Alignment.topRight, 1, 1),
+                          ],
                         ),
-                      ),
-                      SizedBox(height: 20),
-                      InkWell(
-                        child: Container(
-                          padding: EdgeInsets.all(8),
-                          child: Center(
-                            child: Text("Let's go", style: TextStyle(fontSize: 20, color: Colors.white, fontWeight: FontWeight.bold)),
+                        SizedBox(height: 20),
+                        Row(
+                          children: [
+                            floatingBoxWrapper("qualification.jpg", "Qualifying", Colors.white, Alignment.bottomLeft, 2, 0),
+                            SizedBox(width: 20),
+                            floatingBoxWrapper("finals.jpg", "Finals", Colors.white, Alignment.topRight, 2, 1),
+                          ],
+                        ),
+                        SizedBox(height: 20),
+                        Container(
+                          key: _difficultyKey,
+                          padding: EdgeInsets.symmetric(vertical: 15),
+                          child: Column(
+                            children: [
+                              Text(
+                                "Difficulty",
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              SizedBox(height: 5),
+                              Slider(
+                                value: sliderValue,
+                                onChanged: (newVal) {
+                                  sliderValue = newVal;
+                                  setState(() {});
+                                },
+                                min: 1,
+                                max: 20,
+                                divisions: 19,
+                                label: sliderValue.toInt().toString(),
+                              ),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Padding(
+                                    padding: EdgeInsets.only(left: 22),
+                                    child: Text("Beginner", style: TextStyle(fontSize: 16)),
+                                  ),
+                                  Padding(
+                                    padding: EdgeInsets.only(right: 22),
+                                    child: Text("World Champion", style: TextStyle(fontSize: 16)),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
                           decoration: BoxDecoration(
-                            color: selected.contains(-1) ? Colors.grey : Colors.blue[800],
+                            color: Colors.white,
                             borderRadius: BorderRadius.circular(10.0),
                             boxShadow: customBoxShadow(),
                           ),
                         ),
-                        onTap: submitSelection,
-                      ),
-                    ],
+                        SizedBox(height: 20),
+                        Container(
+                          padding: EdgeInsets.symmetric(vertical: 15),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(10.0),
+                            boxShadow: customBoxShadow(),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Container(
+                                  margin: EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
+                                  child: TextFormField(
+                                    enabled: true,
+                                    initialValue: training.arrowDiameterMM.toStringAsFixed(0),
+                                    decoration: InputDecoration(
+                                      labelText: 'Arrow Diameter in Millimeters',
+                                      errorMaxLines: 5,
+                                      fillColor: Colors.white,
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.all(
+                                          Radius.circular(25.0),
+                                        ),
+                                        borderSide: BorderSide(),
+                                      ),
+                                    ),
+                                    keyboardType: TextInputType.number,
+                                    textInputAction: TextInputAction.done,
+                                    validator: (value) {
+                                      if (value.isEmpty) {
+                                        return 'Please enter the diameter of your arrows in millimeters.';
+                                      }
+                                      if (double.parse(value) <= 0 || double.parse(value) > 20) {
+                                        return 'Please enter a value greater than 0 and smaller than 20.';
+                                      }
+                                      return null;
+                                    },
+                                    onSaved: (String value) {
+                                      training.arrowDiameterMM = double.parse(value);
+                                      setState(() {});
+                                    },
+                                  ),
+                                ),
+                              ),
+                              Expanded(
+                                child: Container(
+                                  child: Center(
+                                    child: ButtonTheme(
+                                      minWidth: 100.0,
+                                      height: 50.0,
+                                      child: RaisedButton(
+                                        color: arrowSelectionValid() ? Colors.green : Colors.redAccent,
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18.0)),
+                                        child: Icon(MyFlutterApp.arrow_flights),
+                                        onPressed: selected.contains(-1) ? null : () => setupArrows(context),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(height: 20),
+                        InkWell(
+                          child: Container(
+                            padding: EdgeInsets.all(8),
+                            child: Center(
+                              child: Text("Let's go", style: TextStyle(fontSize: 20, color: Colors.white, fontWeight: FontWeight.bold)),
+                            ),
+                            decoration: BoxDecoration(
+                              color: selected.contains(-1) ? Colors.grey : Colors.blue[800],
+                              borderRadius: BorderRadius.circular(10.0),
+                              boxShadow: customBoxShadow(),
+                            ),
+                          ),
+                          onTap: submitSelection,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),

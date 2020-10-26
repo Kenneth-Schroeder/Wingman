@@ -9,9 +9,7 @@ import 'package:Wingman/TargetPainter.dart';
 import 'ArrowPainter.dart';
 import 'utilities.dart';
 import 'StatsPainter.dart';
-import 'dart:math';
 import 'package:highlighter_coachmark/highlighter_coachmark.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 
 class TrainingSummary extends StatefulWidget {
@@ -28,6 +26,9 @@ class _TrainingSummaryState extends State<TrainingSummary> with TickerProviderSt
   List<List<ScoreInstance>> arrows;
   bool startRoutineFinished = false;
   GlobalKey _changeScoresKey = GlobalObjectKey("changeScores");
+  GlobalKey _statSectionKey = GlobalObjectKey("statSection");
+  bool _statSectionKeyAssigned = false;
+  ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -47,6 +48,7 @@ class _TrainingSummaryState extends State<TrainingSummary> with TickerProviderSt
     CoachMark coachMark = CoachMark();
 
     if (_changeScoresKey.currentContext == null) {
+      showCoachMarkStats();
       return;
     }
 
@@ -67,6 +69,58 @@ class _TrainingSummaryState extends State<TrainingSummary> with TickerProviderSt
               textAlign: TextAlign.center,
               style: const TextStyle(
                 fontSize: 26.0,
+                fontStyle: FontStyle.italic,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ),
+      ],
+      duration: null,
+      onClose: () {
+        // Scrollable.ensureVisible(_statSectionKey.currentContext);
+        if (_statSectionKey.currentContext != null) {
+          RenderBox box = _statSectionKey.currentContext.findRenderObject();
+          Offset position = box.localToGlobal(Offset.zero); //this is global position
+          double y = position.dy - fullScreenHeight() / 2;
+
+          _scrollController
+              .animateTo(
+                y + _scrollController.offset,
+                duration: Duration(seconds: 1),
+                curve: Curves.fastOutSlowIn,
+              )
+              .then((value) => showCoachMarkStats());
+        }
+      },
+    );
+  }
+
+  void showCoachMarkStats() {
+    CoachMark coachMark = CoachMark();
+
+    if (_statSectionKey.currentContext == null) {
+      return;
+    }
+
+    RenderBox target = _statSectionKey.currentContext.findRenderObject();
+    Rect markRect = target.localToGlobal(Offset.zero) & target.size;
+    markRect = Rect.fromCenter(center: markRect.center, width: markRect.width * 10, height: markRect.height * 1.2);
+
+    coachMark.show(
+      targetContext: _statSectionKey.currentContext,
+      markRect: markRect,
+      markShape: BoxShape.rectangle,
+      children: [
+        positionWhereSpace(
+          markRect,
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
+            child: Text(
+              "These sections contain arrow specific statistics. Low dispersion values indicate tight groups and the group center deviations (GCD) quantifies the average deviation of arrow x (purple) from the other arrows (grey).",
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 24.0,
                 fontStyle: FontStyle.italic,
                 color: Colors.white,
               ),
@@ -155,6 +209,7 @@ class _TrainingSummaryState extends State<TrainingSummary> with TickerProviderSt
   }
 
   Widget drawStats(Offset normGroupCenter, Offset normRestCenter, double targetRadiusScaleFactor) {
+    // List<Offset> eigenvectors
     if (normGroupCenter == null || normRestCenter == null) {
       return Container();
     }
@@ -162,7 +217,7 @@ class _TrainingSummaryState extends State<TrainingSummary> with TickerProviderSt
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
         return CustomPaint(
-          painter: StatsPainter(normGroupCenter, normRestCenter, targetRadiusScaleFactor),
+          painter: StatsPainter(normGroupCenter, normRestCenter, targetRadiusScaleFactor), //eigenvectors),
           child: Container(
             width: constraints.maxWidth,
             height: constraints.maxWidth,
@@ -183,8 +238,7 @@ class _TrainingSummaryState extends State<TrainingSummary> with TickerProviderSt
         LayoutBuilder(
           builder: (BuildContext context, BoxConstraints constraints) {
             return CustomPaint(
-              painter: ArrowPainter.fromInstanceForSummary(
-                  instance, widget.training.targetType == TargetType.TripleSpot, targetRadiusScaleFactor, color),
+              painter: ArrowPainter.fromInstanceForSummary(instance, widget.training.targetType == TargetType.TripleSpot, targetRadiusScaleFactor, color),
               child: Container(
                 width: constraints.maxWidth,
                 height: constraints.maxWidth,
@@ -204,11 +258,11 @@ class _TrainingSummaryState extends State<TrainingSummary> with TickerProviderSt
     List<ScoreInstance> secondaryInstances;
 
     if (arrowInformation == null) {
-      mainInstances = allArrows();
-      secondaryInstances = allArrowsExcept();
+      mainInstances = allArrows(arrows);
+      secondaryInstances = allArrowsExcept(arrows);
     } else {
-      mainInstances = allArrows(arrowInformation.id);
-      secondaryInstances = allArrowsExcept(arrowInformation.id);
+      mainInstances = allArrows(arrows, arrowInformation.id);
+      secondaryInstances = allArrowsExcept(arrows, arrowInformation.id);
     }
 
     if (mainInstances == null || mainInstances.isEmpty) {
@@ -243,7 +297,12 @@ class _TrainingSummaryState extends State<TrainingSummary> with TickerProviderSt
               ),
               drawArrows(secondaryInstances, scaleFactor, Colors.black12),
               drawArrows(mainInstances, scaleFactor, Colors.purple),
-              drawStats(normGroupCenter(mainInstances), normGroupCenter(secondaryInstances), scaleFactor),
+              drawStats(
+                normGroupCenter(mainInstances, widget.training.targetDiameterCM, widget.training.targetType),
+                normGroupCenter(secondaryInstances, widget.training.targetDiameterCM, widget.training.targetType),
+                scaleFactor,
+                //calculateConfidenceEllipse(mainInstances, 1, widget.training.targetType),
+              ),
             ],
           );
         },
@@ -269,7 +328,7 @@ class _TrainingSummaryState extends State<TrainingSummary> with TickerProviderSt
 
       List<DataCell> cells = [];
 
-      scores.sort((a, b) => a.pRadius.compareTo(b.pRadius));
+      scores.sort((a, b) => a.tripleSpotRadius(widget.training.targetDiameterCM).compareTo(b.tripleSpotRadius(widget.training.targetDiameterCM)));
 
       int endScoreCounter = 0;
       int rowScoreCounter = 0;
@@ -375,8 +434,6 @@ class _TrainingSummaryState extends State<TrainingSummary> with TickerProviderSt
       )
     ];
 
-    //MediaQueryData _mediaQueryData = MediaQuery.of(context);
-
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: DataTable(
@@ -413,108 +470,44 @@ class _TrainingSummaryState extends State<TrainingSummary> with TickerProviderSt
     );
   }
 
-  List<ScoreInstance> allArrows([int id]) {
-    if (id != null) {
-      return arrows
-          .expand((element) => element)
-          .toList()
-          .where((element) => element.isUntouched == 0)
-          .toList()
-          .where((element) => element.arrowInformation.id == id)
-          .toList();
-    }
-    return arrows.expand((element) => element).toList().where((element) => element.isUntouched == 0).toList();
-  }
-
-  List<ScoreInstance> allArrowsExcept([int id]) {
-    if (id != null) {
-      return arrows
-          .expand((element) => element)
-          .toList()
-          .where((element) => element.isUntouched == 0)
-          .toList()
-          .where((element) => element.arrowInformation.id != id)
-          .toList();
-    }
-    return [];
-  }
-
-  List<ArrowInformation> allArrowInformation() {
-    return allArrows().map((e) => e.arrowInformation).toSet().toList();
-  }
-
   List<Widget> allArrowHitmaps(double radius) {
     List<Widget> hitmaps = [];
-    for (var arrowInformation in allArrowInformation()) {
+    for (var arrowInformation in allArrowInformation(arrows)) {
       hitmaps.add(createHitMap(arrowInformation));
     }
     return hitmaps;
   }
 
-  Offset normGroupCenter(List<ScoreInstance> arrows) {
-    if (arrows == null || arrows.isEmpty) {
-      return Offset(0, 0);
-    }
-
-    return arrows
-            .map((e) => e.getRelativeCartesianCoordinates(widget.training.targetDiameterCM, widget.training.targetType))
-            .reduce((a, b) => a + b) /
-        arrows.length.toDouble() /
-        widget.training.targetDiameterCM;
-  }
-
   Offset centerDeviationOfArrowWithID(int id) {
-    Offset groupAvg = normGroupCenter(allArrows(id));
-    Offset otherAvg = normGroupCenter(allArrowsExcept(id));
+    Offset groupAvg = normGroupCenter(allArrows(arrows, id), widget.training.targetDiameterCM, widget.training.targetType);
+    Offset otherAvg = normGroupCenter(allArrowsExcept(arrows, id), widget.training.targetDiameterCM, widget.training.targetType);
     return (groupAvg - otherAvg) * widget.training.targetDiameterCM;
   }
 
-  double rootMeanSquareDist(List<Offset> positions) {
-    double meanX = positions.map((e) => e.dx).reduce((a, b) => a + b) / positions.length;
-    double meanY = positions.map((e) => e.dy).reduce((a, b) => a + b) / positions.length;
-    double sum = 0;
-
-    for (Offset o in positions) {
-      sum += pow(o.dx - meanX, 2) + pow(o.dy - meanY, 2);
+  GlobalObjectKey assignStatSectionKey() {
+    if (!_statSectionKeyAssigned) {
+      _statSectionKeyAssigned = true;
+      return _statSectionKey;
     }
-    sum = sqrt(sum / positions.length);
-    return sum;
+    return null;
   }
 
   Widget allArrowHitmapsColumn(double radius) {
     List<Widget> mainColumn = [];
     double spacerSize = screenWidth() / 20;
+    _statSectionKeyAssigned = false;
 
-    if (allArrowInformation() == null || allArrowInformation().isEmpty || allArrowInformation().contains(null)) {
+    if (allArrowInformation(arrows) == null || allArrowInformation(arrows).isEmpty || allArrowInformation(arrows).contains(null)) {
       return Container();
     }
 
-    for (var arrowInformation in allArrowInformation()) {
+    for (var arrowInformation in allArrowInformation(arrows)) {
       List<Widget> rowChildren = [];
 
       mainColumn.add(SizedBox(
         height: 30,
       ));
-      mainColumn.add(
-        Row(
-          children: [
-            Expanded(
-              child: Center(
-                child: Text(
-                  "Arrow " + arrowInformation.label + " Hitmap",
-                  style: TextStyle(
-                    fontSize: 18,
-                  ),
-                ),
-              ),
-            ),
-            Expanded(child: Container()),
-          ],
-        ),
-      );
-      mainColumn.add(SizedBox(
-        height: 5,
-      ));
+
       rowChildren.add(SizedBox(width: spacerSize));
       rowChildren.add(Expanded(child: createHitMap(arrowInformation)));
       rowChildren.add(SizedBox(width: spacerSize));
@@ -524,8 +517,7 @@ class _TrainingSummaryState extends State<TrainingSummary> with TickerProviderSt
         children: [
           Text(
             "Ø Score = " +
-                (allArrows(arrowInformation.id).map((e) => e.score).reduce((a, b) => a + b) / allArrows(arrowInformation.id).length)
-                    .toStringAsFixed(2),
+                (allArrows(arrows, arrowInformation.id).map((e) => e.score).reduce((a, b) => a + b) / allArrows(arrows, arrowInformation.id).length).toStringAsFixed(2),
             style: TextStyle(fontSize: 16),
           ),
           SizedBox(
@@ -533,7 +525,7 @@ class _TrainingSummaryState extends State<TrainingSummary> with TickerProviderSt
           ),
           Text(
             "2D Dispersion = " +
-                rootMeanSquareDist(allArrows(arrowInformation.id)
+                rootMeanSquareDist(allArrows(arrows, arrowInformation.id)
                         .map((e) => e.getRelativeCartesianCoordinates(widget.training.targetDiameterCM, widget.training.targetType))
                         .toList())
                     .toStringAsFixed(2),
@@ -557,15 +549,41 @@ class _TrainingSummaryState extends State<TrainingSummary> with TickerProviderSt
       )));
       rowChildren.add(SizedBox(width: spacerSize));
 
-      mainColumn.add(Row(
-        children: rowChildren,
-      ));
+      mainColumn.add(
+        Column(
+          key: assignStatSectionKey(),
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Center(
+                    child: Text(
+                      "Arrow " + arrowInformation.label + " Hitmap",
+                      style: TextStyle(
+                        fontSize: 18,
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(child: Container()),
+              ],
+            ),
+            SizedBox(
+              height: 5,
+            ),
+            SizedBox(width: spacerSize),
+            Row(
+              children: rowChildren,
+            ),
+          ],
+        ),
+      );
     }
     return Column(children: mainColumn);
   }
 
   Widget createStatistics() {
-    if (allArrows().isEmpty) {
+    if (allArrows(arrows).isEmpty) {
       return Container();
     }
 
@@ -640,6 +658,7 @@ class _TrainingSummaryState extends State<TrainingSummary> with TickerProviderSt
                 width: double.infinity,
                 height: double.infinity,
                 child: SingleChildScrollView(
+                  controller: _scrollController,
                   child: Column(
                     children: [
                       SizedBox(

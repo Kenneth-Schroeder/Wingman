@@ -6,11 +6,11 @@ import 'TrainingCreation.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'CompetitionMenu.dart';
 import 'package:Wingman/icons/my_flutter_app_icons.dart';
-import 'SizeConfig.dart';
 import 'utilities.dart';
 import 'package:highlighter_coachmark/highlighter_coachmark.dart';
 import 'dart:math';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'SizeConfig.dart';
 
 class MyHomePage extends StatefulWidget {
   MyHomePage({Key key, this.title}) : super(key: key);
@@ -29,7 +29,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   GlobalKey _trainingTileKey = GlobalObjectKey("trainingTile");
   AnimationController _dialController;
   ScrollController _scrollController = ScrollController();
-  bool _curtainActive = false;
+  bool _curtainActive;
 
   @override
   void initState() {
@@ -39,15 +39,16 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
 
   void onStart() async {
     dbService = await DatabaseService.create();
-    SizeConfig().init(context);
     await _loadTrainings();
-    startRoutineFinished = true;
+    SizeConfig().init(context);
 
+    _curtainActive = false;
     _dialController = new AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 500),
     );
 
+    startRoutineFinished = true;
     setState(() {});
   }
 
@@ -145,7 +146,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   void _addTraining() async {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => TrainingCreation()),
+      MaterialPageRoute(builder: (context) => TrainingCreation(_trainings)),
     ).then((value) {
       startRoutineFinished = false;
       onStart();
@@ -160,7 +161,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   void editTraining(TrainingInstance training) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => TrainingCreation(training)),
+      MaterialPageRoute(builder: (context) => TrainingCreation(_trainings, training)),
     ).then((value) {
       startRoutineFinished = false;
       onStart();
@@ -174,8 +175,6 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   }
 
   double getGradientRadius(int height) {
-    // todo do this with the other SizeConfigs too // todo make sure to use _screenWidth OR always wait for startRoutineFinished
-    SizeConfig().init(context);
     return screenWidth() / height;
   }
 
@@ -241,7 +240,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                         ),
                         boxShadow: [new BoxShadow(color: Colors.black54, offset: new Offset(3.0, 4.0), blurRadius: 3.0, spreadRadius: 0.1)],
                         gradient: RadialGradient(
-                          radius: getGradientRadius(60), // todo check if thats alright for all screen sizes
+                          radius: getGradientRadius(60),
                           center: Alignment.topLeft,
                           colors: [
                             Colors.yellow,
@@ -326,23 +325,19 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     );
   }
 
-  Widget buildSpeedDial() {
+  Widget buildSpeedDial(BuildContext context) {
     List<IconData> icons = [MyFlutterApp.trophy, Icons.assignment];
     List<String> labels = ["Virtual Opponent", "Training"];
     List<Color> backgroundColors = [Colors.red[800], Colors.yellow[800]];
     List<Function> actions = [
-      () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => CompetitionMenu()),
-        ).then((value) {
-          startRoutineFinished = false;
-          onStart();
-        });
-      },
-      () {
-        _addTraining();
-      }
+      () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => CompetitionMenu()),
+          ).then((value) {
+            startRoutineFinished = false;
+            onStart();
+          }),
+      () => _addTraining()
     ];
 
     return Row(
@@ -462,9 +457,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
 
   Widget _greyCurtain() {
     if (!_curtainActive) {
-      return Container(
-        color: Colors.transparent,
-      );
+      return Container();
     }
     return GestureDetector(
       onTap: () {
@@ -478,7 +471,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     );
   }
 
-  Widget showContent() {
+  Widget showContent(BuildContext context) {
     return Stack(
       children: [
         Scaffold(
@@ -504,7 +497,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
               ],
             ),
           ),
-          floatingActionButton: buildSpeedDial(), // This trailing comma makes auto-formatting nicer for build methods.
+          floatingActionButton: buildSpeedDial(context),
         ),
       ],
     );
@@ -513,7 +506,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     if (startRoutineFinished) {
-      return showContent();
+      return showContent(context);
     }
 
     return emptyScreen(context);

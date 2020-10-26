@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'database_service.dart';
-import 'SizeConfig.dart';
 import 'ArrowInformation.dart';
 import 'package:flutter/services.dart';
 import 'utilities.dart';
 import 'package:highlighter_coachmark/highlighter_coachmark.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'SizeConfig.dart';
 
 class QuiverOrganizer extends StatefulWidget {
   QuiverOrganizer(this.numArrowsToSelect, this.selectedArrowInformationIDs, {Key key}) : super(key: key);
@@ -835,8 +835,7 @@ class _CustomTabsState extends State<CustomTabView> with TickerProviderStateMixi
             labelColor: Theme.of(context).primaryColor,
             unselectedLabelColor: Colors.white,
             indicatorSize: TabBarIndicatorSize.label,
-            indicator: BoxDecoration(
-                borderRadius: BorderRadius.only(topLeft: Radius.circular(10), topRight: Radius.circular(10)), color: Colors.white),
+            indicator: BoxDecoration(borderRadius: BorderRadius.only(topLeft: Radius.circular(10), topRight: Radius.circular(10)), color: Colors.white),
             tabs: List.generate(
               widget.itemCount,
               (index) => widget.tabBuilder(context, index),

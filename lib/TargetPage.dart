@@ -14,6 +14,7 @@ import 'ArrowInformation.dart';
 import 'utilities.dart';
 import 'package:highlighter_coachmark/highlighter_coachmark.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'StatsPainter.dart';
 
 class TargetPage extends StatefulWidget {
   TargetPage(this.training, this.arrows, {Key key}) : super(key: key);
@@ -46,6 +47,7 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
   Offset _targetCenterOffset = Offset(0, 0);
 
   double _groupPerimeter = 0;
+  double _2dDispersion = 0;
 
   DatabaseService dbService;
   CompetitionSimulator simulator;
@@ -57,6 +59,7 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
   List<int> currentMatchPoints = [0, 0];
   bool startRoutineFinished = false;
   bool dragScrollIsExpanded = false;
+  bool _showOverlayStatistics = false;
 
   AnimationController _animationController;
   Animation<double> _animation;
@@ -96,15 +99,15 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
 
     switch (widget.training.targetType) {
       case TargetType.Full:
-        targetCenter = SizeConfig().threeSideCenter();
+        targetCenter = screenThreeSideCenter();
         _scaleFactor = 1.0;
         break;
       case TargetType.SingleSpot:
-        targetCenter = SizeConfig().threeSideCenter();
+        targetCenter = screenThreeSideCenter();
         _scaleFactor = 1.7;
         break;
       case TargetType.TripleSpot:
-        targetCenter = SizeConfig().center();
+        targetCenter = screenCenter();
         _scaleFactor = 0.8;
         break;
     }
@@ -160,7 +163,7 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
     CoachMark coachMark = CoachMark();
 
     Rect markRect = Rect.fromCircle(
-      center: arrowTopPosition + SizeConfig().appBarHeight(),
+      center: arrowTopPosition + screenAppBarHeight(),
       radius: minScreenDimension() / 22.0,
     );
 
@@ -200,7 +203,7 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
     }
 
     Rect markRect = Rect.fromCircle(
-      center: draggedTargetCenter() + SizeConfig().appBarHeight(),
+      center: draggedTargetCenter() + screenAppBarHeight(),
       radius: scaledTargetRadius(),
     );
 
@@ -281,8 +284,7 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
     Rect markRectResetButton = resetButton.localToGlobal(Offset.zero) & resetButton.size;
     Rect markRectDeleteButton = deleteButton.localToGlobal(Offset.zero) & resetButton.size;
     double radius = markRectResetButton.longestSide * 0.6;
-    Rect result = Rect.fromPoints(
-        markRectResetButton.center - Offset(radius, radius * 0.8), markRectDeleteButton.center + Offset(radius, radius * 0.8));
+    Rect result = Rect.fromPoints(markRectResetButton.center - Offset(radius, radius * 0.8), markRectDeleteButton.center + Offset(radius, radius * 0.8));
 
     coachMark.show(
       targetContext: _resetArrowsKey.currentContext,
@@ -341,6 +343,27 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
     return CustomPaint(key: _targetKey, painter: TargetPainter(draggedTargetCenter(), scaledTargetRadius(), widget.training.targetType));
   }
 
+  Widget statisticsOverlay() {
+    if (!_showOverlayStatistics || _draggedArrow != -1) {
+      return Container();
+    }
+
+    Offset groupCenter = normGroupCenter(allArrows([arrows[endIndex]]), scaledTargetRadius(), widget.training.targetType);
+
+    if (normGroupCenter == null) {
+      return Container();
+    }
+
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        return CustomPaint(
+          painter: StatsPainter.fromTargetLocation(
+              groupCenter, draggedTargetCenter(), scaledTargetRadius(), calculateConfidenceEllipse(arrows[endIndex], scaledTargetRadius(), widget.training.targetType)),
+        );
+      },
+    );
+  }
+
   int _touchedArrowIndex(double x, double y) {
     // determine distance to all arrows and return arrow with lowest dist IF within radius
     double touchPRadius = localCartesianToRelativePolar(draggedTargetCenter(), x, y)[0];
@@ -348,11 +371,10 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
 
     List<double> distances = [];
 
-    arrows[endIndex].forEach(
-        (arrow) => distances.add(polarDistance(touchPRadius, touchPAngle, arrow.pRadius * targetRadius * _scaleFactor, arrow.pAngle)));
+    arrows[endIndex].forEach((arrow) => distances.add(polarDistance(touchPRadius, touchPAngle, arrow.pRadius * targetRadius * _scaleFactor, arrow.pAngle)));
 
-    // todo pretty much hardcoded /7 same as in arrowpainter
-    if (argMin(distances)[0] <= -arrowDropOffset().dy / 7) {
+    // todo pretty much hardcoded /7 same as in arrowpainter , -arrowDropOffset().dy / 7
+    if (argMin(distances)[0] <= minScreenDimension() / 27.0) {
       return argMin(distances)[1];
     }
 
@@ -377,16 +399,19 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
 
   List<int> getMatchPoints() {
     List<int> points = [0, 0];
+    int untouchedEndDecrease = 0;
 
-    if (opponents == null ||
-        countNumberOfUntouchedArrows(endIndex) == arrows[endIndex].length ||
-        widget.training.competitionType != CompetitionType.finals) {
-      // second condition probably unnecessary
+    if (opponents == null || widget.training.competitionType != CompetitionType.finals) {
       return points;
     }
 
-    for (int i = 0; i < opponents[0].endScores.length; i++) {
-      // todo check if end has an untouched arrow, then stop here and dont allow clicking next if an arrow is not placed
+    if (countNumberOfUntouchedArrows(endIndex) == arrows[endIndex].length) {
+      // dont count the current end
+      untouchedEndDecrease = 1;
+    }
+
+    for (int i = 0; i < opponents[0].endScores.length - untouchedEndDecrease; i++) {
+      // check if end has an untouched arrow, then stop here and dont allow clicking next if an arrow is not placed
       if (countNumberOfUntouchedArrows(i) > 0) {
         break;
       }
@@ -448,7 +473,7 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
 
     if (widget.training.competitionType == CompetitionType.finals) {
       w = Container(
-        height: screenHeight() * 0.12,
+        height: 50,
         child: Center(
           child: Column(
             children: [
@@ -672,8 +697,8 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
     for (int i = 0; i < arrows[endIndex].length; i++) {
       arrowPainters.add(
         CustomPaint(
-          painter: ArrowPainter.fromInstance(arrows[endIndex][i], draggedTargetCenter(), scaledTargetRadius(), arrowDropOffset(),
-              counter == _draggedArrow, _draggedArrow != -1 && i != _draggedArrow && arrows[endIndex][i].isUntouched == 0),
+          painter: ArrowPainter.fromInstance(arrows[endIndex][i], draggedTargetCenter(), scaledTargetRadius(), arrowDropOffset(), counter == _draggedArrow,
+              _draggedArrow != -1 && i != _draggedArrow && arrows[endIndex][i].isUntouched == 0),
           child: Container(),
         ),
       );
@@ -690,7 +715,7 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
         _draggedArrow = _touchedArrowIndex(localPos.dx, localPos.dy);
         if (_draggedArrow != -1 && arrows[endIndex][_draggedArrow].isLocked == 1) {
           Scaffold.of(context).hideCurrentSnackBar();
-          Scaffold.of(context).showSnackBar(SnackBar(content: Text('This Arrow is locked.')));
+          Scaffold.of(context).showSnackBar(SnackBar(content: Text('This arrow is locked.')));
         }
       },
       onMoveEnd: (pointer, localPos, position) {
@@ -737,17 +762,47 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
     );
   }
 
-  void resetArrows() {
+  void resetArrows(BuildContext context) {
+    if (arrows[endIndex].any((element) => element.isLocked == 1)) {
+      Scaffold.of(context).hideCurrentSnackBar();
+      Scaffold.of(context).showSnackBar(SnackBar(content: Text('This end is locked.')));
+      return;
+    }
+
     arrows[endIndex].forEach((element) {
       element.reset();
     });
+
+    resetOpponentsEnd();
+    currentMatchPoints = getMatchPoints();
     setState(() {});
   }
 
-  void deleteEnd() async {
+  void resetOpponentsEnd() {
+    for (int i = 0; i < numOpponents; i++) {
+      opponents[i].arrowScores[endIndex] = [];
+      opponents[i].endScores[endIndex] = 0;
+    }
+  }
+
+  void deleteOpponentsEnd() {
+    for (int i = 0; i < numOpponents; i++) {
+      opponents[i].arrowScores.removeAt(endIndex);
+      opponents[i].endScores.removeAt(endIndex);
+    }
+  }
+
+  void deleteEnd(BuildContext context) async {
+    if (arrows[endIndex].any((element) => element.isLocked == 1)) {
+      Scaffold.of(context).hideCurrentSnackBar();
+      Scaffold.of(context).showSnackBar(SnackBar(content: Text('This end is locked.')));
+      return;
+    }
+
     if (arrows.length <= 1 || widget.training.competitionType == CompetitionType.qualifying) {
       // todo make sure there are no other issues here
-      resetArrows();
+      resetArrows(context);
+      resetOpponentsEnd();
       return;
     }
 
@@ -755,8 +810,10 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
 
     await dbService.deleteEnd(endID);
     arrows.removeAt(endIndex);
+    deleteOpponentsEnd();
 
     endIndex = max(0, endIndex - 1);
+    currentMatchPoints = getMatchPoints();
 
     setState(() {});
   }
@@ -873,7 +930,7 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
 
   Widget _quickStats() {
     return Container(
-      height: 70,
+      height: 95,
       color: Colors.white,
       child: Column(
         children: [
@@ -895,13 +952,46 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
               Column(
                 children: [
                   Text("End Score: " + getEndScore(endIndex).toString(), style: TextStyle(fontSize: 16)),
+                  SizedBox(
+                    height: 1,
+                  ),
                   Text("Total: " + getTotalScore().toString(), style: TextStyle(fontSize: 16)),
+                  SizedBox(
+                    height: 3,
+                  ),
+                  Text(
+                    "2D Dispersion = " + _2dDispersion.toStringAsFixed(2),
+                    style: TextStyle(fontSize: 16),
+                  ),
                 ],
               ),
               Column(
                 children: [
                   Text("End Average: " + getEndAverage().toStringAsFixed(2), style: TextStyle(fontSize: 16)),
-                  Text("Perimeter: " + this._groupPerimeter.toStringAsFixed(2) + " cm", style: TextStyle(fontSize: 16)),
+                  SizedBox(
+                    height: 1,
+                  ),
+                  Text("Perimeter: " + _groupPerimeter.toStringAsFixed(2) + " cm", style: TextStyle(fontSize: 16)),
+                  SizedBox(
+                    height: 3,
+                  ),
+                  FlatButton(
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                    height: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10.0),
+                      side: BorderSide(color: Colors.blue[800]),
+                    ),
+                    child: Text(
+                      "TOGGLE OVERLAY",
+                      style: TextStyle(fontSize: 16, color: Colors.blue[800]),
+                    ),
+                    onPressed: () {
+                      _showOverlayStatistics = !_showOverlayStatistics;
+                      setState(() {});
+                    },
+                  ),
                 ],
               ),
             ],
@@ -911,9 +1001,30 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
     );
   }
 
+  Icon forwardButtonIcon() {
+    if (endIndex + 1 >= arrows.length && !gameOver() && (arrows.length < widget.training.numberOfEnds || widget.training.numberOfEnds == 0)) {
+      // make it add button
+      return Icon(Icons.add);
+    }
+
+    return Icon(Icons.navigate_next);
+  }
+
+  Text forwardButtonText() {
+    if (endIndex + 1 >= arrows.length && !gameOver() && (arrows.length < widget.training.numberOfEnds || widget.training.numberOfEnds == 0)) {
+      // make it add button
+      return Text("Add End");
+    }
+
+    return Text("Next");
+  }
+
   Widget _bottomBar(BuildContext context) {
-    if (_draggedArrow == -1)
+    if (_draggedArrow == -1) {
       _groupPerimeter = getGroupPerimeter(widget.training.targetDiameterCM); // todo remove hardcoding here and further down
+      _2dDispersion = rootMeanSquareDist(
+          allArrows([arrows[endIndex]]).map((e) => e.getRelativeCartesianCoordinates(widget.training.targetDiameterCM, widget.training.targetType)).toList());
+    }
 
     return BottomAppBar(
       color: Colors.white,
@@ -943,8 +1054,8 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
-                Icon(Icons.navigate_next),
-                Text("Next"),
+                forwardButtonIcon(),
+                forwardButtonText(),
               ],
             ),
             onPressed: () {
@@ -958,7 +1069,7 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
 
   double _dragScrollSheetMaxSize() {
     if (widget.training.competitionType == CompetitionType.training) {
-      return (70 + 40 + screenHeight() * 0.045) / screenHeight();
+      return (95 + 40 + screenHeight() * 0.045) / screenHeight();
     }
 
     return 0.5;
@@ -1029,8 +1140,7 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
                       child: Column(
                         children: [
                           sheetItemWrapper(_quickStats(), true, Colors.white),
-                          sheetItemWrapper(
-                              matchPointsDisplay(), widget.training.competitionType == CompetitionType.finals, Colors.red[300]),
+                          sheetItemWrapper(matchPointsDisplay(), widget.training.competitionType == CompetitionType.finals, Colors.red[300]),
                           sheetItemWrapper(_opponentStats(), widget.training.competitionType != CompetitionType.training, Colors.white),
                         ],
                       ),
@@ -1056,46 +1166,46 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
     );
   }
 
-  Widget showContent() {
+  Widget showContent(BuildContext context) {
     return WillPopScope(
-      child: Stack(
-        children: [
-          Scaffold(
-            appBar: AppBar(
-              title: Text("Score Recording"),
-              actions: <Widget>[
-                // action button
-                IconButton(
-                  icon: Icon(Icons.help),
-                  onPressed: () {
-                    showCoachMarkArrowInstance();
-                  },
-                ),
-                IconButton(
-                  key: _resetArrowsKey,
-                  icon: Icon(Icons.undo),
-                  onPressed: resetArrows,
-                ),
-                IconButton(
-                  key: _deleteEndKey,
-                  icon: Icon(Icons.delete),
-                  onPressed: deleteEnd,
-                ),
-              ],
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text("Score Recording"),
+          actions: <Widget>[
+            // action button
+            IconButton(
+              icon: Icon(Icons.help),
+              onPressed: () {
+                showCoachMarkArrowInstance();
+              },
             ),
-            body: SafeArea(
-              bottom: false,
-              child: Builder(
-                builder: (context) => Stack(
-                  children: [createTarget(), loadArrows(context), _dragScrollSheet(), _scoreOverlayAnimation()],
-                ),
+            Builder(
+              builder: (context) => IconButton(
+                key: _resetArrowsKey,
+                icon: Icon(Icons.undo),
+                onPressed: () => resetArrows(context),
               ),
             ),
-            bottomNavigationBar: Builder(
-              builder: (context) => _bottomBar(context),
+            Builder(
+              builder: (context) => IconButton(
+                key: _deleteEndKey,
+                icon: Icon(Icons.delete),
+                onPressed: () => deleteEnd(context),
+              ),
+            ),
+          ],
+        ),
+        body: SafeArea(
+          bottom: false,
+          child: Builder(
+            builder: (context) => Stack(
+              children: [createTarget(), loadArrows(context), statisticsOverlay(), _dragScrollSheet(), _scoreOverlayAnimation()],
             ),
           ),
-        ],
+        ),
+        bottomNavigationBar: Builder(
+          builder: (context) => _bottomBar(context),
+        ),
       ),
       onWillPop: onLeave,
     );
@@ -1109,7 +1219,7 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
       arrowBotPosition = Offset(screenWidth() / 10, screenHeight() * 8 / 12);
       targetRadius = minScreenDimension() / 2.2;
       setUntouchedArrowsPosition();
-      return showContent();
+      return showContent(context);
     }
 
     return emptyScreen(context);

@@ -136,6 +136,17 @@ class ScoreInstance {
     return score;
   }
 
+  double tripleSpotRadius(double targetRadius) {
+    double radius = pRadius;
+    _moveForTriSpot(targetRadius, 1);
+    radius = min(radius, pRadius);
+    _moveForTriSpot(targetRadius, -2);
+    radius = min(radius, pRadius);
+    _moveForTriSpot(targetRadius, 1);
+
+    return radius;
+  }
+
   Offset tripleSpotLocalRelativeCoordinates(double targetRadius) {
     // local spot, relative to local spot center
 

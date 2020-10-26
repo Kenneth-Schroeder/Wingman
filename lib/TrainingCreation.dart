@@ -9,8 +9,9 @@ import 'package:highlighter_coachmark/highlighter_coachmark.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 
 class TrainingCreation extends StatefulWidget {
-  TrainingCreation([this.editInstance]);
+  TrainingCreation(this.trainings, [this.editInstance]);
 
+  List<TrainingInstance> trainings;
   TrainingInstance editInstance;
 
   @override
@@ -22,6 +23,7 @@ class _TrainingCreationState extends State<TrainingCreation> with TickerProvider
   TrainingInstance newTraining = TrainingInstance.forCreation();
   List<int> _arrowInformationIDs = [];
   final numArrowsController = TextEditingController();
+  final sightSettingController = TextEditingController();
   final trainingTitleController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool startRoutineFinished = false;
@@ -39,6 +41,9 @@ class _TrainingCreationState extends State<TrainingCreation> with TickerProvider
     numArrowsController.addListener(() {
       setState(() {});
     });
+    sightSettingController.addListener(() {
+      setState(() {});
+    });
 
     trainingTitleController.text = "Training";
     numArrowsController.text = "6";
@@ -46,6 +51,7 @@ class _TrainingCreationState extends State<TrainingCreation> with TickerProvider
     if (widget.editInstance != null) {
       newTraining = widget.editInstance;
       numArrowsController.text = newTraining.arrowsPerEnd.toString();
+      sightSettingController.text = newTraining.sightSetting.toStringAsFixed(2);
       trainingTitleController.text = newTraining.title;
     }
     startRoutineFinished = true;
@@ -214,7 +220,6 @@ class _TrainingCreationState extends State<TrainingCreation> with TickerProvider
                 },
                 onTap: () {
                   trainingTitleController.text = "";
-                  // numArrowsController.text = "";
                 },
               ),
             ),
@@ -224,7 +229,6 @@ class _TrainingCreationState extends State<TrainingCreation> with TickerProvider
                 children: [
                   Expanded(
                     child: TextFormField(
-                      // todo needs controller for setupArrows() to get current value, when we dont need onFieldSubmitted anymore
                       textInputAction: TextInputAction.next,
                       enabled: widget.editInstance == null,
                       controller: numArrowsController,
@@ -249,6 +253,7 @@ class _TrainingCreationState extends State<TrainingCreation> with TickerProvider
                         }
                         return null;
                       },
+                      // todo check if necessary
                       onFieldSubmitted: (String text) {
                         FocusScope.of(context).requestFocus(_targetFocus);
                         setState(() {});
@@ -270,7 +275,6 @@ class _TrainingCreationState extends State<TrainingCreation> with TickerProvider
                           height: 50.0,
                           child: RaisedButton(
                             key: _quiverKey,
-                            // todo disable button if in edit mode
                             color: arrowSelectionValid() ? Colors.green : Colors.redAccent,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18.0)),
                             child: Icon(MyFlutterApp.arrow_flights),
@@ -393,8 +397,8 @@ class _TrainingCreationState extends State<TrainingCreation> with TickerProvider
                     margin: EdgeInsets.only(top: 10.0, bottom: 10.0, right: 20.0, left: 10),
                     child: TextFormField(
                       textInputAction: TextInputAction.next,
-                      initialValue: newTraining.sightSetting == null ? null : newTraining.sightSetting.toStringAsFixed(2),
-                      decoration: const InputDecoration(
+                      controller: sightSettingController,
+                      decoration: InputDecoration(
                         labelText: 'Sight Setting',
                         errorMaxLines: 3,
                         fillColor: Colors.white,
@@ -495,7 +499,129 @@ class _TrainingCreationState extends State<TrainingCreation> with TickerProvider
     );
   }
 
-  Widget showContent() {
+  DataColumn tableColumn(String text, bool numeric) {
+    return DataColumn(
+      label: Expanded(
+        child: Text(text, textAlign: TextAlign.center, textScaleFactor: 1.1),
+      ),
+      numeric: true,
+    );
+  }
+
+  DataCell tableCell(String content) {
+    return DataCell(
+      Center(
+        child: Text(
+          content,
+          style: TextStyle(fontSize: 16),
+        ),
+      ),
+    );
+  }
+
+  Widget recentSightSettingsTable(BuildContext context) {
+    if (widget.trainings == null || widget.trainings.isEmpty) {
+      return Text("No sight settings available.");
+    }
+
+    Map distToSight = Map<double, double>();
+
+    for (int i = 0; i < widget.trainings.length; i++) {
+      if (widget.trainings[i].targetDistance != null &&
+          widget.trainings[i].targetDistance != 0 &&
+          widget.trainings[i].sightSetting != null &&
+          widget.trainings[i].sightSetting != 0 &&
+          !distToSight.containsKey(widget.trainings[i].targetDistance)) {
+        distToSight[widget.trainings[i].targetDistance] = widget.trainings[i].sightSetting;
+      }
+    }
+
+    List<DataRow> rows = [];
+    List<double> keys = distToSight.keys.toList();
+    keys.sort((a, b) => a.compareTo(b));
+
+    if (keys.isEmpty) {
+      return Text("No sight settings available.");
+    }
+
+    for (int i = 0; i < keys.length; i++) {
+      List<DataCell> cells = [];
+
+      cells.add(tableCell(keys[i].toStringAsFixed(2)));
+      cells.add(
+        DataCell(
+          Center(
+            child: Text(
+              distToSight[keys[i]].toStringAsFixed(2),
+              style: TextStyle(fontSize: 16),
+            ),
+          ),
+          onTap: () {
+            newTraining.sightSetting = distToSight[keys[i]];
+            sightSettingController.text = distToSight[keys[i]].toStringAsFixed(2);
+            Navigator.of(context, rootNavigator: true).pop('dialog');
+          },
+        ),
+      );
+
+      rows.add(DataRow(cells: cells));
+      cells = [];
+    }
+
+    List<DataColumn> columns = [
+      tableColumn('Distance', true),
+      tableColumn('Sight Setting', true),
+    ];
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Center(
+          child: SingleChildScrollView(
+            child: SingleChildScrollView(
+              child: DataTable(
+                columns: columns,
+                rows: rows,
+                columnSpacing: 25,
+                dataRowHeight: 25,
+              ),
+              scrollDirection: Axis.horizontal,
+            ),
+            scrollDirection: Axis.vertical,
+          ),
+        ),
+      ],
+    );
+  }
+
+  void showRecentSightSettings(BuildContext context) {
+    Widget okButton = FlatButton(
+      child: Text(
+        "OK",
+        style: TextStyle(color: Colors.blue[800]),
+      ),
+      onPressed: () {
+        Navigator.of(context, rootNavigator: true).pop('dialog');
+      },
+    );
+
+    // set up the AlertDialog
+    AlertDialog alert = AlertDialog(
+      title: Text("Recent Sight Settings"),
+      content: recentSightSettingsTable(context),
+      actions: [okButton],
+    );
+
+    // show the dialog
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return alert;
+      },
+    );
+  }
+
+  Widget showContent(BuildContext context) {
     return Stack(
       children: [
         Scaffold(
@@ -508,6 +634,10 @@ class _TrainingCreationState extends State<TrainingCreation> with TickerProvider
                 onPressed: () {
                   showCoachMarkQuiver();
                 },
+              ),
+              IconButton(
+                icon: Icon(Icons.album_outlined),
+                onPressed: () => showRecentSightSettings(context),
               ),
             ],
           ),
@@ -547,7 +677,7 @@ class _TrainingCreationState extends State<TrainingCreation> with TickerProvider
   @override
   Widget build(BuildContext context) {
     if (startRoutineFinished) {
-      return showContent();
+      return showContent(context);
     }
 
     return emptyScreen(context);
