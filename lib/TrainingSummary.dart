@@ -117,7 +117,7 @@ class _TrainingSummaryState extends State<TrainingSummary> with TickerProviderSt
           Container(
             padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
             child: Text(
-              "These sections contain arrow specific statistics. Low dispersion values indicate tight groups and the group center deviations (GCD) quantifies the average deviation of arrow x (purple) from the other arrows (grey).",
+              "These sections contain arrow specific statistics. Low dispersion values indicate tight groups and the group center deviations (GCD) quantify the average deviation of arrow x (purple) from the other arrows (grey).",
               textAlign: TextAlign.center,
               style: const TextStyle(
                 fontSize: 24.0,

@@ -38,6 +38,7 @@ class _TrainingCreationState extends State<TrainingCreation> with TickerProvider
 
   void onStart() async {
     dbService = await DatabaseService.create();
+    print("1");
     numArrowsController.addListener(() {
       setState(() {});
     });
@@ -47,14 +48,16 @@ class _TrainingCreationState extends State<TrainingCreation> with TickerProvider
 
     trainingTitleController.text = "Training";
     numArrowsController.text = "6";
-
     if (widget.editInstance != null) {
       newTraining = widget.editInstance;
       numArrowsController.text = newTraining.arrowsPerEnd.toString();
-      sightSettingController.text = newTraining.sightSetting.toStringAsFixed(2);
+      if (newTraining.sightSetting != null && newTraining.sightSetting != 0) {
+        sightSettingController.text = newTraining.sightSetting.toStringAsFixed(2);
+      }
       trainingTitleController.text = newTraining.title;
     }
     startRoutineFinished = true;
+    print("3");
     setState(() {});
   }
 
