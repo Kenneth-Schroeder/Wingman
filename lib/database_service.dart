@@ -51,6 +51,8 @@ class DatabaseService {
             arrowDiameterMM REAL,
             sightSetting REAL DEFAULT 0,
             targetDistance REAL DEFAULT 0,
+            totalScore INTEGER DEFAULT 0,
+            totalArrows INTEGER DEFAULT 0,
             creationTime DATETIME
             )
           ''',
@@ -127,10 +129,14 @@ class DatabaseService {
         if (oldVersion <= 2) {
           db.execute("ALTER TABLE $tableTrainings ADD COLUMN targetDistance REAL DEFAULT 0");
         }
+        if (oldVersion <= 3) {
+          db.execute("ALTER TABLE $tableTrainings ADD COLUMN totalScore INTEGER DEFAULT 0");
+          db.execute("ALTER TABLE $tableTrainings ADD COLUMN totalArrows INTEGER DEFAULT 0");
+        }
       },
       // Set the version. This executes the onCreate function and provides a
       // path to perform database upgrades and downgrades.
-      version: 3,
+      version: 4,
     );
   }
 
@@ -442,39 +448,22 @@ class DatabaseService {
     return arrows;
   }
 
-  /*Future<Map<int, List<ScoreInstance>>> getFullEndsOfTraining(int trainingID) async {
-    // get all ends first and then get scores for each end
-    Database db = await database;
-    List<Map> endsMap = await db.rawQuery("SELECT * "
-        "FROM $tableEnds "
-        "INNER JOIN $tableTrainings ON $tableEnds.trainingID = $tableTrainings.id "
-        "INNER JOIN $tableScores ON $tableEnds.endID = $tableScores.endID "
-        "WHERE $tableEnds.trainingID == $trainingID");
-
-    Map<int, List<ScoreInstance>> scoresByEnd = Map<int, List<ScoreInstance>>();
-
-    for (var item in endsMap) {
-      if (!scoresByEnd.containsKey(item["endID"])) {
-        scoresByEnd[item["endID"]] = [];
-      }
-
-      ArrowInformation arrowInformation = await getArrowInformationFromID(item['arrowInformationID']);
-      scoresByEnd[item["endID"]].add(ScoreInstance.fromMapAndArrowInformation(item, arrowInformation));
-    }
-
-    return scoresByEnd;
-  }*/
-
-  Future<bool> updateAllEndsOfTraining(int trainingID, List<List<ScoreInstance>> arrows) async {
+  Future<bool> updateAllEndsOfTraining(TrainingInstance training, List<List<ScoreInstance>> arrows) async {
     // iterate over all ends and as long as arrows have an id, update them individually
+    int totalScore = 0;
+    int totalArrows = 0;
+
     for (var end in arrows) {
       // update arrows that are in DB already and insert new ones for those that have no ID
+      totalScore += end.map((e) => e.score).reduce((a, b) => a + b);
+      totalArrows += end.map((e) => 1 - e.isUntouched).reduce((a, b) => a + b);
+
       if (end.first.shotID != -1) {
         for (var arrow in end) {
           await updateScore(arrow);
         }
       } else {
-        await addEnd(trainingID).then((endID) {
+        await addEnd(training.id).then((endID) {
           for (var arrow in end) {
             arrow.endID = endID;
             addScore(arrow);
@@ -482,6 +471,11 @@ class DatabaseService {
         });
       }
     }
+
+    // update training totalArrows and totalScore
+    training.totalScore = totalScore;
+    training.totalArrows = totalArrows;
+    await updateTraining(training);
 
     return true;
   }

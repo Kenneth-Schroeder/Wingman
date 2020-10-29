@@ -55,7 +55,7 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
   bool sortAscending = false;
   int sortColumnIndex = 2;
   int numberOfUntouchedArrows;
-  int numOpponents = 10;
+  int numOpponents = 5;
   List<int> currentMatchPoints = [0, 0];
   bool startRoutineFinished = false;
   bool dragScrollIsExpanded = false;
@@ -850,7 +850,7 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
     if (arrows.length < widget.training.numberOfEnds || widget.training.numberOfEnds == 0) {
       lockArrowsIfFinal();
       // create new
-      await dbService.updateAllEndsOfTraining(widget.training.id, arrows);
+      await dbService.updateAllEndsOfTraining(widget.training, arrows);
 
       int endID = await dbService.addEnd(widget.training.id);
       await dbService.addDefaultScores(endID, numArrowsForEnd(endIndex), widget.training.relativeArrowWidth(), arrowInformation);
@@ -863,7 +863,10 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
       numberOfUntouchedArrows = countNumberOfUntouchedArrows();
       endFinishedAction();
       setState(() {});
+      return;
     }
+
+    endIndex--;
   }
 
   void prevRound() async {
@@ -881,7 +884,7 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
     if (opponents != null) {
       await dbService.updateAllOpponents(widget.training.id, opponents);
     }
-    return await dbService.updateAllEndsOfTraining(widget.training.id, arrows);
+    return await dbService.updateAllEndsOfTraining(widget.training, arrows);
   }
 
   int getTotalScore() {

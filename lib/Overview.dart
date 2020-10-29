@@ -178,9 +178,157 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     return screenWidth() / height;
   }
 
-  Widget overviewScreen() {
-    int lighteningFactor = 800;
+  String getTargetImageOfTraining(int index) {
+    switch (_trainings[index].targetType) {
+      case TargetType.TripleSpot:
+        return "assets/images/targets/triple.png";
+      case TargetType.SingleSpot:
+        return "assets/images/targets/single.png";
+      default:
+        return "assets/images/targets/full.png";
+    }
+  }
 
+  String getDistanceOfTraining(int index) {
+    if (_trainings[index].targetDistance != null && _trainings[index].targetDistance != 0) {
+      return _trainings[index].targetDistance.toStringAsFixed(0);
+    }
+
+    return "-";
+  }
+
+  Widget trainingCard(int index) {
+    int lighteningFactor = 800;
+    return Container(
+        key: index == 0 ? _trainingTileKey : null,
+        //padding: EdgeInsets.all(10.0),
+        height: 100,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(15),
+            bottomLeft: Radius.circular(15),
+          ),
+          color: _trainings[index].competitionType == CompetitionType.training ? Colors.red[600] : Colors.yellow[600], //Colors.red[600],
+          boxShadow: [new BoxShadow(color: Colors.black54, offset: new Offset(3.0, 4.0), blurRadius: 3.0, spreadRadius: 0.1)],
+        ),
+        child: Stack(
+          children: [
+            Positioned.fill(
+              left: screenWidth() / 2,
+              top: 0,
+              child: Image.asset(
+                getTargetImageOfTraining(index),
+                fit: BoxFit.none,
+                scale: 2000 / screenWidth() * 1.9,
+              ),
+            ),
+            SizedBox(
+              height: double.infinity,
+              width: double.infinity,
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(15),
+                    bottomLeft: Radius.circular(15),
+                  ),
+                  color: Colors.grey[900].withOpacity(0.4),
+                ),
+              ),
+            ),
+            Positioned.fill(
+              left: 5,
+              top: 5,
+              child: Align(
+                alignment: Alignment.topLeft,
+                child: Container(
+                  width: screenWidth() / 2,
+                  //color: Colors.green,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            _trainings[index].title,
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                            softWrap: false,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Expanded(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "Distance: ",
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                                Text(
+                                  "Score: ",
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                                Text(
+                                  "Arrows: ",
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                              ],
+                            ),
+                            Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(
+                                  getDistanceOfTraining(index),
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                                Text(
+                                  _trainings[index].totalScore.toString(),
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                                Text(
+                                  _trainings[index].totalArrows.toString(),
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      Row(
+                        //mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            "Date: " + _trainings[index].date(),
+                            style: TextStyle(color: Colors.white, fontSize: 10),
+                          ),
+                        ],
+                      ),
+                      SizedBox(
+                        height: 2,
+                      )
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ));
+  }
+
+  Widget overviewScreen() {
     return Container(
       decoration: BoxDecoration(
         gradient: RadialGradient(
@@ -229,73 +377,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                         onTap: () => deleteTraining(_trainings[index].id),
                       ),
                     ],
-                    child: Container(
-                      key: index == 0 ? _trainingTileKey : null,
-                      padding: EdgeInsets.all(10.0),
-                      height: 60,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(15),
-                          bottomLeft: Radius.circular(15),
-                        ),
-                        boxShadow: [new BoxShadow(color: Colors.black54, offset: new Offset(3.0, 4.0), blurRadius: 3.0, spreadRadius: 0.1)],
-                        gradient: RadialGradient(
-                          radius: getGradientRadius(60),
-                          center: Alignment.topLeft,
-                          colors: [
-                            Colors.yellow,
-                            Colors.yellow[lighteningFactor],
-                            Colors.red[lighteningFactor],
-                            Colors.red[lighteningFactor],
-                            Colors.blue[lighteningFactor],
-                            Colors.blue[lighteningFactor],
-                            Colors.black,
-                          ],
-                          stops: [0.0, 0.15, 0.34, 0.48, 0.66, 0.78, 1.0], // [0.0, 0.63, 0.7, 0.76, 0.8, 0.90, 0.94, 1.0],
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Center(
-                              child: Text(
-                                _trainings[index].title,
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 1,
-                                softWrap: false,
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            child: Column(
-                              children: [
-                                Expanded(
-                                    child: Center(
-                                        child: Text(
-                                  "Date: " + _trainings[index].date(),
-                                  style: TextStyle(color: Colors.white),
-                                ))),
-                                Expanded(
-                                    child: Center(
-                                        child: Text(
-                                  "Time: " + _trainings[index].time(),
-                                  style: TextStyle(color: Colors.white),
-                                ))),
-                              ],
-                            ),
-                          ),
-                          Icon(
-                            Icons.navigate_before,
-                            color: Colors.white,
-                          ),
-                        ],
-                      ),
-                    ),
+                    child: trainingCard(index),
                   ),
                 );
               },
@@ -505,6 +587,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    SizeConfig().init(context);
     if (startRoutineFinished) {
       return showContent(context);
     }

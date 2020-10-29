@@ -29,6 +29,8 @@ class TrainingInstance {
   bool indoor = false;
   double sightSetting;
   double targetDistance;
+  int totalScore = 0;
+  int totalArrows = 0;
 
   TrainingInstance(this.title, this.creationTime);
   TrainingInstance.forCreation() {
@@ -48,6 +50,8 @@ class TrainingInstance {
         title = map["title"],
         indoor = map["indoor"] == 1 ? true : false,
         arrowsPerEnd = map["arrowsPerEnd"],
+        totalScore = map["totalScore"],
+        totalArrows = map["totalArrows"],
         competitionLevel = map["competitionLevel"],
         sightSetting = map["sightSetting"], // == null ? 0 : map["sightSetting"],
         targetDistance = map["targetDistance"], // == null ? 0 : map["targetDistance"],
@@ -70,6 +74,8 @@ class TrainingInstance {
       "sightSetting": this.sightSetting,
       "targetDistance": this.targetDistance,
       "indoor": this.indoor ? 1 : 0,
+      "totalScore": this.totalScore,
+      "totalArrows": this.totalArrows,
     };
   }
 
@@ -78,11 +84,7 @@ class TrainingInstance {
   }
 
   String date() {
-    return creationTime.month.toString().padLeft(2, '0') +
-        "/" +
-        creationTime.day.toString().padLeft(2, '0') +
-        "/" +
-        creationTime.year.toString();
+    return creationTime.month.toString().padLeft(2, '0') + "/" + creationTime.day.toString().padLeft(2, '0') + "/" + creationTime.year.toString();
   }
 
   String time() {
