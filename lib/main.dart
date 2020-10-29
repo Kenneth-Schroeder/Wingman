@@ -20,6 +20,16 @@ MaterialColor swatchify(MaterialColor color, int value) {
   });
 }
 
+/*
+yellow ffeb3b
+red f44336
+blue 2196f3
+
+teal 00695c
+lime 827717
+
+ */
+
 class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
@@ -37,6 +47,7 @@ class MyApp extends StatelessWidget {
         // Notice that the counter didn't reset back to zero; the application
         // is not restarted.
         primarySwatch: swatchify(Colors.blue, 800),
+        //primaryColor: Color(0xff7A1C15), //061d80,5A0675
         // This makes the visual density adapt to the platform that you run
         // the app on. For desktop platforms, the controls will be smaller and
         // closer together (more dense) than on mobile platforms.

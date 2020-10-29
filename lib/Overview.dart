@@ -197,133 +197,120 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     return "-";
   }
 
+  Widget cardRing(Color color, double radiusFactor, double width, [Widget child]) {
+    return ClipRect(
+      child: Center(
+        child: OverflowBox(
+          maxWidth: double.infinity,
+          maxHeight: double.infinity,
+          child: Container(
+            width: screenWidth() * radiusFactor,
+            height: screenWidth() * radiusFactor,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.all(Radius.circular(500)),
+              border: Border.all(color: color, width: width),
+            ),
+            child: Center(
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 15),
+                height: 80,
+                child: child,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget trainingInfo(int index) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        SizedBox(
+          height: 3,
+        ),
+        Text(
+          _trainings[index].title,
+          overflow: TextOverflow.ellipsis,
+          maxLines: 1,
+          softWrap: false,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 22,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        Expanded(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Distance: ",
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  Text(
+                    "Score: ",
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ],
+              ),
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    getDistanceOfTraining(index),
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  Text(
+                    _trainings[index].totalScore.toString(),
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        Text(
+          "Date: " + _trainings[index].date(),
+          style: TextStyle(color: Colors.white, fontSize: 10),
+        ),
+        SizedBox(
+          height: 3,
+        )
+      ],
+    );
+  }
+
   Widget trainingCard(int index) {
-    int lighteningFactor = 800;
     return Container(
         key: index == 0 ? _trainingTileKey : null,
         //padding: EdgeInsets.all(10.0),
-        height: 100,
+        height: 80,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.only(
             topLeft: Radius.circular(15),
             bottomLeft: Radius.circular(15),
           ),
-          color: _trainings[index].competitionType == CompetitionType.training ? Colors.red[600] : Colors.yellow[600], //Colors.red[600],
+          color: _trainings[index].competitionType == CompetitionType.training
+              ? Color(0xff99322D)
+              : Color(
+                  0xff96860E), // for lighter Color(0xffB83236) : Color(0xffB59D12), // for dark: Color(0xff752409) : Color(0xff857A18), // 00695c,827717 Colors.teal[800] Colors.lime[900]
           boxShadow: [new BoxShadow(color: Colors.black54, offset: new Offset(3.0, 4.0), blurRadius: 3.0, spreadRadius: 0.1)],
         ),
         child: Stack(
           children: [
-            Positioned.fill(
-              left: screenWidth() / 2,
-              top: 0,
-              child: Image.asset(
-                getTargetImageOfTraining(index),
-                fit: BoxFit.none,
-                scale: 2000 / screenWidth() * 1.9,
-              ),
-            ),
-            SizedBox(
-              height: double.infinity,
-              width: double.infinity,
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(15),
-                    bottomLeft: Radius.circular(15),
-                  ),
-                  color: Colors.grey[900].withOpacity(0.4),
-                ),
-              ),
-            ),
-            Positioned.fill(
-              left: 5,
-              top: 5,
-              child: Align(
-                alignment: Alignment.topLeft,
-                child: Container(
-                  width: screenWidth() / 2,
-                  //color: Colors.green,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            _trainings[index].title,
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 1,
-                            softWrap: false,
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                      Expanded(
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  "Distance: ",
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                                Text(
-                                  "Score: ",
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                                Text(
-                                  "Arrows: ",
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                              ],
-                            ),
-                            Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Text(
-                                  getDistanceOfTraining(index),
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                                Text(
-                                  _trainings[index].totalScore.toString(),
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                                Text(
-                                  _trainings[index].totalArrows.toString(),
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      Row(
-                        //mainAxisSize: MainAxisSize.min,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            "Date: " + _trainings[index].date(),
-                            style: TextStyle(color: Colors.white, fontSize: 10),
-                          ),
-                        ],
-                      ),
-                      SizedBox(
-                        height: 2,
-                      )
-                    ],
-                  ),
-                ),
-              ),
-            ),
+            cardRing(Colors.black, 0.85, 8),
+            cardRing(Colors.blue, 0.75, 8),
+            cardRing(Colors.red, 0.65, 8),
+            cardRing(Colors.yellow, 0.55, 8, trainingInfo(index)),
+
+            //cardRing(Colors.white, 0.9, 5),
           ],
         ));
   }
@@ -348,7 +335,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         child: Scrollbar(
           child: ListView.separated(
               controller: _scrollController,
-              padding: EdgeInsets.only(top: 10, bottom: 12, left: 12), //EdgeInsets.all(8),
+              padding: EdgeInsets.only(top: 15, bottom: 12, left: 15), //EdgeInsets.all(8),
               itemBuilder: (BuildContext ctxt, int index) {
                 return GestureDetector(
                   onTap: () {
@@ -383,7 +370,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
               },
               separatorBuilder: (BuildContext context, int index) {
                 return SizedBox(
-                  height: 12,
+                  height: 16,
                 );
               },
               itemCount: _trainings.length),
