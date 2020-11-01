@@ -386,7 +386,7 @@ class _TrainingCreationState extends State<TrainingCreation> with TickerProvider
                           borderSide: BorderSide(),
                         ),
                       ),
-                      keyboardType: TextInputType.number,
+                      keyboardType: TextInputType.numberWithOptions(signed: true, decimal: true),
                       onSaved: (String value) {
                         if (value != null && value != "") {
                           newTraining.targetDistance = double.parse(value);
@@ -412,7 +412,7 @@ class _TrainingCreationState extends State<TrainingCreation> with TickerProvider
                           borderSide: BorderSide(),
                         ),
                       ),
-                      keyboardType: TextInputType.number,
+                      keyboardType: TextInputType.numberWithOptions(signed: true, decimal: true),
                       onSaved: (String value) {
                         if (value != null && value != "") {
                           newTraining.sightSetting = double.parse(value);
@@ -442,7 +442,7 @@ class _TrainingCreationState extends State<TrainingCreation> with TickerProvider
                     borderSide: BorderSide(),
                   ),
                 ),
-                keyboardType: TextInputType.number,
+                keyboardType: TextInputType.numberWithOptions(signed: true, decimal: true),
                 textInputAction: TextInputAction.done,
                 validator: (value) {
                   if (value.isEmpty) {

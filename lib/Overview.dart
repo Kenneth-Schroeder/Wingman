@@ -11,6 +11,7 @@ import 'package:highlighter_coachmark/highlighter_coachmark.dart';
 import 'dart:math';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'SizeConfig.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class MyHomePage extends StatefulWidget {
   MyHomePage({Key key, this.title}) : super(key: key);
@@ -197,7 +198,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     return "-";
   }
 
-  Widget cardRing(Color color, double radiusFactor, double width, [Widget child]) {
+  Widget cardRing(Color color, double radiusFactor, double width, bool fill, [Widget child]) {
     return ClipRect(
       child: Center(
         child: OverflowBox(
@@ -209,10 +210,11 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.all(Radius.circular(500)),
               border: Border.all(color: color, width: width),
+              color: fill ? color : null,
             ),
             child: Center(
               child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 15),
+                padding: EdgeInsets.symmetric(horizontal: 25),
                 height: 80,
                 child: child,
               ),
@@ -224,22 +226,30 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   }
 
   Widget trainingInfo(int index) {
+    Color col = Colors.black;
+    TextStyle smallFont = TextStyle(color: col, fontSize: 16, height: 0.9);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         SizedBox(
-          height: 3,
+          height: 2,
         ),
         Text(
           _trainings[index].title,
           overflow: TextOverflow.ellipsis,
           maxLines: 1,
           softWrap: false,
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 22,
+          style: GoogleFonts.architectsDaughter(
+            // lobster, architectsDaughter, rockSalt
+            fontSize: 20,
+            letterSpacing: 1.1,
+            fontWeight: FontWeight.w900,
+          ), /*TextStyle(
+            fontSize: 20,
+            color: col,
             fontWeight: FontWeight.w800,
-          ),
+          ),*/
         ),
         Expanded(
           child: Row(
@@ -251,11 +261,11 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                 children: [
                   Text(
                     "Distance: ",
-                    style: TextStyle(color: Colors.white),
+                    style: smallFont,
                   ),
                   Text(
                     "Score: ",
-                    style: TextStyle(color: Colors.white),
+                    style: smallFont,
                   ),
                 ],
               ),
@@ -265,11 +275,11 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                 children: [
                   Text(
                     getDistanceOfTraining(index),
-                    style: TextStyle(color: Colors.white),
+                    style: smallFont,
                   ),
                   Text(
                     _trainings[index].totalScore.toString(),
-                    style: TextStyle(color: Colors.white),
+                    style: smallFont,
                   ),
                 ],
               ),
@@ -278,7 +288,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         ),
         Text(
           "Date: " + _trainings[index].date(),
-          style: TextStyle(color: Colors.white, fontSize: 10),
+          style: TextStyle(color: col, fontSize: 10),
         ),
         SizedBox(
           height: 3,
@@ -289,30 +299,36 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
 
   Widget trainingCard(int index) {
     return Container(
-        key: index == 0 ? _trainingTileKey : null,
-        //padding: EdgeInsets.all(10.0),
-        height: 80,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(15),
-            bottomLeft: Radius.circular(15),
-          ),
-          color: _trainings[index].competitionType == CompetitionType.training
-              ? Color(0xff99322D)
-              : Color(
-                  0xff96860E), // for lighter Color(0xffB83236) : Color(0xffB59D12), // for dark: Color(0xff752409) : Color(0xff857A18), // 00695c,827717 Colors.teal[800] Colors.lime[900]
-          boxShadow: [new BoxShadow(color: Colors.black54, offset: new Offset(3.0, 4.0), blurRadius: 3.0, spreadRadius: 0.1)],
+      key: index == 0 ? _trainingTileKey : null,
+      //padding: EdgeInsets.all(10.0),
+      height: 80,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(15),
+          bottomLeft: Radius.circular(15),
         ),
-        child: Stack(
-          children: [
-            cardRing(Colors.black, 0.85, 8),
-            cardRing(Colors.blue, 0.75, 8),
-            cardRing(Colors.red, 0.65, 8),
-            cardRing(Colors.yellow, 0.55, 8, trainingInfo(index)),
+        border: Border.all(
+          width: 4.0,
+          color: Colors.white,
+        ),
+        color: Colors.white, //_trainings[index].competitionType == CompetitionType.training
+        //? Color(0xff99322D)
+        //: Color(
+        //    0xff96860E), // for lighter Color(0xffB83236) : Color(0xffB59D12), // for dark: Color(0xff752409) : Color(0xff857A18), // 00695c,827717 Colors.teal[800] Colors.lime[900]
 
-            //cardRing(Colors.white, 0.9, 5),
-          ],
-        ));
+        boxShadow: [new BoxShadow(color: Colors.black54, offset: new Offset(3.0, 4.0), blurRadius: 3.0, spreadRadius: 0.1)],
+      ),
+      child: Stack(
+        children: [
+          //cardRing(Colors.black, 0.85, 8, false),
+          cardRing(Colors.blue, 0.85, 8, false),
+          cardRing(Colors.red, 0.75, 8, false),
+          cardRing(Colors.yellow, 0.65, 8, false, trainingInfo(index)),
+
+          //cardRing(Colors.white, 0.9, 5),
+        ],
+      ),
+    );
   }
 
   Widget overviewScreen() {
@@ -322,9 +338,9 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
           radius: 1.7,
           center: Alignment.bottomRight,
           colors: [
-            Colors.grey[100],
-            Colors.grey[200],
+            Colors.grey[300],
             Colors.grey[400],
+            Colors.grey[500],
             //Colors.black45,
             //Colors.black54,
           ], //, Colors.black, Colors.white],
