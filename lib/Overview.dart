@@ -192,7 +192,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
 
   String getDistanceOfTraining(int index) {
     if (_trainings[index].targetDistance != null && _trainings[index].targetDistance != 0) {
-      return _trainings[index].targetDistance.toStringAsFixed(0);
+      return _trainings[index].targetDistance.toStringAsFixed(0) + "m";
     }
 
     return "-";
@@ -232,9 +232,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        SizedBox(
-          height: 2,
-        ),
+        SizedBox(height: 2),
         Text(
           _trainings[index].title,
           overflow: TextOverflow.ellipsis,
@@ -245,11 +243,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
             fontSize: 20,
             letterSpacing: 1.1,
             fontWeight: FontWeight.w900,
-          ), /*TextStyle(
-            fontSize: 20,
-            color: col,
-            fontWeight: FontWeight.w800,
-          ),*/
+          ),
         ),
         Expanded(
           child: Row(
@@ -290,9 +284,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
           "Date: " + _trainings[index].date(),
           style: TextStyle(color: col, fontSize: 10),
         ),
-        SizedBox(
-          height: 3,
-        )
+        SizedBox(height: 3)
       ],
     );
   }
@@ -300,32 +292,25 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   Widget trainingCard(int index) {
     return Container(
       key: index == 0 ? _trainingTileKey : null,
-      //padding: EdgeInsets.all(10.0),
       height: 80,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(15),
-          bottomLeft: Radius.circular(15),
+          topLeft: Radius.circular(20),
+          bottomLeft: Radius.circular(20),
         ),
         border: Border.all(
           width: 4.0,
           color: Colors.white,
         ),
-        color: Colors.white, //_trainings[index].competitionType == CompetitionType.training
-        //? Color(0xff99322D)
-        //: Color(
-        //    0xff96860E), // for lighter Color(0xffB83236) : Color(0xffB59D12), // for dark: Color(0xff752409) : Color(0xff857A18), // 00695c,827717 Colors.teal[800] Colors.lime[900]
-
+        color: Colors.white,
         boxShadow: [new BoxShadow(color: Colors.black54, offset: new Offset(3.0, 4.0), blurRadius: 3.0, spreadRadius: 0.1)],
       ),
       child: Stack(
         children: [
-          //cardRing(Colors.black, 0.85, 8, false),
-          cardRing(Colors.blue, 0.85, 8, false),
-          cardRing(Colors.red, 0.75, 8, false),
-          cardRing(Colors.yellow, 0.65, 8, false, trainingInfo(index)),
-
-          //cardRing(Colors.white, 0.9, 5),
+          cardRing(Colors.blue, 0.85, _trainings[index].competitionType == CompetitionType.training ? screenWidth() * 0.025 : screenWidth() * 0.05, false),
+          cardRing(Colors.red, 0.75, _trainings[index].competitionType == CompetitionType.training ? screenWidth() * 0.025 : screenWidth() * 0.05, false),
+          cardRing(Colors.yellow, 0.65, _trainings[index].competitionType == CompetitionType.training ? screenWidth() * 0.025 : screenWidth() * 0.05, false,
+              trainingInfo(index)),
         ],
       ),
     );
@@ -341,10 +326,8 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
             Colors.grey[300],
             Colors.grey[400],
             Colors.grey[500],
-            //Colors.black45,
-            //Colors.black54,
-          ], //, Colors.black, Colors.white],
-          stops: [0.0, 0.5, 1.0], //[0.0, 0.25, 0.5, 0.75, 1.0],
+          ],
+          stops: [0.0, 0.5, 1.0],
         ),
       ),
       child: SizedBox.expand(
@@ -385,9 +368,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                 );
               },
               separatorBuilder: (BuildContext context, int index) {
-                return SizedBox(
-                  height: 16,
-                );
+                return SizedBox(height: 16);
               },
               itemCount: _trainings.length),
         ),
@@ -400,12 +381,10 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
       appBar: AppBar(
         title: Text(widget.title),
       ),
-      body: SafeArea(
-        child: SpinKitCircle(
-          color: Theme.of(context).primaryColor,
-          size: 100.0,
-          controller: AnimationController(vsync: this, duration: const Duration(milliseconds: 1000)),
-        ),
+      body: SpinKitCircle(
+        color: Theme.of(context).primaryColor,
+        size: 100.0,
+        controller: AnimationController(vsync: this, duration: const Duration(milliseconds: 1000)),
       ),
     );
   }
@@ -574,13 +553,11 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
               ),
             ],
           ),
-          body: SafeArea(
-            child: Stack(
-              children: [
-                overviewScreen(),
-                _greyCurtain(),
-              ],
-            ),
+          body: Stack(
+            children: [
+              overviewScreen(),
+              _greyCurtain(),
+            ],
           ),
           floatingActionButton: buildSpeedDial(context),
         ),

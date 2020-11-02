@@ -315,7 +315,7 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
   }
 
   Offset arrowDropOffset() {
-    return Offset(0, -screenHeight() / 5);
+    return Offset(0, -fullScreenHeight() / 6);
   }
 
   int countNumberOfUntouchedArrows([int index]) {
@@ -626,9 +626,11 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
       return Container(
         color: Colors.white,
         padding: EdgeInsets.all(10),
-        child: Text(
-          "< Opponent scores will be displayed here after you record your results >",
-          style: TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
+        child: Center(
+          child: Text(
+            "< Opponent scores will be displayed here after you record your results >",
+            style: TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
+          ),
         ),
       );
     }
@@ -914,19 +916,26 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
   }
 
   // todo fix error when clicking next round too fast
-  double getGroupPerimeter(double physicalTargetRadius) {
+  double getGroupPerimeter(double physicalTargetDiameter) {
     // all arrows to Offsets
     List<Offset> arrowOffsets = [];
 
-    arrows[endIndex].forEach((arrow) {
-      arrowOffsets.add(arrow.getRelativeCartesianCoordinates(physicalTargetRadius, widget.training.targetType));
+    // arrows[endIndex]
+    allArrows([arrows[endIndex]]).forEach((arrow) {
+      arrowOffsets.add(arrow.getRelativeCartesianCoordinates(physicalTargetDiameter / 2, widget.training.targetType));
     });
+
+    if (arrowOffsets.isEmpty) {
+      return 0.0;
+    }
 
     return chPerimeter(convexHull(arrowOffsets));
   }
 
   int _numberOfEnds() {
-    if (widget.training.numberOfEnds == 0) return arrows.length;
+    if (widget.training.numberOfEnds == 0) {
+      return arrows.length;
+    }
 
     return widget.training.numberOfEnds;
   }
@@ -946,58 +955,53 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
             child: Container(
               height: 1.0,
               width: screenWidth(),
-              //color: Colors.black,
             ),
           ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              Column(
-                children: [
-                  Text("End Score: " + getEndScore(endIndex).toString(), style: TextStyle(fontSize: 16)),
-                  SizedBox(
-                    height: 1,
-                  ),
-                  Text("Total: " + getTotalScore().toString(), style: TextStyle(fontSize: 16)),
-                  SizedBox(
-                    height: 3,
-                  ),
-                  Text(
-                    "2D Dispersion = " + _2dDispersion.toStringAsFixed(2),
-                    style: TextStyle(fontSize: 16),
-                  ),
-                ],
-              ),
-              Column(
-                children: [
-                  Text("End Average: " + getEndAverage().toStringAsFixed(2), style: TextStyle(fontSize: 16)),
-                  SizedBox(
-                    height: 1,
-                  ),
-                  Text("Perimeter: " + _groupPerimeter.toStringAsFixed(2) + " cm", style: TextStyle(fontSize: 16)),
-                  SizedBox(
-                    height: 3,
-                  ),
-                  FlatButton(
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-                    height: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10.0),
-                      side: BorderSide(color: Colors.blue[800]),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                Column(
+                  children: [
+                    Text("End Score: " + getEndScore(endIndex).toString(), style: TextStyle(fontSize: 16)),
+                    SizedBox(height: 1),
+                    Text("Total: " + getTotalScore().toString(), style: TextStyle(fontSize: 16)),
+                    SizedBox(height: 3),
+                    FlatButton(
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                      height: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10.0),
+                        side: BorderSide(color: Colors.blue[800]),
+                      ),
+                      child: Text(
+                        "TOGGLE OVERLAY",
+                        style: TextStyle(fontSize: 16, color: Colors.blue[800]),
+                      ),
+                      onPressed: () {
+                        _showOverlayStatistics = !_showOverlayStatistics;
+                        setState(() {});
+                      },
                     ),
-                    child: Text(
-                      "TOGGLE OVERLAY",
-                      style: TextStyle(fontSize: 16, color: Colors.blue[800]),
+                  ],
+                ),
+                SizedBox(width: 15),
+                Column(
+                  children: [
+                    Text("End Average: " + getEndAverage().toStringAsFixed(2), style: TextStyle(fontSize: 16)),
+                    SizedBox(height: 1),
+                    Text("Perimeter: " + _groupPerimeter.toStringAsFixed(2) + " cm", style: TextStyle(fontSize: 16)),
+                    SizedBox(height: 3),
+                    Text(
+                      "2D Dispersion = " + _2dDispersion.toStringAsFixed(2),
+                      style: TextStyle(fontSize: 16),
                     ),
-                    onPressed: () {
-                      _showOverlayStatistics = !_showOverlayStatistics;
-                      setState(() {});
-                    },
-                  ),
-                ],
-              ),
-            ],
+                  ],
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -1072,7 +1076,7 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
 
   double _dragScrollSheetMaxSize() {
     if (widget.training.competitionType == CompetitionType.training) {
-      return (95 + 40 + screenHeight() * 0.045) / screenHeight();
+      return (135 + 25) / screenHeight();
     }
 
     return 0.5;
@@ -1083,10 +1087,10 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
       return _dragScrollSheetMaxSize();
     }
 
-    return 0.04;
+    return 22 / screenHeight();
   }
 
-  Widget sheetItemWrapper(Widget child, bool enabled, Color backgroundColor) {
+  Widget sheetItemWrapper(Widget child, bool enabled, Color backgroundColor, Color borderColor) {
     if (!enabled) {
       return Container();
     }
@@ -1098,11 +1102,14 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
         color: backgroundColor,
         border: Border.all(
           width: 10.0,
-          color: Colors.white,
+          color: borderColor,
         ),
         borderRadius: BorderRadius.all(Radius.circular(20)),
       ),
-      child: child,
+      child: SizedBox(
+        width: double.infinity,
+        child: child,
+      ),
     );
   }
 
@@ -1111,7 +1118,7 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
         key: Key(dragScrollIsExpanded.toString()),
         initialChildSize: _dragScrollSheetInitialSize(),
         maxChildSize: _dragScrollSheetMaxSize(),
-        minChildSize: 0.04,
+        minChildSize: 22 / screenHeight(),
         builder: (context, scrollController) {
           return SingleChildScrollView(
             controller: scrollController,
@@ -1123,7 +1130,7 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
                   GestureDetector(
                     child: Container(
                       key: _draggableSheetKey,
-                      height: screenHeight() * 0.045,
+                      height: 25,
                       color: Colors.blue[800],
                       child: Center(
                         child: Icon(
@@ -1138,13 +1145,13 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
                     },
                   ),
                   Container(
-                    height: screenHeight() * (_dragScrollSheetMaxSize() - 0.045 * 1.5), // 1.5 creates bottom border
+                    height: screenHeight() * _dragScrollSheetMaxSize() - 25, // 1.5 creates bottom border
                     child: SingleChildScrollView(
                       child: Column(
                         children: [
-                          sheetItemWrapper(_quickStats(), true, Colors.white),
-                          sheetItemWrapper(matchPointsDisplay(), widget.training.competitionType == CompetitionType.finals, Colors.red[300]),
-                          sheetItemWrapper(_opponentStats(), widget.training.competitionType != CompetitionType.training, Colors.white),
+                          sheetItemWrapper(_quickStats(), true, Colors.white, Colors.white),
+                          sheetItemWrapper(matchPointsDisplay(), widget.training.competitionType == CompetitionType.finals, Colors.red[300], Colors.red[300]),
+                          sheetItemWrapper(_opponentStats(), widget.training.competitionType != CompetitionType.training, Colors.white, Colors.white),
                         ],
                       ),
                     ),
@@ -1159,12 +1166,10 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
   Widget emptyScreen(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text("Score Recording")),
-      body: SafeArea(
-        child: SpinKitCircle(
-          color: Theme.of(context).primaryColor,
-          size: 100.0,
-          controller: AnimationController(vsync: this, duration: const Duration(milliseconds: 1000)),
-        ),
+      body: SpinKitCircle(
+        color: Theme.of(context).primaryColor,
+        size: 100.0,
+        controller: AnimationController(vsync: this, duration: const Duration(milliseconds: 1000)),
       ),
     );
   }
@@ -1198,12 +1203,9 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
             ),
           ],
         ),
-        body: SafeArea(
-          bottom: false,
-          child: Builder(
-            builder: (context) => Stack(
-              children: [createTarget(), loadArrows(context), statisticsOverlay(), _dragScrollSheet(), _scoreOverlayAnimation()],
-            ),
+        body: Builder(
+          builder: (context) => Stack(
+            children: [createTarget(), loadArrows(context), statisticsOverlay(), _dragScrollSheet(), _scoreOverlayAnimation()],
           ),
         ),
         bottomNavigationBar: Builder(

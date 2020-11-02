@@ -24,6 +24,7 @@ class _TrainingCreationState extends State<TrainingCreation> with TickerProvider
   List<int> _arrowInformationIDs = [];
   final numArrowsController = TextEditingController();
   final sightSettingController = TextEditingController();
+  final targetDistanceController = TextEditingController();
   final trainingTitleController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool startRoutineFinished = false;
@@ -45,15 +46,23 @@ class _TrainingCreationState extends State<TrainingCreation> with TickerProvider
     sightSettingController.addListener(() {
       setState(() {});
     });
+    targetDistanceController.addListener(() {
+      setState(() {});
+    });
 
     trainingTitleController.text = "Training";
     numArrowsController.text = "6";
     if (widget.editInstance != null) {
       newTraining = widget.editInstance;
       numArrowsController.text = newTraining.arrowsPerEnd.toString();
+
       if (newTraining.sightSetting != null && newTraining.sightSetting != 0) {
         sightSettingController.text = newTraining.sightSetting.toStringAsFixed(2);
       }
+      if (newTraining.targetDistance != null && newTraining.targetDistance != 0) {
+        targetDistanceController.text = newTraining.targetDistance.toStringAsFixed(2);
+      }
+
       trainingTitleController.text = newTraining.title;
     }
 
@@ -374,9 +383,9 @@ class _TrainingCreationState extends State<TrainingCreation> with TickerProvider
                     child: TextFormField(
                       textInputAction: TextInputAction.next,
                       focusNode: _targetFocus,
-                      initialValue: newTraining.targetDistance == null ? null : newTraining.targetDistance.toStringAsFixed(0),
+                      controller: targetDistanceController,
                       decoration: const InputDecoration(
-                        labelText: 'Target Distance',
+                        labelText: 'Target Distance in Meters',
                         errorMaxLines: 3,
                         fillColor: Colors.white,
                         border: OutlineInputBorder(
@@ -386,10 +395,23 @@ class _TrainingCreationState extends State<TrainingCreation> with TickerProvider
                           borderSide: BorderSide(),
                         ),
                       ),
-                      keyboardType: TextInputType.numberWithOptions(signed: true, decimal: true),
+                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+                      validator: (value) {
+                        if (value.isEmpty) {
+                          return null;
+                        }
+                        String text = value;
+                        text = text.replaceAll(new RegExp(r','), '.');
+                        if (double.tryParse(text) == null) {
+                          return 'Please enter a valid number.';
+                        }
+                        return null;
+                      },
                       onSaved: (String value) {
                         if (value != null && value != "") {
-                          newTraining.targetDistance = double.parse(value);
+                          String text = value;
+                          text = text.replaceAll(new RegExp(r','), '.');
+                          newTraining.targetDistance = double.parse(text) ?? 0;
                         }
                       },
                     ),
@@ -412,10 +434,23 @@ class _TrainingCreationState extends State<TrainingCreation> with TickerProvider
                           borderSide: BorderSide(),
                         ),
                       ),
-                      keyboardType: TextInputType.numberWithOptions(signed: true, decimal: true),
+                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+                      validator: (value) {
+                        if (value.isEmpty) {
+                          return null;
+                        }
+                        String text = value;
+                        text = text.replaceAll(new RegExp(r','), '.');
+                        if (double.tryParse(text) == null) {
+                          return 'Please enter a valid number.';
+                        }
+                        return null;
+                      },
                       onSaved: (String value) {
                         if (value != null && value != "") {
-                          newTraining.sightSetting = double.parse(value);
+                          String text = value;
+                          text = text.replaceAll(new RegExp(r','), '.');
+                          newTraining.sightSetting = double.parse(text) ?? 0;
                         }
                       },
                     ),
@@ -442,7 +477,7 @@ class _TrainingCreationState extends State<TrainingCreation> with TickerProvider
                     borderSide: BorderSide(),
                   ),
                 ),
-                keyboardType: TextInputType.numberWithOptions(signed: true, decimal: true),
+                keyboardType: TextInputType.number,
                 textInputAction: TextInputAction.done,
                 validator: (value) {
                   if (value.isEmpty) {
@@ -492,12 +527,10 @@ class _TrainingCreationState extends State<TrainingCreation> with TickerProvider
       appBar: AppBar(
         title: widget.editInstance == null ? Text("Create new Training") : Text("Edit Training"),
       ),
-      body: SafeArea(
-        child: SpinKitCircle(
-          color: Theme.of(context).primaryColor,
-          size: 100.0,
-          controller: AnimationController(vsync: this, duration: const Duration(milliseconds: 1000)),
-        ),
+      body: SpinKitCircle(
+        color: Theme.of(context).primaryColor,
+        size: 100.0,
+        controller: AnimationController(vsync: this, duration: const Duration(milliseconds: 1000)),
       ),
     );
   }
@@ -550,7 +583,7 @@ class _TrainingCreationState extends State<TrainingCreation> with TickerProvider
     for (int i = 0; i < keys.length; i++) {
       List<DataCell> cells = [];
 
-      cells.add(tableCell(keys[i].toStringAsFixed(2)));
+      cells.add(tableCell(keys[i].toStringAsFixed(2) + "m"));
       cells.add(
         DataCell(
           Center(
@@ -561,7 +594,9 @@ class _TrainingCreationState extends State<TrainingCreation> with TickerProvider
           ),
           onTap: () {
             newTraining.sightSetting = distToSight[keys[i]];
+            newTraining.targetDistance = keys[i];
             sightSettingController.text = distToSight[keys[i]].toStringAsFixed(2);
+            targetDistanceController.text = keys[i].toStringAsFixed(2);
             Navigator.of(context, rootNavigator: true).pop('dialog');
           },
         ),
@@ -644,33 +679,31 @@ class _TrainingCreationState extends State<TrainingCreation> with TickerProvider
               ),
             ],
           ),
-          body: SafeArea(
-            child: GestureDetector(
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: RadialGradient(
-                    radius: 1.7,
-                    center: Alignment.bottomRight,
-                    colors: [
-                      Colors.grey[100],
-                      Colors.grey[200],
-                      Colors.grey[400],
-                      //Colors.black45,
-                      //Colors.black54,
-                    ], //, Colors.black, Colors.white],
-                    stops: [0.0, 0.5, 1.0], //[0.0, 0.25, 0.5, 0.75, 1.0],
-                  ),
-                ),
-                child: SizedBox(
-                  height: double.infinity,
-                  width: double.infinity,
-                  child: newTrainingForm(),
+          body: GestureDetector(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: RadialGradient(
+                  radius: 1.7,
+                  center: Alignment.bottomRight,
+                  colors: [
+                    Colors.grey[100],
+                    Colors.grey[200],
+                    Colors.grey[400],
+                    //Colors.black45,
+                    //Colors.black54,
+                  ], //, Colors.black, Colors.white],
+                  stops: [0.0, 0.5, 1.0], //[0.0, 0.25, 0.5, 0.75, 1.0],
                 ),
               ),
-              onTap: () {
-                FocusScope.of(context).requestFocus(new FocusNode());
-              },
+              child: SizedBox(
+                height: double.infinity,
+                width: double.infinity,
+                child: newTrainingForm(),
+              ),
             ),
+            onTap: () {
+              FocusScope.of(context).requestFocus(new FocusNode());
+            },
           ),
         ),
       ],

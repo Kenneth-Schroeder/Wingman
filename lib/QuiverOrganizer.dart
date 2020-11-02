@@ -653,12 +653,10 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> with TickerProviderSt
       appBar: AppBar(
         title: Text("Quiver"),
       ),
-      body: SafeArea(
-        child: SpinKitCircle(
-          color: Theme.of(context).primaryColor,
-          size: 100.0,
-          controller: AnimationController(vsync: this, duration: const Duration(milliseconds: 1000)),
-        ),
+      body: SpinKitCircle(
+        color: Theme.of(context).primaryColor,
+        size: 100.0,
+        controller: AnimationController(vsync: this, duration: const Duration(milliseconds: 1000)),
       ),
     );
   }
@@ -692,10 +690,7 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> with TickerProviderSt
               ],
             ),
             bottomNavigationBar: _bottomBar(),
-            body: SafeArea(
-              bottom: false,
-              child: createTabScreen(),
-            ),
+            body: createTabScreen(),
           ),
         ],
       ),

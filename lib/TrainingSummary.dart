@@ -460,12 +460,10 @@ class _TrainingSummaryState extends State<TrainingSummary> with TickerProviderSt
       appBar: AppBar(
         title: Text(widget.training.title),
       ),
-      body: SafeArea(
-        child: SpinKitCircle(
-          color: Theme.of(context).primaryColor,
-          size: 100.0,
-          controller: AnimationController(vsync: this, duration: const Duration(milliseconds: 1000)),
-        ),
+      body: SpinKitCircle(
+        color: Theme.of(context).primaryColor,
+        size: 100.0,
+        controller: AnimationController(vsync: this, duration: const Duration(milliseconds: 1000)),
       ),
     );
   }
@@ -504,9 +502,7 @@ class _TrainingSummaryState extends State<TrainingSummary> with TickerProviderSt
     for (var arrowInformation in allArrowInformation(arrows)) {
       List<Widget> rowChildren = [];
 
-      mainColumn.add(SizedBox(
-        height: 30,
-      ));
+      mainColumn.add(SizedBox(height: 30));
 
       rowChildren.add(SizedBox(width: spacerSize));
       rowChildren.add(Expanded(child: createHitMap(arrowInformation)));
@@ -520,9 +516,7 @@ class _TrainingSummaryState extends State<TrainingSummary> with TickerProviderSt
                 (allArrows(arrows, arrowInformation.id).map((e) => e.score).reduce((a, b) => a + b) / allArrows(arrows, arrowInformation.id).length).toStringAsFixed(2),
             style: TextStyle(fontSize: 16),
           ),
-          SizedBox(
-            height: 5,
-          ),
+          SizedBox(height: 5),
           Text(
             "2D Dispersion = " +
                 rootMeanSquareDist(allArrows(arrows, arrowInformation.id)
@@ -531,16 +525,12 @@ class _TrainingSummaryState extends State<TrainingSummary> with TickerProviderSt
                     .toStringAsFixed(2),
             style: TextStyle(fontSize: 16),
           ),
-          SizedBox(
-            height: 5,
-          ),
+          SizedBox(height: 5),
           Text(
             "↔ GCD = " + centerDeviationOfArrowWithID(arrowInformation.id).dx.toStringAsFixed(2) + "cm",
             style: TextStyle(fontSize: 16),
           ),
-          SizedBox(
-            height: 5,
-          ),
+          SizedBox(height: 5),
           Text(
             "↕ GCD = " + centerDeviationOfArrowWithID(arrowInformation.id).dy.toStringAsFixed(2) + "cm",
             style: TextStyle(fontSize: 16),
@@ -568,9 +558,7 @@ class _TrainingSummaryState extends State<TrainingSummary> with TickerProviderSt
                 Expanded(child: Container()),
               ],
             ),
-            SizedBox(
-              height: 5,
-            ),
+            SizedBox(height: 5),
             SizedBox(width: spacerSize),
             Row(
               children: rowChildren,
@@ -589,34 +577,24 @@ class _TrainingSummaryState extends State<TrainingSummary> with TickerProviderSt
 
     return Column(
       children: [
-        SizedBox(
-          height: 30,
-        ),
+        SizedBox(height: 30),
         Text(
           "Statistics",
           style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
         ),
-        SizedBox(
-          height: 10,
-        ),
+        SizedBox(height: 10),
         Text(
           "Hitmap of all arrows",
           style: TextStyle(
             fontSize: 18,
           ),
         ),
-        SizedBox(
-          height: 5,
-        ),
+        SizedBox(height: 5),
         Row(
           children: [
-            SizedBox(
-              width: 20,
-            ),
+            SizedBox(width: 20),
             Expanded(child: createHitMap()),
-            SizedBox(
-              width: 20,
-            ),
+            SizedBox(width: 20),
           ],
         ),
         allArrowHitmapsColumn(150)
@@ -640,38 +618,34 @@ class _TrainingSummaryState extends State<TrainingSummary> with TickerProviderSt
               ),
             ],
           ),
-          body: SafeArea(
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: RadialGradient(
-                  radius: 1.7,
-                  center: Alignment.bottomRight,
-                  colors: [
-                    Colors.grey[100],
-                    Colors.grey[200],
-                    Colors.grey[400],
-                  ],
-                  stops: [0.0, 0.5, 1.0], //[0.0, 0.25, 0.5, 0.75, 1.0],
-                ),
+          body: Container(
+            decoration: BoxDecoration(
+              gradient: RadialGradient(
+                radius: 1.7,
+                center: Alignment.bottomRight,
+                colors: [
+                  Colors.grey[100],
+                  Colors.grey[200],
+                  Colors.grey[400],
+                ],
+                stops: [0.0, 0.5, 1.0], //[0.0, 0.25, 0.5, 0.75, 1.0],
               ),
-              child: SizedBox(
-                width: double.infinity,
-                height: double.infinity,
-                child: SingleChildScrollView(
-                  controller: _scrollController,
-                  child: Column(
-                    children: [
-                      SizedBox(
-                        height: 20,
-                      ),
-                      Text(
-                        "Score Table",
-                        style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
-                      ),
-                      createSummaryTable(),
-                      createStatistics(),
-                    ],
-                  ),
+            ),
+            child: SizedBox(
+              width: double.infinity,
+              height: double.infinity,
+              child: SingleChildScrollView(
+                controller: _scrollController,
+                child: Column(
+                  children: [
+                    SizedBox(height: 20),
+                    Text(
+                      "Score Table",
+                      style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+                    ),
+                    createSummaryTable(),
+                    createStatistics(),
+                  ],
                 ),
               ),
             ),

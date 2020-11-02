@@ -6,6 +6,7 @@ class SizeConfig {
   static double screenWidth;
   static double screenHeight;
   static double fullScreenHeight;
+  static double fullScreenWidth;
   static double blockSizeHorizontal;
   static double blockSizeVertical;
   static double minDim;
@@ -19,14 +20,18 @@ class SizeConfig {
     _mediaQueryData = MediaQuery.of(context);
     screenWidth = _mediaQueryData.size.width;
     fullScreenHeight = _mediaQueryData.size.height + _mediaQueryData.viewInsets.bottom;
-    screenHeight =
-        _mediaQueryData.size.height - kToolbarHeight - kBottomNavigationBarHeight - kTextTabBarHeight; //- _mediaQueryData.padding.top  - _mediaQueryData.padding.bottom
+    screenHeight = _mediaQueryData.size.height -
+        kToolbarHeight -
+        kBottomNavigationBarHeight -
+        kTextTabBarHeight +
+        _mediaQueryData.padding.top +
+        11; //- _mediaQueryData.padding.top  - _mediaQueryData.padding.bottom
     blockSizeHorizontal = screenWidth / 100;
     blockSizeVertical = screenHeight / 100;
-    minDim = min(screenWidth, screenHeight);
+    minDim = min(screenWidth, fullScreenHeight);
     appBarHeight = Offset(0, kToolbarHeight + _mediaQueryData.padding.top);
     threeSideCenter = Offset(minDim / 2, minDim / 2);
     center = Offset(screenWidth / 2, screenHeight / 2);
-    maxDim = max(screenWidth, screenHeight);
+    maxDim = max(screenWidth, fullScreenHeight);
   }
 }
