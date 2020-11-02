@@ -992,7 +992,7 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
                   children: [
                     Text("End Average: " + getEndAverage().toStringAsFixed(2), style: TextStyle(fontSize: 16)),
                     SizedBox(height: 1),
-                    Text("Perimeter: " + _groupPerimeter.toStringAsFixed(2) + " cm", style: TextStyle(fontSize: 16)),
+                    Text("Perimeter: " + _groupPerimeter.toStringAsFixed(2) + "cm", style: TextStyle(fontSize: 16)),
                     SizedBox(height: 3),
                     Text(
                       "2D Dispersion = " + _2dDispersion.toStringAsFixed(2),
