@@ -1070,7 +1070,7 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
 
   double _dragScrollSheetMaxSize() {
     if (widget.training.competitionType == CompetitionType.training) {
-      return (135 + 25) / screenHeight();
+      return (95 + 55) / screenHeight();
     }
 
     return 0.5;
@@ -1081,7 +1081,7 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
       return _dragScrollSheetMaxSize();
     }
 
-    return 22 / screenHeight();
+    return 25 / screenHeight();
   }
 
   Widget sheetItemWrapper(Widget child, bool enabled, Color backgroundColor, Color borderColor) {
@@ -1112,7 +1112,7 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
         key: Key(dragScrollIsExpanded.toString()),
         initialChildSize: _dragScrollSheetInitialSize(),
         maxChildSize: _dragScrollSheetMaxSize(),
-        minChildSize: 22 / screenHeight(),
+        minChildSize: 25 / screenHeight(),
         builder: (context, scrollController) {
           return SingleChildScrollView(
             controller: scrollController,
@@ -1139,7 +1139,7 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
                     },
                   ),
                   Container(
-                    height: screenHeight() * _dragScrollSheetMaxSize() - 25, // 1.5 creates bottom border
+                    height: screenHeight() * _dragScrollSheetMaxSize() - 25, // -25 1.5 creates bottom border
                     child: SingleChildScrollView(
                       child: Column(
                         children: [

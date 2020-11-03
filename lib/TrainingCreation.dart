@@ -30,6 +30,7 @@ class _TrainingCreationState extends State<TrainingCreation> with TickerProvider
   bool startRoutineFinished = false;
   final FocusNode _targetFocus = FocusNode();
   GlobalKey _quiverKey = GlobalObjectKey("quiver");
+  GlobalKey _recentSightKey = GlobalObjectKey("recentSight");
 
   @override
   void initState() {
@@ -92,6 +93,44 @@ class _TrainingCreationState extends State<TrainingCreation> with TickerProvider
             padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
             child: Text(
               "Tap here to select labeled arrows from your quiver.",
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 26.0,
+                fontStyle: FontStyle.italic,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ),
+      ],
+      duration: null,
+      onClose: () {
+        showCoachMarkRecentSightSettings();
+      },
+    );
+  }
+
+  void showCoachMarkRecentSightSettings() {
+    CoachMark coachMark = CoachMark();
+
+    if (_recentSightKey.currentContext == null) {
+      return;
+    }
+
+    RenderBox target = _recentSightKey.currentContext.findRenderObject();
+    Rect markRect = target.localToGlobal(Offset.zero) & target.size;
+    markRect = Rect.fromCircle(center: markRect.center, radius: markRect.longestSide * 0.5);
+
+    coachMark.show(
+      targetContext: _recentSightKey.currentContext,
+      markRect: markRect,
+      children: [
+        positionWhereSpace(
+          markRect,
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
+            child: Text(
+              "Tap here for an overview of your latest sight settings.",
               textAlign: TextAlign.center,
               style: const TextStyle(
                 fontSize: 26.0,
@@ -680,6 +719,7 @@ class _TrainingCreationState extends State<TrainingCreation> with TickerProvider
                 },
               ),
               IconButton(
+                key: _recentSightKey,
                 icon: Icon(Icons.album_outlined),
                 onPressed: () => showRecentSightSettings(context),
               ),

@@ -20,12 +20,9 @@ class SizeConfig {
     _mediaQueryData = MediaQuery.of(context);
     screenWidth = _mediaQueryData.size.width;
     fullScreenHeight = _mediaQueryData.size.height + _mediaQueryData.viewInsets.bottom;
-    screenHeight = _mediaQueryData.size.height -
-        kToolbarHeight -
-        kBottomNavigationBarHeight -
-        kTextTabBarHeight +
-        _mediaQueryData.padding.top +
-        11; //- _mediaQueryData.padding.top  - _mediaQueryData.padding.bottom
+
+    screenHeight = _mediaQueryData.size.height - kToolbarHeight - kTextTabBarHeight - _mediaQueryData.padding.top - _mediaQueryData.padding.bottom;
+
     blockSizeHorizontal = screenWidth / 100;
     blockSizeVertical = screenHeight / 100;
     minDim = min(screenWidth, fullScreenHeight);
