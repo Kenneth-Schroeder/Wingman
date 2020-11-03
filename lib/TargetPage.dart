@@ -765,6 +765,7 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
   }
 
   void resetArrows(BuildContext context) {
+    // i want to keep reset, mainly when editing middle ends
     if (arrows[endIndex].any((element) => element.isLocked == 1)) {
       Scaffold.of(context).hideCurrentSnackBar();
       Scaffold.of(context).showSnackBar(SnackBar(content: Text('This end is locked.')));
@@ -776,6 +777,7 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
     });
 
     if (widget.training.competitionType != CompetitionType.training) {
+      // resetting in the middle of all the ends is fine here, since the end will be locked until all arrows are placed again...
       resetOpponentsEnd();
       currentMatchPoints = getMatchPoints();
     }
@@ -789,13 +791,6 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
     }
   }
 
-  void deleteOpponentsEnd() {
-    for (int i = 0; i < numOpponents; i++) {
-      opponents[i].arrowScores.removeAt(endIndex);
-      opponents[i].endScores.removeAt(endIndex);
-    }
-  }
-
   void deleteEnd(BuildContext context) async {
     if (arrows[endIndex].any((element) => element.isLocked == 1)) {
       Scaffold.of(context).hideCurrentSnackBar();
@@ -803,24 +798,19 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
       return;
     }
 
-    if (arrows.length <= 1 || widget.training.competitionType == CompetitionType.qualifying) {
-      // want to keep opponent scores if its qualifying, since they are all added ??
+    if (arrows.length <= 1 || widget.training.competitionType != CompetitionType.training) {
+      // do just a reset if its not training or only one end left
       resetArrows(context);
-      resetOpponentsEnd();
       return;
     }
 
+    // if its training and there are multiple ends, just delete
     int endID = arrows[endIndex].first.endID;
-
     await dbService.deleteEnd(endID);
     arrows.removeAt(endIndex);
-    if (widget.training.competitionType != CompetitionType.training) {
-      deleteOpponentsEnd(); // THIS WORKS BECAUSE WE DONT UPDATE IN DB WE JUST OVERWRITE
-    }
 
+    // update current end
     endIndex = max(0, endIndex - 1);
-    currentMatchPoints = getMatchPoints();
-
     setState(() {});
   }
 
