@@ -544,17 +544,6 @@ class _TrainingCreationState extends State<TrainingCreation> with TickerProvider
     );
   }
 
-  DataCell tableCell(String content) {
-    return DataCell(
-      Center(
-        child: Text(
-          content,
-          style: TextStyle(fontSize: 16),
-        ),
-      ),
-    );
-  }
-
   Widget recentSightSettingsTable(BuildContext context) {
     if (widget.trainings == null || widget.trainings.isEmpty) {
       return Text("No sight settings available.");
@@ -583,7 +572,24 @@ class _TrainingCreationState extends State<TrainingCreation> with TickerProvider
     for (int i = 0; i < keys.length; i++) {
       List<DataCell> cells = [];
 
-      cells.add(tableCell(keys[i].toStringAsFixed(2) + "m"));
+      cells.add(
+        DataCell(
+          Center(
+            child: Text(
+              keys[i].toStringAsFixed(2) + "m",
+              style: TextStyle(fontSize: 16),
+            ),
+          ),
+          onTap: () {
+            newTraining.sightSetting = distToSight[keys[i]];
+            newTraining.targetDistance = keys[i];
+            sightSettingController.text = distToSight[keys[i]].toStringAsFixed(2);
+            targetDistanceController.text = keys[i].toStringAsFixed(2);
+            Navigator.of(context, rootNavigator: true).pop('dialog');
+          },
+        ),
+      );
+
       cells.add(
         DataCell(
           Center(

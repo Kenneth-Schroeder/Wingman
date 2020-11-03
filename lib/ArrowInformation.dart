@@ -6,6 +6,15 @@ class ArrowInformation {
 
   ArrowInformation(this.label);
 
+  ArrowInformation clone() {
+    return ArrowInformation.fromMap({
+      "label": this.label,
+      "setID": setID,
+      "id": id,
+      "selected": selected,
+    });
+  }
+
   int get hashCode => id.hashCode;
 
   bool operator ==(other) {

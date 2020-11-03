@@ -20,6 +20,32 @@ class ScoreInstance {
   ScoreInstance.scoreOnly(this.endID, this.score); // for opponent scores
   ScoreInstance(this.endID, this.relativeArrowRadius);
 
+  ScoreInstance clone() {
+    /*
+    * "relativeArrowRadius": this.relativeArrowRadius,
+      "score": this.score,
+      "isX": this.isX ? 1 : 0,
+      "endID": this.endID,
+      "arrowInformationID": _getArrowInformationID(),
+      "pRadius": this.pRadius,
+      "pAngle": this.pAngle,
+      "isLocked": this.isLocked,
+      "isUntouched": this.isUntouched,
+    * */
+    return ScoreInstance.fromMapAndArrowInformation({
+      ...this.toMap(),
+      ...{"shotID": this.shotID},
+    }, _cloneArrowInformation());
+  }
+
+  ArrowInformation _cloneArrowInformation() {
+    if (arrowInformation != null) {
+      return arrowInformation.clone();
+    }
+
+    return null;
+  }
+
   // todo check if compound scores are right and also adjust all the score calculations for compound if enabled later on
   String displayScore(bool recurve, bool indoor) {
     if (recurve) {

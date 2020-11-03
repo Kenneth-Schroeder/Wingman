@@ -73,7 +73,8 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    arrows = widget.arrows;
+    //arrows = List.from(widget.arrows);
+    arrows = widget.arrows.map((end) => end.map((score) => score.clone()).toList()).toList();
 
     _animationController = AnimationController(duration: const Duration(milliseconds: 2000), vsync: this, value: 0.1);
     _animation = CurvedAnimation(parent: _animationController, curve: Curves.decelerate);
@@ -370,11 +371,12 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
     double touchPAngle = localCartesianToRelativePolar(draggedTargetCenter(), x, y)[1];
 
     List<double> distances = [];
+    for (int i = 0; i < arrows[endIndex].length; i++) {
+      distances.add(polarDistance(touchPRadius, touchPAngle, arrows[endIndex][i].pRadius * targetRadius * _scaleFactor, arrows[endIndex][i].pAngle));
+    }
 
-    arrows[endIndex].forEach((arrow) => distances.add(polarDistance(touchPRadius, touchPAngle, arrow.pRadius * targetRadius * _scaleFactor, arrow.pAngle)));
-
-    // todo pretty much hardcoded /7 same as in arrowpainter , -arrowDropOffset().dy / 7
-    if (argMin(distances)[0] <= minScreenDimension() / 27.0) {
+    // todo pretty much hardcoded /27 or /15 same as in arrowpainter
+    if (argMin(distances)[0] <= minScreenDimension() / 15.0) {
       return argMin(distances)[1];
     }
 
@@ -695,16 +697,14 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
 
   Widget loadArrows(BuildContext context) {
     List<CustomPaint> arrowPainters = [];
-    int counter = 0;
     for (int i = 0; i < arrows[endIndex].length; i++) {
       arrowPainters.add(
         CustomPaint(
-          painter: ArrowPainter.fromInstance(arrows[endIndex][i], draggedTargetCenter(), scaledTargetRadius(), arrowDropOffset(), counter == _draggedArrow,
+          painter: ArrowPainter.fromInstance(arrows[endIndex][i], draggedTargetCenter(), scaledTargetRadius(), arrowDropOffset(), i == _draggedArrow,
               _draggedArrow != -1 && i != _draggedArrow && arrows[endIndex][i].isUntouched == 0),
           child: Container(),
         ),
       );
-      counter++;
     }
 
     return XGestureDetector(
@@ -775,8 +775,10 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
       element.reset();
     });
 
-    resetOpponentsEnd();
-    currentMatchPoints = getMatchPoints();
+    if (widget.training.competitionType != CompetitionType.training) {
+      resetOpponentsEnd();
+      currentMatchPoints = getMatchPoints();
+    }
     setState(() {});
   }
 
@@ -802,7 +804,7 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
     }
 
     if (arrows.length <= 1 || widget.training.competitionType == CompetitionType.qualifying) {
-      // todo make sure there are no other issues here
+      // want to keep opponent scores if its qualifying, since they are all added ??
       resetArrows(context);
       resetOpponentsEnd();
       return;
@@ -812,7 +814,9 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
 
     await dbService.deleteEnd(endID);
     arrows.removeAt(endIndex);
-    deleteOpponentsEnd();
+    if (widget.training.competitionType != CompetitionType.training) {
+      deleteOpponentsEnd(); // THIS WORKS BECAUSE WE DONT UPDATE IN DB WE JUST OVERWRITE
+    }
 
     endIndex = max(0, endIndex - 1);
     currentMatchPoints = getMatchPoints();

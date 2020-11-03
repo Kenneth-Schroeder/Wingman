@@ -244,3 +244,5 @@ List<Offset> calculateConfidenceEllipse(List<ScoreInstance> arrows, double targe
 
   return [Offset(vPlus.x, vPlus.y) * sqrt(lambdaPlus) * 2, Offset(vMinus.x, vMinus.y) * sqrt(lambdaMinus) * 2];
 }
+
+
