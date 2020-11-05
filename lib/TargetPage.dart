@@ -1160,7 +1160,7 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
 
   Widget emptyScreen(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Score Recording")),
+      appBar: AppBar(title: Text("Hit Records")),
       body: SpinKitCircle(
         color: Theme.of(context).primaryColor,
         size: 100.0,
@@ -1173,7 +1173,7 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
     return WillPopScope(
       child: Scaffold(
         appBar: AppBar(
-          title: Text("Score Recording"),
+          title: Text("Hit Records"),
           actions: <Widget>[
             // action button
             IconButton(
