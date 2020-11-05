@@ -439,7 +439,7 @@ class _TrainingSummaryState extends State<TrainingSummary> with TickerProviderSt
       child: DataTable(
         columns: columns,
         rows: rows,
-        columnSpacing: 25,
+        columnSpacing: 15,
         dataRowHeight: 35,
       ),
     );

@@ -303,6 +303,7 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> with TickerProviderSt
   }
 
   DataCell tableCell(BuildContext context, ArrowInformation arrowInformation) {
+    int maxLength = 4;
     return DataCell(
       Center(
         child: Container(
@@ -326,14 +327,14 @@ class _QuiverOrganizerState extends State<QuiverOrganizer> with TickerProviderSt
                 hintText: "",
               ),
               inputFormatters: [
-                LengthLimitingTextInputFormatter(5),
+                LengthLimitingTextInputFormatter(maxLength),
               ],
               style: TextStyle(fontSize: 20),
               textAlign: TextAlign.center,
               initialValue: arrowInformation.label,
               keyboardType: TextInputType.name,
               onChanged: (text) {
-                if (text.length <= 5) {
+                if (text.length <= maxLength) {
                   arrowInformation.label = text;
                 }
               },

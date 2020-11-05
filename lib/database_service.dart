@@ -334,7 +334,7 @@ class DatabaseService {
       return opponent;
     }
 
-    Archer opponent = Archer(endsMap.first['name'].toString());
+    Archer opponent = Archer(endsMap.first['name']);
 
     Map<int, List<int>> scoresByEnd = Map<int, List<int>>(); // maps from endID to the scores
     for (var element in endsMap) {

@@ -133,8 +133,9 @@ class _TargetPageState extends State<TargetPage> with TickerProviderStateMixin {
         opponents = [];
 
         for (int i = 0; i < numOpponents; i++) {
-          opponents.add(Archer("Rival " + (i + 1).toString().padLeft(2, '0')));
-          dbService.addOpponent(widget.training.id, i.toString());
+          String name = "Rival " + (i + 1).toString().padLeft(2, '0');
+          opponents.add(Archer(name));
+          dbService.addOpponent(widget.training.id, name);
         }
       } else {
         opponents = await dbService.getAllOpponents(widget.training.id);
