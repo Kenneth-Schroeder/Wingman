@@ -21,17 +21,6 @@ class ScoreInstance {
   ScoreInstance(this.endID, this.relativeArrowRadius);
 
   ScoreInstance clone() {
-    /*
-    * "relativeArrowRadius": this.relativeArrowRadius,
-      "score": this.score,
-      "isX": this.isX ? 1 : 0,
-      "endID": this.endID,
-      "arrowInformationID": _getArrowInformationID(),
-      "pRadius": this.pRadius,
-      "pAngle": this.pAngle,
-      "isLocked": this.isLocked,
-      "isUntouched": this.isUntouched,
-    * */
     return ScoreInstance.fromMapAndArrowInformation({
       ...this.toMap(),
       ...{"shotID": this.shotID},

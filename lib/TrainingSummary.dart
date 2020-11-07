@@ -328,7 +328,11 @@ class _TrainingSummaryState extends State<TrainingSummary> with TickerProviderSt
 
       List<DataCell> cells = [];
 
-      scores.sort((a, b) => a.tripleSpotRadius(widget.training.targetDiameterCM).compareTo(b.tripleSpotRadius(widget.training.targetDiameterCM)));
+      if (widget.training.targetType == TargetType.TripleSpot) {
+        scores.sort((a, b) => a.tripleSpotRadius(widget.training.targetDiameterCM).compareTo(b.tripleSpotRadius(widget.training.targetDiameterCM)));
+      } else {
+        scores.sort((a, b) => a.pRadius.compareTo(b.pRadius));
+      }
 
       int endScoreCounter = 0;
       int rowScoreCounter = 0;
