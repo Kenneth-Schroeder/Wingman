@@ -1,4 +1,4 @@
-# Wingman
+# ArchersWingman
 
 ArchersWingman is a Flutter application developed for iOS and Android which aims at improving archers training experience.
 The App is designed as an assistant, that enables regular score recording, statistical analysis and competition simulation.
