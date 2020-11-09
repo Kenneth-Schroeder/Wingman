@@ -268,6 +268,7 @@ class ScoreInstance {
     pRadius = 1.3;
     pAngle = 13 / 20 * pi;
     isUntouched = 1;
+    isX = false;
     // position only temporary, will be set by targetpage to be on screen side
   }
 
