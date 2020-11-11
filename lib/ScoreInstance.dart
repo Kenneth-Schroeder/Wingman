@@ -113,6 +113,7 @@ class ScoreInstance {
 
     if (distance <= 0) {
       score = 10;
+      isX = true;
       return score;
     }
     if (distance > 1) {
