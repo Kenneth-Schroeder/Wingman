@@ -142,13 +142,19 @@ class ScoreInstance {
 
   int tripleSpotScore(double targetRadius) {
     score = 0;
+    bool newIsX = false;
 
     score = max(score, singleSpotScore());
+    newIsX = newIsX | isX;
     _moveForTriSpot(targetRadius, 1);
     score = max(score, singleSpotScore());
+    newIsX = newIsX | isX;
     _moveForTriSpot(targetRadius, -2);
     score = max(score, singleSpotScore());
+    newIsX = newIsX | isX;
     _moveForTriSpot(targetRadius, 1);
+
+    isX = newIsX;
 
     return score;
   }
